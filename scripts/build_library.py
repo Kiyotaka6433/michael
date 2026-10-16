@@ -195,7 +195,10 @@ def phase_hubs(vault, manifest, state):
     home = ["---", "michael: hub", "tags: [hub]", "---", "# Home", "",
             "Michael's library. Every article in `Sources/` is saved verbatim from a trusted site (math kept as "
             "exact LaTeX); every note in `Key points/` was written by Michael and each sentence is checked against a "
-            "quote from the article.", ""]
+            "quote from the article.", "",
+            "**Visual maps:** [[Maps/Library map.canvas|Library map]] · open the graph view (Ctrl+G): gold = hubs, "
+            "purple = topic overviews, blue = Number Theory, green = DSA, orange = Machine Learning, grey = key points.",
+            ""]
     for subj in manifest["subjects"]:
         name = subj["name"]
         lines = ["---", "michael: hub", f"tags: [hub, {subj['tag']}]", f"updated: {datetime.now():%Y-%m-%d %H:%M}",
@@ -231,6 +234,80 @@ def phase_hubs(vault, manifest, state):
         home.append(f"- [[{name}]] - {n_saved} articles, {n_kp} key-point notes, {n_cards} flashcards")
     (vault / "Home.md").write_text("\n".join(home) + "\n", encoding="utf8")
     print("hubs: written", flush=True)
+    phase_graph(vault, manifest)
+    phase_canvas(vault, manifest, state)
+
+
+SUBJECT_COLORS = {"number-theory": (0x4C9AFF, "5"), "dsa-cp": (0x36B37E, "4"), "machine-learning": (0xFF8B00, "2")}
+HUB_RGB, TOPIC_RGB, KEYPOINT_RGB = 0xFFD700, 0xE040FB, 0x8993A4
+
+
+def phase_graph(vault, manifest):
+    """Colour the graph view: hubs gold, topic overviews purple, key points grey, articles by subject; hide
+    flashcard decks. Other graph settings the user changed are kept."""
+    path = Path(vault) / ".obsidian" / "graph.json"
+    g = json.loads(path.read_text(encoding="utf8")) if path.exists() else {}
+    groups = [{"query": "tag:#hub", "color": {"a": 1, "rgb": HUB_RGB}},
+              {"query": 'path:"/Topics/"', "color": {"a": 1, "rgb": TOPIC_RGB}},
+              {"query": 'path:"Key points"', "color": {"a": 1, "rgb": KEYPOINT_RGB}}]
+    groups += [{"query": f'path:"{s["name"]}/"', "color": {"a": 1, "rgb": SUBJECT_COLORS.get(s["tag"], (0x999999, ""))[0]}}
+               for s in manifest["subjects"]]
+    g.update({"colorGroups": groups, "search": g.get("search") or "-path:Flashcards -path:Maps",
+              "showTags": False, "showOrphans": False, "hideUnresolved": True, "showArrow": False,
+              "nodeSizeMultiplier": g.get("nodeSizeMultiplier", 1.3), "linkDistance": g.get("linkDistance", 180),
+              "repelStrength": g.get("repelStrength", 12)})
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(g, indent=2), encoding="utf8")
+    print("graph: colour groups written (reopen the graph view to see them)", flush=True)
+
+
+def phase_canvas(vault, manifest, state):
+    """One Obsidian Canvas map per subject: the hub in the middle, one coloured group per topic holding its
+    overview note and its articles, with arrows from the hub to each topic."""
+    vault = Path(vault)
+    rel = lambda p: Path(p).relative_to(vault).as_posix()
+    maps = vault / "Maps"
+    maps.mkdir(exist_ok=True)
+    home_nodes = []
+    for si, subj in enumerate(manifest["subjects"]):
+        color = SUBJECT_COLORS.get(subj["tag"], (0, "1"))[1]
+        hub = f"{subj['name']}/{subj['name']}.md"
+        nodes = [{"id": "hub", "type": "file", "file": hub, "x": -200, "y": -900, "width": 400, "height": 300, "color": "3"}]
+        edges = []
+        cols, gw, gap = 3, 760, 80
+        y_offsets = [0] * cols
+        for ti, topic in enumerate(subj["topics"]):
+            arts = [state[i] for i in topic["items"] if state.get(i, {}).get("status") == "saved"]
+            ts = state.get(f"topic:{subj['name']}/{topic['name']}", {})
+            rows = (len(arts) + 1) // 2
+            gh = 120 + (200 if ts.get("note") else 0) + rows * 90
+            col = min(range(cols), key=lambda c: y_offsets[c])          # shortest column first (masonry)
+            gx, gy = (col - 1) * (gw + gap) - gw // 2, y_offsets[col]
+            y_offsets[col] += gh + gap
+            gid = f"t{ti}"
+            nodes.append({"id": gid, "type": "group", "label": topic["name"], "x": gx, "y": gy, "width": gw,
+                          "height": gh, "color": color})
+            y = gy + 50
+            target = gid
+            if ts.get("note") and Path(ts["note"]).exists():
+                nodes.append({"id": f"{gid}o", "type": "file", "file": rel(ts["note"]), "x": gx + 20, "y": y,
+                              "width": gw - 40, "height": 180, "color": "6"})
+                target, y = f"{gid}o", y + 200
+            for ai, st in enumerate(arts):
+                nodes.append({"id": f"{gid}a{ai}", "type": "file", "file": rel(st["path"]),
+                              "x": gx + 20 + (ai % 2) * ((gw - 60) // 2 + 20), "y": y + (ai // 2) * 90,
+                              "width": (gw - 60) // 2, "height": 70})
+            edges.append({"id": f"e{ti}", "fromNode": "hub", "fromSide": "bottom", "toNode": target, "toSide": "top"})
+        canvas = maps / f"{subj['name']} map.canvas"
+        canvas.write_text(json.dumps({"nodes": nodes, "edges": edges}, indent=1), encoding="utf8")
+        home_nodes.append({"id": f"s{si}", "type": "file", "file": f"Maps/{subj['name']} map.canvas",
+                           "x": si * 520 - 520, "y": 0, "width": 480, "height": 360, "color": color})
+    home = [{"id": "home", "type": "file", "file": "Home.md", "x": -240, "y": -420, "width": 480, "height": 300,
+             "color": "3"}] + home_nodes
+    edges = [{"id": f"h{n['id']}", "fromNode": "home", "fromSide": "bottom", "toNode": n["id"], "toSide": "top"}
+             for n in home_nodes]
+    (maps / "Library map.canvas").write_text(json.dumps({"nodes": home, "edges": edges}, indent=1), encoding="utf8")
+    print(f"canvas: {len(manifest['subjects'])} subject maps + Library map in Maps/", flush=True)
 
 
 def main():
