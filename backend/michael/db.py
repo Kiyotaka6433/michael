@@ -37,6 +37,9 @@ CREATE TABLE IF NOT EXISTS verdicts (
     run_id TEXT, claim_idx INTEGER, label TEXT, evidence_label TEXT, chunk_id TEXT,
     quote TEXT, quote_start INTEGER, quote_end INTEGER, entailment REAL, contradiction REAL
 );
+CREATE TABLE IF NOT EXISTS cache (
+    ns TEXT, key TEXT, value TEXT, created REAL, PRIMARY KEY (ns, key)
+);
 CREATE TABLE IF NOT EXISTS human_labels (
     run_id TEXT, claim_idx INTEGER, human_label TEXT, system_label TEXT, created_at REAL,
     PRIMARY KEY (run_id, claim_idx)
@@ -49,7 +52,7 @@ _lock = threading.Lock()
 @contextmanager
 def connect():
     with _lock:
-        con = sqlite3.connect(settings.db_path)
+        con = sqlite3.connect(settings.db_path, timeout=30)   # the batch builder and the API share this file
         con.row_factory = sqlite3.Row
         try:
             yield con
@@ -60,7 +63,28 @@ def connect():
 
 def init():
     with connect() as con:
+        con.execute("PRAGMA journal_mode=WAL")      # readers never block the writer (API + batch at once)
         con.executescript(SCHEMA)
+
+
+# ----------------------------------------------------------------- result cache
+def cache_get(ns: str, keys: list[str]) -> dict:
+    """Cached JSON values for these keys (e.g. LLM responses, NLI scores), keyed by an input hash."""
+    out = {}
+    with connect() as con:
+        for i in range(0, len(keys), 500):
+            part = keys[i:i + 500]
+            for r in con.execute(f"SELECT key, value FROM cache WHERE ns=? AND key IN ({','.join('?' * len(part))})",
+                                 [ns, *part]):
+                out[r["key"]] = json.loads(r["value"])
+    return out
+
+
+def cache_put(ns: str, items: dict):
+    now = time.time()
+    with connect() as con:
+        con.executemany("INSERT OR REPLACE INTO cache VALUES (?,?,?,?)",
+                        [(ns, k, json.dumps(v), now) for k, v in items.items()])
 
 
 # ----------------------------------------------------------------- source cache

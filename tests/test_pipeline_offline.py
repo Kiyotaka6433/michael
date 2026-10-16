@@ -243,3 +243,12 @@ def test_sentence_that_passes_only_in_context_needs_a_high_score():
     chunk = Chunk(source_id="s", kind="t", title="T", url="", text=text, start=0, end=len(text), label="p1")
     v = verify_claim(Claim(index=0, sentence="The Transformer reaches 41.8 BLEU.", citations=["p1"]), {"p1": chunk}, OnlyParagraph())
     assert v.label == "PARTIAL" and v.in_context
+
+
+def test_latex_broken_by_json_escapes_is_repaired():
+    import json
+    from michael.llm import repair_latex
+    data = json.loads(r'{"s": "involves computing $\text{phi}(n)$ and $\frac{a}{b}$"}')   # \t and \f escapes
+    assert "\t" in data["s"]                                                           # what the parser does
+    assert repair_latex(data)["s"] == r"involves computing $\text{phi}(n)$ and $\frac{a}{b}$"
+    assert repair_latex({"s": "plain sentence."}) == {"s": "plain sentence."}

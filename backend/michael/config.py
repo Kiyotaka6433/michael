@@ -41,6 +41,7 @@ class Settings:
     # verification
     support_threshold: float = 0.70  # entailment probability for SUPPORTED
     context_threshold: float = 0.90  # ...when the quote only passes together with its whole paragraph
+    semantic_windows: bool = _env("SEMANTIC_WINDOWS", "1") == "1"   # rank quote windows by meaning too
     partial_threshold: float = 0.40  # entailment probability for PARTIAL
     max_repair_rounds: int = 1
 

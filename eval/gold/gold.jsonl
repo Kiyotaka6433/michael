@@ -1,0 +1,64 @@
+{"id": "c0000", "label": "correct", "reason": "true author list (quote shows names garbled by an old metadata bug, fixed since)", "labeler": "claude-audit"}
+{"id": "c0001", "label": "correct", "reason": "matches the abstract", "labeler": "claude-audit"}
+{"id": "c0002", "label": "correct", "reason": "matches Section 3.2.1", "labeler": "claude-audit"}
+{"id": "c0003", "label": "partly", "reason": "the quote is about operations to relate distant positions, not 'sequential computation'", "labeler": "claude-audit"}
+{"id": "c0004", "label": "correct", "reason": "the paper motivates the Transformer by the sequential limits of recurrent models", "labeler": "claude-audit"}
+{"id": "c0005", "label": "correct", "reason": "both BLEU numbers are in the abstract; wrongly removed", "labeler": "claude-audit"}
+{"id": "c0006", "label": "partly", "reason": "vague paraphrase of the motivation; not wrong, not precise", "labeler": "claude-audit"}
+{"id": "c0007", "label": "correct", "reason": "verbatim from the abstract; wrongly removed ('our model' vs 'the Transformer', since fixed)", "labeler": "claude-audit"}
+{"id": "c0008", "label": "correct", "reason": "verbatim from the abstract", "labeler": "claude-audit"}
+{"id": "c0009", "label": "correct", "reason": "matches the abstract", "labeler": "claude-audit"}
+{"id": "c0010", "label": "correct", "reason": "matches the abstract", "labeler": "claude-audit"}
+{"id": "c0011", "label": "correct", "reason": "matches Section 3.2.2", "labeler": "claude-audit"}
+{"id": "c0012", "label": "correct", "reason": "matches Section 3.2.2", "labeler": "claude-audit"}
+{"id": "c0013", "label": "wrong", "reason": "the feed-forward network describes additive attention, not scaled dot-product; correctly removed", "labeler": "claude-audit"}
+{"id": "c0014", "label": "correct", "reason": "standard definition", "labeler": "claude-audit"}
+{"id": "c0015", "label": "correct", "reason": "matches the source", "labeler": "claude-audit"}
+{"id": "c0016", "label": "partly", "reason": "implies every arithmetic function is either multiplicative or additive; the source only defines the two classes", "labeler": "claude-audit"}
+{"id": "c0017", "label": "correct", "reason": "the Dirichlet ring", "labeler": "claude-audit"}
+{"id": "c0018", "label": "correct", "reason": "definition of pi(x)", "labeler": "claude-audit"}
+{"id": "c0019", "label": "correct", "reason": "Riemann's prime-power counting function, weights 1/k", "labeler": "claude-audit"}
+{"id": "c0020", "label": "correct", "reason": "(f*g)(n) = sum over d|n of f(d)g(n/d); wrongly removed", "labeler": "claude-audit"}
+{"id": "c0021", "label": "correct", "reason": "true; wrongly removed", "labeler": "claude-audit"}
+{"id": "c0022", "label": "wrong", "reason": "the condition is f(1) != 0, not epsilon(1) != 0; correctly removed", "labeler": "claude-audit"}
+{"id": "c0023", "label": "correct", "reason": "definition", "labeler": "claude-audit"}
+{"id": "c0024", "label": "correct", "reason": "definition", "labeler": "claude-audit"}
+{"id": "c0025", "label": "correct", "reason": "definition", "labeler": "claude-audit"}
+{"id": "c0026", "label": "correct", "reason": "matches the source", "labeler": "claude-audit"}
+{"id": "c0027", "label": "correct", "reason": "true, though 'the general case' is unclear out of context (split from a compound sentence)", "labeler": "claude-audit"}
+{"id": "c0028", "label": "partly", "reason": "the source says 'some more advanced functions', not 'many'", "labeler": "claude-audit"}
+{"id": "c0029", "label": "correct", "reason": "matches the source", "labeler": "claude-audit"}
+{"id": "c0030", "label": "correct", "reason": "Lagrange's theorem", "labeler": "claude-audit"}
+{"id": "c0031", "label": "correct", "reason": "matches the source", "labeler": "claude-audit"}
+{"id": "c0032", "label": "correct", "reason": "definition", "labeler": "claude-audit"}
+{"id": "c0033", "label": "correct", "reason": "smallest positive linear combination", "labeler": "claude-audit"}
+{"id": "c0034", "label": "correct", "reason": "matches the source", "labeler": "claude-audit"}
+{"id": "c0035", "label": "correct", "reason": "definition of coprime", "labeler": "claude-audit"}
+{"id": "c0036", "label": "correct", "reason": "gcd(a,b,c) = gcd(a,gcd(b,c))", "labeler": "claude-audit"}
+{"id": "c0037", "label": "correct", "reason": "verbatim", "labeler": "claude-audit"}
+{"id": "c0038", "label": "correct", "reason": "verbatim", "labeler": "claude-audit"}
+{"id": "c0039", "label": "correct", "reason": "definition", "labeler": "claude-audit"}
+{"id": "c0040", "label": "correct", "reason": "matches the source", "labeler": "claude-audit"}
+{"id": "c0041", "label": "correct", "reason": "ISBN mod 11/10, IBAN mod 97", "labeler": "claude-audit"}
+{"id": "c0042", "label": "correct", "reason": "matches the source", "labeler": "claude-audit"}
+{"id": "c0043", "label": "correct", "reason": "linear congruence theorem", "labeler": "claude-audit"}
+{"id": "c0044", "label": "correct", "reason": "matches the source", "labeler": "claude-audit"}
+{"id": "c0045", "label": "wrong", "reason": "garbled: the inverse is x with ax = 1 (mod m), existing iff gcd(a,m)=1; correctly removed", "labeler": "claude-audit"}
+{"id": "c0046", "label": "correct", "reason": "true; wrongly removed", "labeler": "claude-audit"}
+{"id": "c0047", "label": "correct", "reason": "matches the source", "labeler": "claude-audit"}
+{"id": "c0048", "label": "correct", "reason": "definition", "labeler": "claude-audit"}
+{"id": "c0049", "label": "correct", "reason": "correct algorithm; LaTeX broken by a JSON escape bug (\\text became a tab)", "labeler": "claude-audit"}
+{"id": "c0050", "label": "correct", "reason": "definition of discrete log; wrongly removed", "labeler": "claude-audit"}
+{"id": "c0051", "label": "correct", "reason": "baby-step giant-step is O(sqrt m) up to log factors; wrongly removed", "labeler": "claude-audit"}
+{"id": "c0052", "label": "correct", "reason": "definition", "labeler": "claude-audit"}
+{"id": "c0053", "label": "correct", "reason": "true", "labeler": "claude-audit"}
+{"id": "c0054", "label": "correct", "reason": "the quote states pi(n) ~ n/log n", "labeler": "claude-audit"}
+{"id": "c0055", "label": "partly", "reason": "the quote describes sieving by divisibility testing, not an incremental Eratosthenes sieve", "labeler": "claude-audit"}
+{"id": "c0056", "label": "correct", "reason": "definition", "labeler": "claude-audit"}
+{"id": "c0057", "label": "correct", "reason": "stated in the paragraph", "labeler": "claude-audit"}
+{"id": "c0058", "label": "correct", "reason": "stated in the paragraph", "labeler": "claude-audit"}
+{"id": "c0059", "label": "correct", "reason": "Tonelli-Shanks; 'both problems' is unclear out of context", "labeler": "claude-audit"}
+{"id": "c0060", "label": "correct", "reason": "matches the source", "labeler": "claude-audit"}
+{"id": "c0061", "label": "correct", "reason": "matches the source", "labeler": "claude-audit"}
+{"id": "c0062", "label": "wrong", "reason": "Euler's criterion is for an odd prime p, not any modulus n; correctly removed", "labeler": "claude-audit"}
+{"id": "c0063", "label": "correct", "reason": "true for an odd prime p ((p-1)/2 each); wrongly removed", "labeler": "claude-audit"}
