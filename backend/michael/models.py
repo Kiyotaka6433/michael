@@ -66,6 +66,7 @@ class Verdict:
     quote_end: int = -1
     entailment: float = 0.0
     contradiction: float = 0.0
+    in_context: bool = False  # judged together with its paragraph (e.g. "our model" -> "the Transformer")
 
     def to_dict(self):
         return asdict(self)

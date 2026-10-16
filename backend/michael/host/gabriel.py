@@ -31,7 +31,8 @@ def render(question: str, claims: list[Claim], verdicts: dict[int, Verdict], evi
             if chunk.id not in used:
                 used.append(chunk.id)
             quote = " ".join(v.quote.split())
-            notes.append(f'[^{n}]: "{quote}" - {chunk.link} · {v.label.lower()} (entailment {v.entailment:.2f})')
+            ctx = " in the context of its paragraph" if getattr(v, "in_context", False) else ""
+            notes.append(f'[^{n}]: "{quote}" - {chunk.link} · {v.label.lower()}{ctx} (entailment {v.entailment:.2f})')
             body.append(f"{text}[^{n}]{ICON[v.label]}")
         else:
             body.append(f"{text}{ICON['UNSUPPORTED']}")
@@ -48,7 +49,8 @@ def render(question: str, claims: list[Claim], verdicts: dict[int, Verdict], evi
         lines += ["## Removed claims", "Sentences the writer produced but the verifier could not support:", ""]
         lines += [f"- ~~{c.sentence}~~" for c in removed] + [""]
     lines += ["## Sources", ""]
-    lines += [f"- {by_id[cid].link}{' - ' + by_id[cid].heading if by_id[cid].heading and by_id[cid].kind != 'vault' else ''}"
-              for cid in used] + [""]
+    entries = [f"- {by_id[cid].link}{' - ' + by_id[cid].heading if by_id[cid].heading and by_id[cid].kind != 'vault' else ''}"
+               for cid in used]
+    lines += list(dict.fromkeys(entries)) + [""]          # two chunks of one section = one source line
     lines += notes
     return "\n".join(lines) + "\n"

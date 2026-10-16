@@ -3,6 +3,7 @@ import re
 
 from ..llm import chat_json
 from ..models import Chunk, Claim
+from .scrolls import split_sentences
 
 SYSTEM = """You write short, factual research notes using ONLY the numbered evidence passages provided.
 Rules:
@@ -57,7 +58,9 @@ def parse_sentences(data: dict, valid_labels: set) -> list[Claim]:
             text, cites = str(item.get("text", "")).strip(), item.get("citations", []) or []
         cites = [c.strip("[] ") for c in cites if isinstance(c, str)]
         cites = [c for c in dict.fromkeys(cites) if c in valid_labels]
-        for part in split_compound(text) if text else []:
+        # one claim per sentence: a two-sentence item could pass on the strength of only one of them
+        parts = [p for sent in (split_sentences(text) if text else []) for p in split_compound(sent)]
+        for part in parts:
             key = " ".join(part.lower().split())
             if key not in seen:               # small models sometimes repeat sentences
                 seen.add(key)

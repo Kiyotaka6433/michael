@@ -8,7 +8,7 @@ from rapidfuzz import fuzz
 
 from ..config import settings
 from ..models import Chunk, Claim, Verdict
-from .uriel import lexical_candidates
+from .uriel import lexical_candidates, paragraph_of
 
 
 class NLI:
@@ -51,24 +51,42 @@ def label_for(entailment: float) -> str:
     return "UNSUPPORTED"
 
 
-def _windows(claim: Claim, chunks: list[Chunk], top: int = 3):
-    return [(c, s, e) for c in chunks for s, e in lexical_candidates(claim.sentence, c.text, top=top)]
+def _windows(claim: Claim, chunks: list[Chunk], top: int = 3, context: bool = True):
+    """Candidates (chunk, quote_start, quote_end, judged_start, judged_end). Each quote window is judged alone;
+    the best one is also judged inside its paragraph, because a sentence like "our model achieves 41.8 BLEU"
+    only supports "the Transformer achieves 41.8 BLEU" when the NLI model can see what "our model" is."""
+    out = []
+    for c in chunks:
+        wins = lexical_candidates(claim.sentence, c.text, top=top)
+        out += [(c, s, e, s, e) for s, e in wins]
+        if context and wins:
+            s, e = wins[0]
+            ps, pe = paragraph_of(c.text, s, e)
+            if (ps, pe) != (s, e) and ps <= s and e <= pe:
+                out.append((c, s, e, ps, pe))
+    return out
 
 
 def _pick(cands, scores):
     """Tightest quote that proves the sentence; otherwise the strongest partial evidence."""
     passing = [i for i in range(len(cands)) if scores[i][0] >= settings.support_threshold]
     if passing:
-        best = min(passing, key=lambda i: (cands[i][2] - cands[i][1], -scores[i][0]))
+        best = min(passing, key=lambda i: (cands[i][4] - cands[i][3], -scores[i][0]))
     else:
-        best = max(range(len(cands)), key=lambda i: (scores[i][0], -(cands[i][2] - cands[i][1])))
+        best = max(range(len(cands)), key=lambda i: (scores[i][0], -(cands[i][4] - cands[i][3])))
     return cands[best], scores[best]
 
 
 def _score_groups(groups: list[list], claims: list[Claim], nli: NLI) -> list:
     """Score every (window, claim) pair of every claim in one batch; returns the best pick per claim (or None)."""
-    pairs = [(c.text[s:e], claim.sentence) for g, claim in zip(groups, claims) for c, s, e in g]
+    pairs = [(c.text[js:je], claim.sentence) for g, claim in zip(groups, claims) for c, _, _, js, je in g]
     flat = nli.scores(pairs) if pairs else []
+    # a whole paragraph lets loosely-worded sentences through, so passing *only in context* needs a much higher
+    # score; below it the sentence can at most be PARTIAL
+    cands = [w for g in groups for w in g]
+    flat = [(min(ent, settings.support_threshold - 0.01), con)
+            if (w[3], w[4]) != (w[1], w[2]) and ent < settings.context_threshold else (ent, con)
+            for w, (ent, con) in zip(cands, flat)]
     out, k = [], 0
     for g in groups:
         out.append(_pick(g, flat[k:k + len(g)]) if g else None)
@@ -88,9 +106,15 @@ def verify_claims(claims: list[Claim], evidence: dict[str, Chunk], nli: NLI, rec
         for i in retry:
             cl = claims[i]
             others = [c for l, c in evidence.items() if l not in cl.citations]
-            pool = _windows(cl, others, top=2)
+            pool = _windows(cl, others, top=2, context=False)
             pool.sort(key=lambda w: fuzz.token_set_ratio(cl.sentence, w[0].text[w[1]:w[2]]), reverse=True)
-            alt_groups.append(pool[:4])
+            pool = pool[:3]
+            if pool:                                  # the best one also in its paragraph
+                c, s, e = pool[0][:3]
+                ps, pe = paragraph_of(c.text, s, e)
+                if (ps, pe) != (s, e):
+                    pool.append((c, s, e, ps, pe))
+            alt_groups.append(pool)
         for i, alt in zip(retry, _score_groups(alt_groups, [claims[i] for i in retry], nli)):
             if alt and alt[1][0] >= settings.support_threshold:
                 found[i] = alt
@@ -100,10 +124,13 @@ def verify_claims(claims: list[Claim], evidence: dict[str, Chunk], nli: NLI, rec
         if f is None:
             verdicts.append(Verdict(claim_index=cl.index, label="UNSUPPORTED"))
             continue
-        (chunk, s, e), (ent, con) = f
+        (chunk, s, e, js, je), (ent, con) = f
+        in_context = (js, je) != (s, e)
+        if in_context and je - js <= 700:            # judged in context: show the reader that whole paragraph
+            s, e = js, je
         verdicts.append(Verdict(claim_index=cl.index, label=label_for(ent), chunk_id=chunk.id,
                                 evidence_label=chunk.label, quote=chunk.text[s:e], quote_start=s, quote_end=e,
-                                entailment=ent, contradiction=con))
+                                entailment=ent, contradiction=con, in_context=in_context))
     return verdicts
 
 

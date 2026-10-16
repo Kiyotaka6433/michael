@@ -89,6 +89,7 @@ SITE_SUFFIX = re.compile(r"\s+[-—–|]\s+(Wikipedia|Algorithms for Competitive
 
 
 def clean_title(title: str) -> str:
+    title = re.split(r"\s+(?:Colab \[|Open the notebook|SageMaker Studio)", title)[0]   # d2l.ai buttons
     title = SITE_SUFFIX.sub("", title.replace("¶", "")).strip()
     return re.sub(r"^\d+(\.\d+)*\.\s+", "", title)      # "1.4. Support Vector Machines" -> "Support Vector Machines"
 
@@ -153,12 +154,11 @@ def save_article(target: str, vault_path=None, subject=None, title=None, tags=()
     return a, src_path, math
 
 
-def key_points(src_path: Path, title: str, notes_dir: Path, emit=lambda *a, **k: None, run_id=None) -> dict:
-    """Verified key-points note for a saved source note: every point cites a quote from it ([[Title#Section]])."""
-    question = f"What are the key points of “{title}”?"
-    chunks = file_chunks(src_path)
-    emit("gather", f"{len(chunks)} sections from the article")
-    evidence = select_evidence(question, [question] + SUMMARY_QUERIES, chunks, emit)
+def verified_note(question: str, queries: list[str], chunks: list, note_path: Path, intro: str,
+                  emit=lambda *a, **k: None, run_id=None, keep: int | None = None) -> dict:
+    """Write -> verify -> repair over the given chunks and save an Obsidian note. Returns the note, its stats and
+    the verified facts [(sentence, link to the supporting quote)] for flashcards."""
+    evidence = select_evidence(question, queries, chunks, emit, keep)
     claims = metatron.write(question, evidence)
     emit("write", f"{len(claims)} sentences drafted")
     drafted = len(claims)
@@ -168,14 +168,35 @@ def key_points(src_path: Path, title: str, notes_dir: Path, emit=lambda *a, **k:
              "partial": sum(1 for c in claims if c.status == "PARTIAL"),
              "unsupported": sum(1 for c in claims if c.status == "UNSUPPORTED")}
     note_md = gabriel.render(question, claims, verdicts, evidence, removed, settings.llm_model, stats)
-    note_md = note_md.replace(f"# {question}\n", f"# {question}\n\nKey points of [[{src_path.stem}]].\n", 1)
+    note_md = note_md.replace(f"# {question}\n", f"# {question}\n\n{intro}\n", 1)
     note_md, _ = mathcheck.guard(note_md)
-    notes_dir.mkdir(parents=True, exist_ok=True)
-    note_path = notes_dir / f"{src_path.stem} - key points.md"
+    note_path.parent.mkdir(parents=True, exist_ok=True)
     note_path.write_text(note_md, encoding="utf8")
     if run_id:
         db.save_results(run_id, evidence, claims + removed, list(verdicts.values()))
-    return {"note": note_path, "markdown": note_md, "stats": stats}
+    by_id = {c.id: c for c in evidence}
+    facts = [(c.sentence, by_id[verdicts[c.index].chunk_id].link) for c in claims
+             if c.status == "SUPPORTED" and c.index in verdicts and verdicts[c.index].chunk_id in by_id]
+    return {"note": note_path, "markdown": note_md, "stats": stats, "facts": facts}
+
+
+def key_points(src_path: Path, title: str, notes_dir: Path, emit=lambda *a, **k: None, run_id=None) -> dict:
+    """Verified key-points note for a saved source note: every point cites a quote from it ([[Title#Section]])."""
+    question = f"What are the key points of “{title}”?"
+    chunks = file_chunks(src_path)
+    emit("gather", f"{len(chunks)} sections from the article")
+    return verified_note(question, [question] + SUMMARY_QUERIES, chunks, notes_dir / f"{src_path.stem} - key points.md",
+                         f"Key points of [[{src_path.stem}]].", emit, run_id)
+
+
+def topic_note(subject: str, topic: str, sources: list[Path], note_path: Path, emit=lambda *a, **k: None) -> dict:
+    """One verified overview per topic, drawing on every saved article of that topic."""
+    question = f"Explain {topic} ({subject}): the key definitions, results and algorithms."
+    chunks = [c for p in sources for c in file_chunks(p)]
+    emit("gather", f"{len(chunks)} sections from {len(sources)} articles")
+    links = ", ".join(f"[[{p.stem}]]" for p in sources)
+    return verified_note(question, [question, topic, f"{topic} definition", f"{topic} theorem algorithm example"],
+                         chunks, note_path, f"Overview of **{topic}** from: {links}.", emit, keep=8)
 
 
 def add_article(target: str, summary: bool = True, vault_path: str | None = None, on_event=None,
