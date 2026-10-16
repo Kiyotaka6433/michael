@@ -170,7 +170,7 @@ def phase_related(state, k=5):
     for _, st in saved:
         body = Path(st["path"]).read_text(encoding="utf8", errors="ignore")
         body = re.sub(r"\A---\n.*?\n---\n", "", body, flags=re.S)
-        body = re.sub(r"(?s)" + re.escape(RELATED_START) + r".*?" + re.escape(RELATED_END), "", body)
+        body = body.split("<!-- michael:")[0]                       # our Related / Mentions link blocks
         body = re.sub(r"(?m)^>.*$", "", body)                      # callouts
         texts.append(st["title"] + ". " + " ".join(body.split())[:1500])
     vecs = np.stack([EMBEDDER.model.encode(t, normalize_embeddings=True) for t in texts])
@@ -188,6 +188,50 @@ def phase_related(state, k=5):
         text = re.sub(r"\n?" + re.escape(RELATED_START) + r".*?" + re.escape(RELATED_END) + r"\n?", "\n", text, flags=re.S)
         p.write_text(text.rstrip() + "\n\n" + block, encoding="utf8")
     print(f"related: linked {len(saved)} articles", flush=True)
+
+
+MENTIONS_START, MENTIONS_END = "<!-- michael:mentions -->", "<!-- /michael:mentions -->"
+SITE_TAG = re.compile(r"\s*\((cp-algorithms|scikit-learn|d2l\.ai)\)$")
+AMBIGUOUS = {"adam", "dropout", "divisor", "trie"}      # also common words / people's names
+
+
+def phase_mentions(state, cap=30):
+    """Link every article to the other library articles it mentions by name ("... by Bézout's identity ..." ->
+    [[Bézouts identity]]). The article text is not touched; links go in a "Mentions" section at the end. This
+    turns the graph into one dense web of real concept links."""
+    saved = [st for st in state.values() if isinstance(st, dict) and st.get("status") == "saved" and Path(st["path"]).exists()]
+    names, orig = {}, {}                         # lower-case name -> note stems / original spellings
+    for st in saved:
+        for name in {st["title"], SITE_TAG.sub("", st["title"])}:
+            name = re.sub(r"\s*\(.*?\)\s*$", "", name).strip()          # "Heap (data structure)" -> "Heap"
+            if len(name) >= 4 and not re.fullmatch(r"[\d.\s]+", name):
+                names.setdefault(name.lower(), set()).add(Path(st["path"]).stem)
+                orig.setdefault(name.lower(), set()).add(name)
+    names = {n: v for n, v in names.items() if n not in AMBIGUOUS}
+    # one-word names must match with their capitalisation ("Dropout" the technique, not every "dropout")
+    patterns = [(re.compile(r"(?<![\w-])" + re.escape(next(iter(orig[n]))) + r"(?:s|es)?(?![\w-])",
+                            0 if " " not in n else re.I), stems)
+                for n, stems in sorted(names.items(), key=lambda x: -len(x[0]))]
+    total = 0
+    for st in saved:
+        p = Path(st["path"])
+        text = p.read_text(encoding="utf8")
+        body = re.sub(r"\A---\n.*?\n---\n", "", text, flags=re.S).split("<!-- michael:")[0]
+        counts = {}
+        for rx, stems in patterns:
+            n = len(rx.findall(body))
+            if n:
+                for stem in stems:
+                    if stem != p.stem:
+                        counts[stem] = counts.get(stem, 0) + n
+        top = sorted(counts, key=lambda s: -counts[s])[:cap]
+        text = re.sub(r"\n?" + re.escape(MENTIONS_START) + r".*?" + re.escape(MENTIONS_END) + r"\n?", "\n", text, flags=re.S)
+        if top:
+            block = f"{MENTIONS_START}\n## Mentions\n" + " · ".join(f"[[{s}]]" for s in sorted(top)) + f"\n{MENTIONS_END}\n"
+            text = text.rstrip() + "\n\n" + block
+            total += len(top)
+        p.write_text(text, encoding="utf8")
+    print(f"mentions: {total} concept links across {len(saved)} articles", flush=True)
 
 
 def phase_hubs(vault, manifest, state):
@@ -252,10 +296,15 @@ def phase_graph(vault, manifest):
               {"query": 'path:"Key points"', "color": {"a": 1, "rgb": KEYPOINT_RGB}}]
     groups += [{"query": f'path:"{s["name"]}/"', "color": {"a": 1, "rgb": SUBJECT_COLORS.get(s["tag"], (0x999999, ""))[0]}}
                for s in manifest["subjects"]]
+    # look: one round, dense web of small nodes with thin links and readable labels
     g.update({"colorGroups": groups, "search": g.get("search") or "-path:Flashcards -path:Maps",
-              "showTags": False, "showOrphans": False, "hideUnresolved": True, "showArrow": False,
-              "nodeSizeMultiplier": g.get("nodeSizeMultiplier", 1.3), "linkDistance": g.get("linkDistance", 180),
-              "repelStrength": g.get("repelStrength", 12)})
+              "showTags": False, "showOrphans": True, "hideUnresolved": True, "showArrow": False,
+              "textFadeMultiplier": -1.5, "nodeSizeMultiplier": 0.75, "lineSizeMultiplier": 0.45,
+              "centerStrength": 0.55, "repelStrength": 9, "linkStrength": 0.8, "linkDistance": 110, "scale": 0.6})
+    appearance = Path(vault) / ".obsidian" / "appearance.json"
+    a = json.loads(appearance.read_text(encoding="utf8")) if appearance.exists() else {}
+    a.setdefault("theme", "obsidian")                                # dark theme, as in the reference picture
+    appearance.write_text(json.dumps(a, indent=2), encoding="utf8")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(g, indent=2), encoding="utf8")
     print("graph: colour groups written (reopen the graph view to see them)", flush=True)
@@ -326,6 +375,7 @@ def main():
         phase_fetch(a.vault, manifest, state, a.subject, a.limit)
     if a.phase in ("hubs", "all"):
         phase_related(state)
+        phase_mentions(state)
         phase_hubs(a.vault, manifest, state)
     if a.phase in ("topics", "all"):
         phase_topics(a.vault, manifest, state, a.subject, a.limit)

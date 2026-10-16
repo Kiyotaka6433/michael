@@ -29,7 +29,7 @@ def _pieces(text: str, max_chars: int) -> list[tuple[int, int]]:
 
 
 def file_chunks(md: Path, max_chars: int = 1000) -> list[Chunk]:
-    text = md.read_text(encoding="utf8", errors="ignore")
+    text = md.read_text(encoding="utf8", errors="ignore").split("<!-- michael:")[0]   # link blocks are not evidence
     body_offset = m.end() if (m := FRONTMATTER.match(text)) else 0
     out, pos = [], body_offset
     for part in HEADING.split(text[body_offset:]):
