@@ -40,6 +40,7 @@ class Settings:
 
     # verification
     support_threshold: float = 0.70  # entailment probability for SUPPORTED
+    context_threshold: float = 0.90  # ...when the quote only passes together with its whole paragraph
     partial_threshold: float = 0.40  # entailment probability for PARTIAL
     max_repair_rounds: int = 1
 

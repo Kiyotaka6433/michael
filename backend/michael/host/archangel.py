@@ -53,10 +53,10 @@ def collect_candidates(question, queries, kinds=None, urls=(), pdfs=(), use_vaul
     return chunks
 
 
-def select_evidence(question, queries, chunks, emit=_noop) -> list[Chunk]:
+def select_evidence(question, queries, chunks, emit=_noop, keep: int | None = None) -> list[Chunk]:
     candidates = hybrid_search(queries, chunks, EMBEDDER, settings.candidates)
     emit("search", f"hybrid search kept {len(candidates)} candidates")
-    evidence = RERANKER.rerank(question, candidates, settings.keep)
+    evidence = RERANKER.rerank(question, candidates, keep or settings.keep)
     for i, c in enumerate(evidence, 1):
         c.label = f"p{i}"
     emit("rerank", f"reranker kept the best {len(evidence)}",

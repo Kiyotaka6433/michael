@@ -39,7 +39,8 @@ Michael is an archangel, so each stage in `backend/michael/host/` is named after
 | `raguel.py` | Raguel | justice | independent NLI verifier |
 | `raphael.py` | Raphael | the healer | repairs or drops unsupported sentences |
 | `gabriel.py` | Gabriel | the messenger | renders the Obsidian note |
-| `pravuil.py` | Pravuil | keeper of the heavenly records | adds articles to the vault and writes verified key points |
+| `pravuil.py` | Pravuil | keeper of the heavenly records | adds articles to the vault and writes verified key points and topic notes |
+| `zachriel.py` | Zachriel | angel of memory | flashcards from verified sentences |
 
 ## Setup (Windows, CPU only)
 
@@ -148,7 +149,15 @@ Every formula is then checked with MathJax (Obsidian's math engine, `tools/mathc
 .venv\Scripts\python scripts/build_library.py keypoints
 ```
 
-`fetch` saves every article verbatim with exact math (seconds each), `hubs` writes `Home.md` and one hub note per subject (topics → articles → key points) and adds a "Related" section to each article (nearest articles by embedding, across subjects), and `keypoints` writes a verified key-points note per article (minutes each; resumable, progress in `library/state.json`). The saved articles are a source for every later question; Michael's own notes (key points, answers, hubs) never are.
+```bash
+.venv\Scripts\python scripts/build_library.py topics
+```
+
+`fetch` saves every article verbatim with exact math (seconds each), `hubs` writes `Home.md` and one hub note per subject (topics → overview → articles → key points) and adds a "Related" section to each article (nearest articles by embedding, across subjects), `topics` writes one verified overview per topic from all of its articles, and `keypoints` writes a verified key-points note per article (minutes each; resumable, progress in `library/state.json`).
+
+Every topic and key-points note also gets a flashcard deck in `<Subject>/Flashcards/` for the Obsidian **Spaced Repetition** plugin (`Question::Answer`, tag `#flashcards/<subject>`). Only sentences the verifier marked SUPPORTED become cards, and the answer is that verified sentence unchanged, with a link to its quote (`zachriel.py`).
+
+The saved articles are a source for every later question; Michael's own notes (answers, key points, topic notes, hubs, flashcards) never are, so it cannot cite itself.
 
 ### Search sources
 

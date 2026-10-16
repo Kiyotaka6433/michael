@@ -228,3 +228,18 @@ def test_generated_notes_are_never_vault_evidence(tmp_path):
     (tmp_path / "Answer.md").write_text('---\nquestion: "x"\n---\n# x\nGenerated.\n', encoding="utf8")
     (tmp_path / "Hub.md").write_text("---\nmichael: hub\n---\n# Hub\nLinks.\n", encoding="utf8")
     assert {c.title for c in vault_chunks(str(tmp_path))} == {"Real"}
+
+
+def test_multi_sentence_claims_are_checked_one_sentence_at_a_time():
+    claims = parse_sentences({"sentences": [{"text": "Euclid is old. It finds the GCD of two numbers.", "citations": ["p1"]}]}, {"p1"})
+    assert [c.sentence for c in claims] == ["Euclid is old.", "It finds the GCD of two numbers."]
+
+
+def test_sentence_that_passes_only_in_context_needs_a_high_score():
+    class OnlyParagraph:          # the window alone says nothing; the paragraph gives a middling score
+        def scores(self, pairs):
+            return [(0.8, 0.0) if "\n" not in p and "Transformer" in p and "41.8" in p else (0.05, 0.0) for p, _ in pairs]
+    text = "We propose the Transformer. It is new. It is fast. Our model reaches 41.8 BLEU."
+    chunk = Chunk(source_id="s", kind="t", title="T", url="", text=text, start=0, end=len(text), label="p1")
+    v = verify_claim(Claim(index=0, sentence="The Transformer reaches 41.8 BLEU.", citations=["p1"]), {"p1": chunk}, OnlyParagraph())
+    assert v.label == "PARTIAL" and v.in_context

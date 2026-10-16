@@ -28,7 +28,7 @@ def _pieces(text: str, max_chars: int) -> list[tuple[int, int]]:
     return out
 
 
-def file_chunks(md: Path, max_chars: int = 1500) -> list[Chunk]:
+def file_chunks(md: Path, max_chars: int = 1000) -> list[Chunk]:
     text = md.read_text(encoding="utf8", errors="ignore")
     body_offset = m.end() if (m := FRONTMATTER.match(text)) else 0
     out, pos = [], body_offset
@@ -51,10 +51,10 @@ def is_generated(md: Path) -> bool:
     otherwise the writer could end up citing its own earlier output."""
     head = md.read_text(encoding="utf8", errors="ignore")[:600]
     m = FRONTMATTER.match(head)
-    return bool(m and re.search(r"(?m)^(question:|michael: hub)", m.group(0)))
+    return bool(m and re.search(r"(?m)^(question:|michael: )", m.group(0)))   # answers, hubs, flashcards
 
 
-def vault_chunks(vault_dir: str, max_chars: int = 1500) -> list[Chunk]:
+def vault_chunks(vault_dir: str, max_chars: int = 1000) -> list[Chunk]:
     root = Path(vault_dir)
     out = []
     for md in sorted(root.rglob("*.md")):

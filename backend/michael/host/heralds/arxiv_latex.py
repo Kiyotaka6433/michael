@@ -58,7 +58,7 @@ def abs_page_metadata(arxiv_id: str) -> dict:
     title = (meta("citation_title") or [""])[0]
     if not title:
         return {}
-    authors = [", ".join(reversed(a.split(", ", 1))) if ", " in a else a for a in meta("citation_author")]
+    authors = [" ".join(reversed(a.split(", ", 1))) if ", " in a else a for a in meta("citation_author")]   # "Vaswani, Ashish" -> "Ashish Vaswani"
     return {"title": " ".join(title.split()), "authors": authors,
             "date": (meta("citation_date") or [""])[0].replace("/", "-"),
             "abstract": " ".join((meta("citation_abstract") or [""])[0].split())}
