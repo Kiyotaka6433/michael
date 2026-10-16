@@ -1,0 +1,6 @@
+{"premise": "LACP is defined in IEEE 802.3ad and negotiates link aggregation between devices.", "hypothesis": "LACP is an IEEE standard.", "label": "supported"}
+{"premise": "PAgP is a Cisco proprietary protocol used to form EtherChannels.", "hypothesis": "PAgP is an open IEEE standard.", "label": "unsupported"}
+{"premise": "Spanning Tree Protocol prevents loops in Ethernet networks by blocking redundant paths.", "hypothesis": "STP blocks redundant links to stop switching loops.", "label": "supported"}
+{"premise": "OSPF is a link-state routing protocol that uses Dijkstra's algorithm.", "hypothesis": "OSPF is a distance-vector protocol.", "label": "unsupported"}
+{"premise": "The reranker reads the query and the passage together in one transformer pass.", "hypothesis": "A cross-encoder processes the query and document jointly.", "label": "supported"}
+{"premise": "Paris is the capital of France.", "hypothesis": "Berlin is in Germany.", "label": "unsupported"}

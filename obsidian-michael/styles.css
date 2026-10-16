@@ -1,0 +1,4 @@
+/* Michael: highlight partial claims a little more clearly in reading view */
+.markdown-rendered mark {
+  background-color: rgba(255, 196, 0, 0.25);
+}
