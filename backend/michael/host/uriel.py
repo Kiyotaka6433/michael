@@ -1,6 +1,7 @@
 """Find the exact span (1-3 consecutive sentences) of a chunk that best matches a claim."""
 import re
 
+import numpy as np
 from rapidfuzz import fuzz
 
 from .scrolls import sentence_spans
@@ -44,9 +45,37 @@ def candidate_windows(text: str, max_len: int = 3) -> list[tuple[int, int]]:
     return out
 
 
-def lexical_candidates(claim: str, text: str, top: int = 5) -> list[tuple[int, int]]:
-    """Top windows by lexical overlap; the verifier then picks the one the NLI model trusts most.
-    Shorter windows win ties so quotes stay tight."""
+def _semantic(claim: str, texts: list[str]) -> np.ndarray | None:
+    """Cosine similarity of the claim to each window (bge-small, cached); None if the embedder is unavailable."""
+    try:
+        from .archangel import EMBEDDER
+        from ..models import Chunk
+        vecs = EMBEDDER.chunks([Chunk(source_id="", kind="", title="", url="", text=t, start=0, end=len(t))
+                                for t in texts])
+        return vecs @ EMBEDDER.encode([claim])[0]
+    except Exception:
+        return None
+
+
+def lexical_candidates(claim: str, text: str, top: int = 5, semantic: bool | None = None) -> list[tuple[int, int]]:
+    """Top windows for the NLI judge: ranked by word overlap AND by meaning (embedding similarity), merged, so a
+    paraphrased claim still reaches the sentence that proves it. Shorter windows win ties so quotes stay tight."""
     wins = candidate_windows(text)
-    scored = sorted(wins, key=lambda w: (fuzz.token_set_ratio(claim, text[w[0]:w[1]]), -(w[1] - w[0])), reverse=True)
-    return scored[:top]
+    lexical = sorted(wins, key=lambda w: (fuzz.token_set_ratio(claim, text[w[0]:w[1]]), -(w[1] - w[0])), reverse=True)
+    if semantic is None:
+        from ..config import settings
+        semantic = settings.semantic_windows
+    if not semantic or len(wins) <= top:
+        return lexical[:top]
+    sims = _semantic(claim, [text[s:e] for s, e in wins])
+    if sims is None:
+        return lexical[:top]
+    by_meaning = [wins[i] for i in np.argsort(-sims)]
+    out = []
+    for pair in zip(lexical, by_meaning):           # interleave the two rankings, best of each first
+        for w in pair:
+            if w not in out:
+                out.append(w)
+        if len(out) >= top:
+            break
+    return out[:top]

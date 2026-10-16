@@ -31,6 +31,23 @@ def _noop(stage, detail="", **data):
     pass
 
 
+def vault_evidence(vault_path: str, queries: list[str], per_query: int = 15) -> list[Chunk]:
+    """The vault's best passages for these queries, from the vault index (milliseconds, instead of re-reading and
+    re-scoring every note). Michael's own notes are never evidence. Falls back to a full scan if indexing fails."""
+    from .. import vault_index
+    try:
+        vault_index.index_vault(vault_path)
+        seen, out = set(), []
+        for q in queries:
+            for r in vault_index.search(q, k=per_query, include_generated=False, kinds=("source", "note")):
+                if r["id"] not in seen:
+                    seen.add(r["id"])
+                    out.append(r)
+        return vault_index.as_chunks(out)
+    except Exception:
+        return vault_chunks(vault_path)
+
+
 def collect_candidates(question, queries, kinds=None, urls=(), pdfs=(), use_vault=True, emit=_noop,
                        vault_path=None) -> list[Chunk]:
     sources = heralds.gather(queries, kinds)
@@ -45,7 +62,7 @@ def collect_candidates(question, queries, kinds=None, urls=(), pdfs=(), use_vaul
     chunks = [c for s in sources for c in chunk_source(s, settings.chunk_chars)]
     vault_path = vault_path or settings.vault_path
     if use_vault and vault_path:
-        vc = vault_chunks(vault_path)
+        vc = vault_evidence(vault_path, [question] + list(queries))
         emit("vault", f"{len(vc)} sections from your vault")
         chunks += vc
     emit("gather", f"{len(sources)} sources, {len(chunks)} passages",

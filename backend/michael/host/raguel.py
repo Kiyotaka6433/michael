@@ -7,7 +7,7 @@ batch, and only short quote windows (1-3 sentences) are scored, never whole pass
 from rapidfuzz import fuzz
 
 from ..config import settings
-from ..models import Chunk, Claim, Verdict
+from ..models import Chunk, Claim, Verdict, sha
 from .uriel import lexical_candidates, paragraph_of
 
 
@@ -27,7 +27,26 @@ class NLI:
             self._ent, self._con = labels["entailment"], labels["contradiction"]
 
     def scores(self, pairs: list[tuple[str, str]]) -> list[tuple[float, float]]:
-        """(entailment, contradiction) probability for each (premise, hypothesis) pair."""
+        """(entailment, contradiction) probability for each (premise, hypothesis) pair, with a persistent cache:
+        re-verifying a note, or the same quote for the same sentence, costs nothing."""
+        from .. import db
+        keys = [sha(f"{self.model_name}|{p}|{h}") for p, h in pairs]
+        try:
+            cached = db.cache_get("nli", list(set(keys)))
+        except Exception:
+            cached = {}
+        todo = [i for i, k in enumerate(keys) if k not in cached]
+        fresh = self._scores([pairs[i] for i in todo]) if todo else []
+        if fresh:
+            new = {keys[i]: list(v) for i, v in zip(todo, fresh)}
+            try:
+                db.cache_put("nli", new)
+            except Exception:
+                pass
+            cached.update(new)
+        return [tuple(cached[k]) for k in keys]
+
+    def _scores(self, pairs: list[tuple[str, str]]) -> list[tuple[float, float]]:
         import torch
         self._load()
         order = sorted(range(len(pairs)), key=lambda i: len(pairs[i][0]) + len(pairs[i][1]))
@@ -106,9 +125,9 @@ def verify_claims(claims: list[Claim], evidence: dict[str, Chunk], nli: NLI, rec
         for i in retry:
             cl = claims[i]
             others = [c for l, c in evidence.items() if l not in cl.citations]
-            pool = _windows(cl, others, top=2, context=False)
+            pool = _windows(cl, others, top=3, context=False)
             pool.sort(key=lambda w: fuzz.token_set_ratio(cl.sentence, w[0].text[w[1]:w[2]]), reverse=True)
-            pool = pool[:3]
+            pool = pool[:5]
             if pool:                                  # the best one also in its paragraph
                 c, s, e = pool[0][:3]
                 ps, pe = paragraph_of(c.text, s, e)

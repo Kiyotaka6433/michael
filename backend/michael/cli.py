@@ -3,6 +3,8 @@
   michael search "LACP vs PAgP"            retrieval only (no LLM): gather, hybrid search, rerank
   michael ask "How does LACP differ from PAgP?" [--url URL] [--pdf FILE] [--no-vault]
   michael add https://arxiv.org/abs/1706.03762 [--vault PATH] [--no-summary]   save an article (+ key points)
+  michael index [--vault PATH]          bring the vault index up to date (incremental)
+  michael find "query" [--subject S]   hybrid full-text + vector search over the indexed vault
   michael verify "sentence" "evidence text"
   michael serve [--port 8765]
 """
@@ -36,6 +38,14 @@ def main(argv=None):
     ad.add_argument("target", help="URL, arXiv link or id, PDF URL or path")
     ad.add_argument("--vault", default=None, help="vault to save into (default: MICHAEL_VAULT, else data/notes)")
     ad.add_argument("--no-summary", action="store_true", help="only save the article, no key-points note")
+
+    ix = sub.add_parser("index", help="index the vault for search (incremental)")
+    ix.add_argument("--vault", default=None)
+
+    fd = sub.add_parser("find", help="search the indexed vault")
+    fd.add_argument("query")
+    fd.add_argument("--subject", default=None)
+    fd.add_argument("-k", type=int, default=8)
 
     v = sub.add_parser("verify", help="check one sentence against evidence text")
     v.add_argument("sentence")
@@ -74,6 +84,24 @@ def main(argv=None):
         if res["note"]:
             print(f"Key points written to {res['note']}\n")
             print(res["markdown"])
+    elif args.cmd == "index":
+        import time
+        from . import db, vault_index
+        from .config import settings
+        db.init()
+        vault = args.vault or settings.vault_path
+        if not vault:
+            sys.exit("Pass --vault PATH or set MICHAEL_VAULT.")
+        t = time.time()
+        res = vault_index.index_vault(vault, on_progress=print)
+        print(res, f"in {time.time() - t:.1f}s")
+        print(vault_index.stats())
+    elif args.cmd == "find":
+        from . import db, vault_index
+        db.init()
+        for r in vault_index.search(args.query, k=args.k, subject=args.subject):
+            print(f"\n{r['score']:.4f}  [{r['kind']}] {r['rel']}  #{r['heading']}")
+            print("        " + " ".join(r["text"].split())[:220])
     elif args.cmd == "verify":
         from .host.archangel import verify_text
         print(json.dumps(verify_text(args.sentence, args.evidence), indent=2))

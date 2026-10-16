@@ -126,6 +126,33 @@ async def events(run_id: str):
     return EventSourceResponse(stream())
 
 
+# ------------------------------------------------------------------ v1: vault index
+@app.get("/api/v1/search")
+def search(q: str, k: int = 10, subject: str | None = None, include_generated: bool = True):
+    from . import vault_index
+    return {"query": q, "results": vault_index.search(q, k=min(k, 50), subject=subject,
+                                                      include_generated=include_generated)}
+
+
+class IndexRequest(BaseModel):
+    vault_path: str | None = None
+
+
+@app.post("/api/v1/index")
+def reindex(req: IndexRequest):
+    from . import vault_index
+    vault = req.vault_path or settings.vault_path
+    if not vault:
+        raise HTTPException(400, "no vault: pass vault_path or set MICHAEL_VAULT")
+    return {**vault_index.index_vault(vault), "stats": vault_index.stats()}
+
+
+@app.get("/api/v1/library/stats")
+def library_stats():
+    from . import vault_index
+    return vault_index.stats()
+
+
 @app.get("/runs")
 def runs():
     return db.list_runs()
