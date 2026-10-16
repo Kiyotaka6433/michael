@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.egg-info/
+data/
+eval/reports/
+eval/datasets/scifact_dev.jsonl
+node_modules/
+dashboard/.next/
+obsidian-michael/main.js
+data_install.log
+library/state.json
+library/*.log
