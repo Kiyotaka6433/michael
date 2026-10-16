@@ -1,0 +1,7 @@
+{
+  "name": "michael-mathcheck",
+  "private": true,
+  "type": "module",
+  "description": "Checks that LaTeX formulas render in MathJax 3 (the engine Obsidian uses).",
+  "dependencies": { "mathjax-full": "3.2.2" }
+}

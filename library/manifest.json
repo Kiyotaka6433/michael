@@ -1,0 +1,113 @@
+{
+  "about": "Curated reading list for the Michael Vault. Shorthands: wiki:<Wikipedia title>, cp:<cp-algorithms path>, skl:<scikit-learn user-guide page>, d2l:<d2l.ai path>, arxiv:<id>. Build with: python scripts/build_library.py",
+  "subjects": [
+    {
+      "name": "Number Theory",
+      "tag": "number-theory",
+      "intro": "Divisibility, primes, congruences and the algorithms competitive programmers use with them.",
+      "topics": [
+        {"name": "Divisibility and the GCD", "items": [
+          "wiki:Divisor", "wiki:Fundamental theorem of arithmetic", "wiki:Euclidean algorithm", "wiki:Bézout's identity",
+          "wiki:Least common multiple", "cp:algebra/euclid-algorithm", "cp:algebra/extended-euclid-algorithm",
+          "cp:algebra/linear-diophantine-equation"]},
+        {"name": "Primes", "items": [
+          "wiki:Prime number", "wiki:Sieve of Eratosthenes", "wiki:Prime number theorem", "wiki:Mersenne prime",
+          "wiki:Miller–Rabin primality test", "wiki:Pollard's rho algorithm", "cp:algebra/sieve-of-eratosthenes",
+          "cp:algebra/prime-sieve-linear", "cp:algebra/primality_tests", "cp:algebra/factorization"]},
+        {"name": "Modular arithmetic", "items": [
+          "wiki:Modular arithmetic", "wiki:Modular multiplicative inverse", "wiki:Chinese remainder theorem",
+          "wiki:Fermat's little theorem", "wiki:Euler's theorem", "wiki:Wilson's theorem", "wiki:Modular exponentiation",
+          "cp:algebra/binary-exp", "cp:algebra/module-inverse", "cp:algebra/chinese-remainder-theorem",
+          "cp:algebra/garners-algorithm", "cp:algebra/factorial-modulo"]},
+        {"name": "Arithmetic functions", "items": [
+          "wiki:Arithmetic function", "wiki:Multiplicative function", "wiki:Euler's totient function", "wiki:Divisor function",
+          "wiki:Möbius function", "wiki:Möbius inversion formula", "wiki:Dirichlet convolution",
+          "cp:algebra/phi-function", "cp:algebra/divisors"]},
+        {"name": "Orders, primitive roots and discrete logs", "items": [
+          "wiki:Multiplicative order", "wiki:Primitive root modulo n", "wiki:Discrete logarithm", "wiki:Carmichael function",
+          "cp:algebra/primitive-root", "cp:algebra/discrete-log", "cp:algebra/discrete-root"]},
+        {"name": "Quadratic residues", "items": [
+          "wiki:Quadratic residue", "wiki:Legendre symbol", "wiki:Quadratic reciprocity", "wiki:Euler's criterion"]},
+        {"name": "Diophantine equations and continued fractions", "items": [
+          "wiki:Diophantine equation", "wiki:Pell's equation", "wiki:Continued fraction", "wiki:Lifting-the-exponent lemma",
+          "wiki:Hensel's lemma", "cp:algebra/continued-fractions"]},
+        {"name": "Applications", "items": [
+          "wiki:RSA cryptosystem", "wiki:Fibonacci sequence", "cp:algebra/fibonacci-numbers",
+          "cp:combinatorics/binomial-coefficients"]}
+      ]
+    },
+    {
+      "name": "DSA and Competitive Programming",
+      "tag": "dsa-cp",
+      "intro": "Core data structures, graph and string algorithms, and dynamic programming for contests and interviews.",
+      "topics": [
+        {"name": "Complexity and fundamentals", "items": [
+          "wiki:Big O notation", "wiki:Amortized analysis", "wiki:Master theorem (analysis of algorithms)",
+          "wiki:Divide-and-conquer algorithm", "wiki:Greedy algorithm", "cp:num_methods/binary_search"]},
+        {"name": "Sorting and searching", "items": [
+          "wiki:Sorting algorithm", "wiki:Merge sort", "wiki:Quicksort", "wiki:Heapsort", "wiki:Counting sort",
+          "wiki:Binary search"]},
+        {"name": "Core data structures", "items": [
+          "wiki:Hash table", "wiki:Binary search tree", "wiki:Red–black tree", "wiki:Heap (data structure)", "wiki:Trie",
+          "cp:data_structures/stack_queue_modification", "cp:data_structures/disjoint_set_union"]},
+        {"name": "Range queries", "items": [
+          "cp:data_structures/segment_tree", "cp:data_structures/fenwick", "cp:data_structures/sparse-table",
+          "cp:data_structures/sqrt_decomposition", "cp:data_structures/treap", "wiki:Segment tree", "wiki:Fenwick tree"]},
+        {"name": "Graphs", "items": [
+          "cp:graph/breadth-first-search", "cp:graph/depth-first-search", "cp:graph/01_bfs", "cp:graph/dijkstra",
+          "cp:graph/bellman_ford", "cp:graph/all-pair-shortest-path-floyd-warshall", "cp:graph/mst_kruskal",
+          "cp:graph/mst_prim", "cp:graph/topological-sort", "cp:graph/strongly-connected-components",
+          "cp:graph/bridge-searching", "cp:graph/cutpoints", "cp:graph/lca_binary_lifting", "cp:graph/edmonds_karp",
+          "wiki:Dijkstra's algorithm", "wiki:Minimum spanning tree"]},
+        {"name": "Strings", "items": [
+          "cp:string/prefix-function", "cp:string/z-function", "cp:string/string-hashing", "cp:string/suffix-array",
+          "cp:string/aho_corasick", "cp:string/manacher"]},
+        {"name": "Dynamic programming", "items": [
+          "wiki:Dynamic programming", "cp:dynamic_programming/intro-to-dp", "cp:dynamic_programming/knapsack",
+          "cp:dynamic_programming/longest_increasing_subsequence", "cp:dynamic_programming/divide-and-conquer-dp",
+          "wiki:Longest common subsequence", "wiki:Knapsack problem"]}
+      ]
+    },
+    {
+      "name": "Machine Learning",
+      "tag": "machine-learning",
+      "intro": "An undergraduate path: supervised learning, classic models, evaluation, unsupervised learning, deep learning and the landmark papers.",
+      "topics": [
+        {"name": "Foundations", "items": [
+          "wiki:Supervised learning", "wiki:Bias–variance tradeoff", "wiki:Overfitting", "wiki:Regularization (mathematics)",
+          "wiki:Cross-validation (statistics)", "wiki:Maximum likelihood estimation", "skl:cross_validation"]},
+        {"name": "Optimisation", "items": [
+          "wiki:Gradient descent", "wiki:Stochastic gradient descent", "d2l:chapter_optimization/sgd",
+          "d2l:chapter_optimization/adam", "arxiv:1609.04747", "arxiv:1412.6980"]},
+        {"name": "Linear models", "items": [
+          "wiki:Linear regression", "wiki:Ordinary least squares", "wiki:Logistic regression", "wiki:Ridge regression",
+          "wiki:Lasso (statistics)", "skl:linear_model", "d2l:chapter_linear-regression/linear-regression",
+          "d2l:chapter_linear-classification/softmax-regression"]},
+        {"name": "Classic classifiers", "items": [
+          "wiki:Support vector machine", "wiki:Kernel method", "wiki:K-nearest neighbors algorithm",
+          "wiki:Naive Bayes classifier", "wiki:Decision tree learning", "skl:svm", "skl:neighbors", "skl:naive_bayes",
+          "skl:tree"]},
+        {"name": "Ensembles", "items": [
+          "wiki:Random forest", "wiki:Gradient boosting", "wiki:Bootstrap aggregating", "skl:ensemble", "arxiv:1603.02754"]},
+        {"name": "Evaluation", "items": [
+          "wiki:Precision and recall", "wiki:Receiver operating characteristic", "wiki:Confusion matrix",
+          "wiki:Cross-entropy", "skl:model_evaluation"]},
+        {"name": "Unsupervised learning", "items": [
+          "wiki:K-means clustering", "wiki:Principal component analysis", "wiki:Expectation–maximization algorithm",
+          "wiki:DBSCAN", "skl:clustering", "skl:decomposition"]},
+        {"name": "Neural networks", "items": [
+          "wiki:Backpropagation", "wiki:Softmax function", "wiki:Rectifier (neural networks)",
+          "d2l:chapter_multilayer-perceptrons/mlp", "d2l:chapter_multilayer-perceptrons/backprop",
+          "d2l:chapter_multilayer-perceptrons/dropout", "skl:neural_networks_supervised", "arxiv:1207.0580",
+          "arxiv:1502.03167"]},
+        {"name": "Deep learning architectures", "items": [
+          "wiki:Convolutional neural network", "wiki:Recurrent neural network", "wiki:Long short-term memory",
+          "d2l:chapter_convolutional-neural-networks/conv-layer", "d2l:chapter_attention-mechanisms-and-transformers/transformer",
+          "arxiv:1512.03385", "arxiv:1706.03762", "arxiv:1810.04805"]},
+        {"name": "Generative models and representations", "items": [
+          "arxiv:1406.2661", "arxiv:1312.6114", "arxiv:1301.3781", "wiki:Autoencoder", "wiki:Word embedding"]},
+        {"name": "Overviews", "items": ["arxiv:1803.08823"]}
+      ]
+    }
+  ]
+}

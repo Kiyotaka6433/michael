@@ -1,0 +1,5 @@
+How does LACP differ from PAgP?
+What is retrieval-augmented generation?
+How does a cross-encoder reranker differ from a bi-encoder?
+What problem does spanning tree protocol solve?
+What is natural language inference?

@@ -1,0 +1,9 @@
+{
+  "id": "michael",
+  "name": "Michael",
+  "version": "0.1.0",
+  "minAppVersion": "1.4.0",
+  "description": "Evidence-locked research notes: every sentence linked to an exact source quote and checked by an independent verifier.",
+  "author": "Aryan",
+  "isDesktopOnly": true
+}
