@@ -15,7 +15,7 @@ def _env(name, default):
 class Settings:
     # models
     ollama_url: str = _env("OLLAMA_URL", "http://localhost:11434")
-    llm_model: str = _env("LLM", "qwen2.5:3b")
+    llm_model: str = _env("LLM", "qwen2.5:7b")    # writes clearly better notes than 3b; ~2x slower on CPU
     llm_threads: int = int(_env("LLM_THREADS", os.cpu_count() or 4))
     llm_ctx: int = int(_env("LLM_CTX", 6144))
     embed_model: str = _env("EMBED_MODEL", "BAAI/bge-small-en-v1.5")

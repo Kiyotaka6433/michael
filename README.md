@@ -51,7 +51,7 @@ winget install Ollama.Ollama
 ```
 
 ```bash
-ollama pull qwen2.5:3b
+ollama pull qwen2.5:7b
 ```
 
 2. Python environment (already created in `.venv` if you used the skeleton as delivered):
@@ -218,5 +218,5 @@ All settings live in `backend/michael/config.py` and can be overridden with `MIC
 
 - The verifier proves that a quote supports a sentence, not that the source is true.
 - Sentence-level checking struggles with conclusions that combine several passages; those show as PARTIAL.
-- On a CPU laptop a full run takes a few minutes with `qwen2.5:3b`.
+- On a CPU laptop a note takes several minutes with `qwen2.5:7b` (set `MICHAEL_LLM=qwen2.5:3b` for about 2x faster, plainer writing).
 - PDFs that are not on arXiv keep their text but not their math; a PDF-to-LaTeX model (Marker) is the planned next step.
