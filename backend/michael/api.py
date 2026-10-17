@@ -314,6 +314,27 @@ def note(path: str):
             "obsidian": f"obsidian://open?vault={vault.name}&file={f.relative_to(vault).as_posix()}"}
 
 
+@app.get("/api/v1/graph")
+def graph(subject: str | None = None):
+    """Notes and the links between them (from the vault index), for the web app's graph view.
+    Flashcard decks and maps are left out, like in the Obsidian graph settings."""
+    from . import vault_index
+    vault_index.init()
+    with db.connect() as con:
+        notes = [dict(r) for r in con.execute("SELECT path, rel, title, subject, kind FROM vault_notes "
+                                              "WHERE kind NOT IN ('flashcards', 'map')")]
+        links = con.execute("SELECT src, dst FROM vault_links").fetchall()
+    if subject:
+        notes = [n for n in notes if n["subject"] == subject]
+    from pathlib import Path
+    by_stem = {Path(n["path"]).stem: n["rel"] for n in notes}
+    ids = {n["path"]: n["rel"] for n in notes}
+    edges = {(ids[s], by_stem[d]) for s, d in links if s in ids and d in by_stem and ids[s] != by_stem[d]}
+    return {"nodes": [{"id": n["rel"], "label": Path(n["rel"]).stem, "subject": n["subject"], "kind": n["kind"]}
+                      for n in notes],
+            "edges": [{"source": s, "target": t} for s, t in sorted(edges)]}
+
+
 # ------------------------------------------------------------------ v1: flashcards (shared with the SR plugin)
 class ReviewRequest(BaseModel):
     deck: str
