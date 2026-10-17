@@ -14,6 +14,8 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
   - `/note`: renders a note with exact math; all 138 Transformer formulas render with 0 errors. Links between notes work, backlinks show, and an "Open in Obsidian" button is on every page.
   - `/search`: full-text and meaning search.
   - `/flashcards`: reviews shared with the Obsidian Spaced Repetition plugin.
+  - `/graph`: 221 notes and 2,105 links in the Obsidian colours (Cytoscape); hover to focus, click to open.
+- Key points started: **6/84 done so far, every one fully verified** (Ruder's gradient-descent overview 5/5, Dropout 4/4, BatchNorm 5/5, ResNet 5/5), about 5–6 minutes each.
 - 43 tests pass.
 
 **Choices and why**
@@ -23,6 +25,8 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 - **Display math normalised before rendering** (`$$` on its own lines): Obsidian accepts inline-style `$$...$$` but the web Markdown parser doesn't. Without it only 20 of 138 formulas rendered.
 - **Wikilink paths are URL-encoded**: note names contain spaces, which break Markdown links.
 - **Developer mode in Chrome was left to you**: it's a browser security setting.
+- **Graph colours match Obsidian's graph settings** (gold hubs, purple topics, blue/green/orange subjects), so both views read the same way.
+- **The web preview server is stopped after each check**: it competes with the key-points batch for the CPU.
 
 ## 2026-10-17 · 13:00-14:00
 **Done**
