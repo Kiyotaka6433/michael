@@ -184,7 +184,35 @@ This creates `Desktop\Michael Vault` (or pass another vault path), installs and 
 
 In Obsidian: the first time, click **Turn on community plugins** when asked. Then click the ribbon icon or run **Michael: Research a question** (`Ctrl+P`). The plugin starts `michael serve` by itself, sends its vault as a source, accepts extra URLs, shows progress in the status bar and opens the finished note from `Michael/`. **Michael: Add an article** (second ribbon icon) does the article flow above inside the vault.
 
-## Evaluation (resume numbers)
+## Results (measured on this laptop: Ryzen 5 7520U, CPU only)
+
+**Verifier benchmark** (SciFact dev, 450 claim/evidence pairs, `eval/compare_verifiers.py`):
+
+| Verifier | ms / pair | Precision @0.70 | Recall @0.70 |
+|---|---|---|---|
+| DeBERTa-v3-base (mnli-fever-anli) | 326 | 95.4% | 28.7% |
+| **DeBERTa-v3-large (…-ling-wanli), used** | 1013 | **98.9%** | **40.7%** |
+| MiniCheck-DeBERTa-v3-Large | 1174 | 97.8% | 20.4% |
+| deberta-v3-base-zeroshot-v2.0 | 337 | 95.6% | 30.1% |
+| deberta-small-long-nli | 154 | 93.2% | 25.5% |
+
+**Michael's own notes** (gold set: 247 sentences from generated notes, labelled `claude-audit`, i.e. AI-audited, not human-labelled; `eval/gold_report.py`):
+
+| | Before claim-driven retrieval (157) | After (90) |
+|---|---|---|
+| Verified sentences that are right (strict) | 91.3% | **92.7%** |
+| ... right or only imprecise | 99.0% | **100%** |
+| Wrong sentences left in notes | 1 | **0** |
+| Drafted sentences kept as verified (yield) | 66.2% | **91.1%** |
+| Drafted sentences removed | 26% | **7%** |
+
+**Speed and fidelity**
+- Key-points note for one paper: 29 min → 8.5 min (3.4×), then ~5–6 min with qwen2.5:7b and batching. Fixes: float32 instead of float16 on CPU (verifier 9.3× faster), all CPU threads for Ollama (1.7×), batched NLI, result caches.
+- Library: 184 articles saved from Wikipedia, cp-algorithms, scikit-learn, d2l.ai and arXiv; **20,335 / 20,438 formulas (99.5%) render** (arXiv papers from their LaTeX source via pandoc, others from MathJax/KaTeX/LaTeXML alt-text, every formula checked with MathJax).
+- Vault graph: ~220 notes, ~2,100 links; 26 verified topic overviews; flashcards from verified sentences only.
+- Citation re-check: 85/86 quotes still match their source word for word.
+
+## Evaluation (how to reproduce)
 
 ```bash
 .venv\Scripts\python eval\prepare_scifact.py
