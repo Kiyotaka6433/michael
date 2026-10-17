@@ -37,6 +37,9 @@ SENT = re.compile(r"(==)?((?:[^\[\n]|\[(?!\^))+?)(==)?\[\^(\d+)\]")
 def init():
     with db.connect() as con:
         con.executescript(SCHEMA)
+        cols = {r[1] for r in con.execute("PRAGMA table_info(note_claims)")}
+        if "conflict" not in cols:                  # added later: another source that contradicts the sentence
+            con.execute("ALTER TABLE note_claims ADD COLUMN conflict TEXT DEFAULT ''")
 
 
 # ------------------------------------------------------------------ claims of generated notes
@@ -51,12 +54,14 @@ def parse_note_claims(text: str) -> list[dict]:
                      "status": f.group(4).upper() if f else "UNKNOWN", "entailment": float(f.group(6)) if f else None,
                      "quote": f.group(2) if f else "", "source": f.group(3) if f else "",
                      "in_context": int("in the context" in tail),
-                     "math": "match" if "formulas and numbers checked" in tail else ""})
+                     "math": "match" if "formulas and numbers checked" in tail else "",
+                     "conflict": _conflict(text[f.start():(text.find("\n", f.start()) + 1 or len(text) + 1) - 1])
+                     if f else ""})
     removed = text.split("## Removed claims", 1)
     if len(removed) == 2:
         for s in re.findall(r"^- ~~(.*)~~$", removed[1].split("\n## ", 1)[0], re.M):
             rows.append({"sentence": s, "status": "REMOVED", "entailment": None, "quote": "", "source": "",
-                         "in_context": 0, "math": ""})
+                         "in_context": 0, "math": "", "conflict": ""})
     return rows
 
 
@@ -65,16 +70,22 @@ def index_note_claims(path: str, text: str):
     rows = parse_note_claims(text) if re.search(r"(?m)^question:", text[:600]) else []
     with db.connect() as con:
         con.execute("DELETE FROM note_claims WHERE path=?", (path,))
-        con.executemany("INSERT INTO note_claims VALUES (?,?,?,?,?,?,?,?,?)",
+        con.executemany("INSERT INTO note_claims (path, idx, sentence, status, entailment, quote, source, in_context, "
+                        "math, conflict) VALUES (?,?,?,?,?,?,?,?,?,?)",
                         [(path, i, r["sentence"], r["status"], r["entailment"], r["quote"], r["source"],
-                          r["in_context"], r["math"]) for i, r in enumerate(rows)])
+                          r["in_context"], r["math"], r["conflict"]) for i, r in enumerate(rows)])
     return len(rows)
 
 
 def query_claims(status: str | None = None, source: str | None = None, subject: str | None = None,
-                 q: str | None = None, limit: int = 100) -> list[dict]:
+                 q: str | None = None, limit: int = 100, path: str | None = None,
+                 conflicts: bool = False) -> list[dict]:
     init()
     where, params = ["1=1"], []
+    if path:                                         # one note (the Obsidian trust panel): vault-relative path
+        where.append("(n.rel = ? OR c.path = ?)"); params += [path.replace("\\", "/"), path]
+    if conflicts:
+        where.append("c.conflict != ''")
     if status:
         where.append("c.status = ?"); params.append(status.upper())
     if source:
@@ -88,6 +99,11 @@ def query_claims(status: str | None = None, source: str | None = None, subject: 
                            f"WHERE {' AND '.join(where)} ORDER BY c.path, c.idx LIMIT ?", [*params, limit]).fetchall()
         totals = {r["status"]: r["n"] for r in con.execute("SELECT status, COUNT(*) n FROM note_claims GROUP BY status")}
     return {"claims": [dict(r) for r in rows], "totals": totals}
+
+
+def _conflict(footnote_line: str) -> str:
+    m = re.search(r"⚠ (\[\[.*?\]\]) appears to disagree: \"(.*)\" \(contradiction", footnote_line)
+    return f"{m.group(1)}: {m.group(2)}" if m else ""
 
 
 # ------------------------------------------------------------------ flashcard reviews

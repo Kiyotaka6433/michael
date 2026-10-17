@@ -68,6 +68,10 @@ class Verdict:
     contradiction: float = 0.0
     in_context: bool = False  # judged together with its paragraph (e.g. "our model" -> "the Transformer")
     math: str = ""            # formulas/numbers checked by ophaniel: match | mismatch | unchecked
+    conflict_label: str = ""  # another evidence passage that contradicts the sentence (shown, never hidden)
+    conflict_quote: str = ""
+    conflict_score: float = 0.0
+    parts: int = 0            # >0: a compound sentence proven part by part (each part has its own quote)
 
     def to_dict(self):
         return asdict(self)

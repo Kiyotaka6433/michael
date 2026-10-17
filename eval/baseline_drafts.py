@@ -33,6 +33,31 @@ def sid(note, sentence):
     return "b" + hashlib.sha1(f"{note}|{sentence}".encode("utf8")).hexdigest()[:10]
 
 
+def evidence_by_note() -> dict:
+    """The exact evidence each baseline note was drafted from (deterministic: hybrid search + reranker, no LLM)."""
+    state = json.loads((ROOT / "library" / "state.json").read_text(encoding="utf8"))
+    manifest = json.loads((ROOT / "library" / "manifest.json").read_text(encoding="utf8"))
+    out = {}
+    for key in TOPICS:
+        subject, topic = key.split("/", 1)
+        t = next(t for s in manifest["subjects"] if s["name"] == subject for t in s["topics"] if t["name"] == topic)
+        # the drafts were made from the topic's articles as of 17 Oct afternoon: Wikipedia + cp-algorithms only
+        paths = [Path(state[i]["path"]) for i in t["items"] if state.get(i, {}).get("status") == "saved"
+                 and not i.startswith("url:")]
+        question = f"Explain {topic} ({subject}): the key definitions, results and algorithms."
+        chunks = [c for p in paths for c in file_chunks(p)]
+        out[f"{topic}.md"] = select_evidence(question, [question, topic, f"{topic} definition",
+                                                        f"{topic} theorem algorithm example"], chunks, keep=8)
+    for item in KEYPOINTS:
+        st = state.get(item, {})
+        if st.get("status") == "saved":
+            src = Path(st["path"])
+            question = f"What are the key points of “{st['title']}”?"
+            out[f"{src.stem} - key points.md"] = select_evidence(question, [question] + pravuil.SUMMARY_QUERIES,
+                                                                 file_chunks(src))
+    return out
+
+
 def main():
     import argparse
     from michael.config import settings

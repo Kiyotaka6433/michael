@@ -19,6 +19,7 @@ def _yaml(s: str) -> str:
 def render(question: str, claims: list[Claim], verdicts: dict[int, Verdict], evidence: list[Chunk],
            removed: list[Claim], model: str, stats: dict) -> str:
     by_id = {c.id: c for c in evidence}
+    by_label = {c.label: c for c in evidence}
     used = []
     body, notes = [], []
     for n, claim in enumerate(claims, 1):
@@ -33,8 +34,15 @@ def render(question: str, claims: list[Claim], verdicts: dict[int, Verdict], evi
             quote = " ".join(v.quote.split())
             ctx = " in the context of its paragraph" if getattr(v, "in_context", False) else ""
             ctx += {"match": " · formulas and numbers checked", "proven": " · formulas proven equivalent"}.get(getattr(v, "math", ""), "")
-            notes.append(f'[^{n}]: "{quote}" - {chunk.link} · {v.label.lower()}{ctx} (entailment {v.entailment:.2f})')
-            body.append(f"{text}[^{n}]{ICON[v.label]}")
+            if getattr(v, "parts", 0):
+                ctx += f" · proven in {v.parts} parts"
+            note = f'[^{n}]: "{quote}" - {chunk.link} · {v.label.lower()}{ctx} (entailment {v.entailment:.2f})'
+            other = by_label.get(getattr(v, "conflict_label", ""))
+            if other is not None:            # shown, never resolved silently: the reader sees both quotes
+                note += (f' · ⚠ {other.link} appears to disagree: "{" ".join(v.conflict_quote.split())}"'
+                         f" (contradiction {v.conflict_score:.2f})")
+            notes.append(note)
+            body.append(f"{text}[^{n}]{ICON[v.label]}" + (" ⚠" if other is not None else ""))
         else:
             body.append(f"{text}{ICON['UNSUPPORTED']}")
 

@@ -1,5 +1,6 @@
 import { App, Editor, FileSystemAdapter, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, normalizePath, requestUrl } from "obsidian";
 import { ChildProcess, spawn } from "child_process";
+import { TRUST_VIEW, TrustView } from "./trust";
 
 interface MichaelSettings {
   backendUrl: string;
@@ -104,8 +105,23 @@ export default class MichaelPlugin extends Plugin {
       if (p.q) this.startRun(decodeURIComponent(p.q));
     });
 
+    // side panel: verdict, score, quote and source of every sentence in the open Michael note
+    this.registerView(TRUST_VIEW, (leaf) => new TrustView(leaf));
+    this.addRibbonIcon("shield-check", "Michael: trust panel", () => this.openTrust());
+    this.addCommand({ id: "open-trust-panel", name: "Open trust panel (evidence for every sentence)",
+                      callback: () => this.openTrust() });
+
     this.addSettingTab(new MichaelSettingTab(this.app, this));
     this.app.workspace.onLayoutReady(() => this.ensureBackend(false));
+  }
+
+  async openTrust() {
+    let leaf = this.app.workspace.getLeavesOfType(TRUST_VIEW)[0];
+    if (!leaf) {
+      leaf = this.app.workspace.getRightLeaf(false)!;
+      await leaf.setViewState({ type: TRUST_VIEW, active: true });
+    }
+    this.app.workspace.revealLeaf(leaf);
   }
 
   onunload() {
