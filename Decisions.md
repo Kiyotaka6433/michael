@@ -4,6 +4,25 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-17 · 15:00-16:00
+**Done**
+- **Flashcards: one card per verified fact.** BERT's 7 verified facts had produced 1 card, because the model stopped after the first question. The schema now demands exactly N cards, and skipped facts are retried. All 38 existing decks were rebuilt; every deck checked came out one card per fact (e.g. 5/5, 7/7). Review history from the Spaced Repetition plugin is kept.
+- **Extension 0.2:**
+  - Alt+Shift+M asks about any page immediately.
+  - A green ✓ badge shows when the page is already saved.
+  - One classification per page per browser session.
+  - Single-page sites are followed as you navigate.
+  - An offline card appears when the backend isn't running.
+  - The backend skips classifying badge-only checks.
+  - You reloaded the extension.
+- Web app: research-run pages render their note (math, footnotes).
+- Key points: 12/84 written, every sentence verified so far; they resume after the deck rebuild.
+
+**Choices and why**
+- **Diagnosed the cards before changing them.** I printed what the model returned and why each question was rejected: it was stopping early, not getting filtered. So the fix is in the request (exact count), not in loosening the filters.
+- **Rebuilding decks keeps review history** (matched by answer text): you may already have reviewed cards in Obsidian.
+- **Session cache in the extension instead of the backend**: the card and the toolbar button run in the same browser, so caching there also saves the network round-trip.
+
 ## 2026-10-17 · 14:00-15:00
 **Done**
 - **All 26 topic overviews finished: 120/134 sentences verified, 100 flashcards.** The batch moved on to key points for 84 papers and tutorial pages (overnight).
