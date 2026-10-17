@@ -4,6 +4,22 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-17 · 17:30-18:10
+**Done**
+- **cp-algorithms notes repaired** (`scripts/polish_sources.py`, rebuilt from each article's original page; the wording is untouched):
+  - Code indentation restored and marked as C++ (314 of 318 blocks).
+  - "Practice Problems" lists added back (57 notes).
+  - "¶" removed from headings.
+  - The authors' own links to other library articles became wikilinks (134 links in a "Linked in the article" section).
+- **34 new cp-algorithms nodes**, chosen from pages the existing articles link to, plus core CP topics. Two new topics: *Geometry* and *Combinatorics and games*. All 34 saved; formulas render.
+- **Links rebuilt:** related articles, 1,148 mention links, hubs, graph colours, canvases. The vault went from about 220 notes and 2,100 links to 308 notes and 3,607 links; 1 note has no links.
+- Committed `df62734`. The 3B baseline is on its last notes.
+
+**Choices and why**
+- **Author links over model-inferred links:** a link the article's author wrote is a fact about the source. Embedding neighbours are only a guess, so both are kept but labelled separately.
+- **Practice lists stop at "Contributors" and skip GitHub links:** the first run pulled in the page's contributor list. It was caught on inspection, the notes were restored from a backup, and the run was repeated.
+- **No LLM work this hour** (the overview notes and flashcards for the new topics are left for the evening batch), so the 3B baseline measurement wasn't slowed.
+
 ## 2026-10-17 · 16:30-17:30
 **Done**
 - **Maths benchmark (400 pairs) finished.** Wrong formulas accepted: NLI 2.0% → NLI+maths 1.0%. Wrong numbers accepted: 0% → 0%. True sentences kept: unchanged (91.0%). On near-verbatim edits, NLI already notices most changes.
