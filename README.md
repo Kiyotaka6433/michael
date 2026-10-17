@@ -222,6 +222,9 @@ In the second benchmark, a PARTIAL sentence is upgraded to verified only when ev
 | Writer | Without verifier: correct / partly / wrong | With verifier (only SUPPORTED shown) | Correct drafts dropped |
 |---|---|---|---|
 | qwen2.5:7b (86 drafts) | 90.7% / 9.3% / 0% | **95.2% / 4.8% / 0%** | 19 of 78 |
+| qwen2.5:3b (112 drafts) | 90.2% / 8.0% / 1.8% | **98.5% / 1.5% / 0%** | 36 of 101 |
+
+The verifier removed both wrong 3B sentences (2 of 2: a wrong Dijkstra running time and a misattributed author contribution) and most of the imprecise ones. The cost is recall: about a third of correct drafts are dropped before repair. In the full pipeline, claim-driven retrieval re-cites most of them (yield 91%).
 
 **Speed and fidelity**
 - Key-points note for one paper: 29 min → 8.5 min (3.4×), then ~5–6 min with qwen2.5:7b and batching. Fixes: float32 instead of float16 on CPU (verifier 9.3× faster), all CPU threads for Ollama (1.7×), batched NLI, result caches.

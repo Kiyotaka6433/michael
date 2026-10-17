@@ -4,6 +4,22 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-17 · 18:00-18:20 (sprint wrap-up)
+**Done**
+- **Controlled baseline, 3B writer** (112 drafts, all labelled `claude-audit`):
+  - Without the verifier: 90.2% correct, 8.0% partly, 1.8% wrong.
+  - With the verifier: **98.5% correct, 1.5% partly, 0% wrong.**
+  - Both wrong sentences were removed: "Dijkstra runs in O(m+n)" and a misattributed author contribution.
+  - 36 of 101 correct drafts were also dropped; in the full pipeline, re-citation recovers most of them.
+- **Number Theory, same treatment as cp:**
+  - 34 new nodes (Wikipedia and cp), chosen mainly from the concepts the existing articles link to most (GCD, coprime integers, integer factorization...); 9,048 of 9,048 formulas render.
+  - The Wikipedia articles' own links became wikilinks across all subjects (1,010 links in 73 articles).
+- **Backend restarted:** `/claims`, `/flashcards/stats`, `/calibration`, the maths checker with its upgrade rule, and the non-blocking classifier are live. Classify takes about 0.1 s.
+
+**Choices and why**
+- **Labels were judged by what is true in the source, not by the verifier's verdict.** Citing the wrong passage but stating a true fact counts as correct, so the comparison measures content, not citation format.
+- **New nodes were chosen by link counts.** A concept that 14-20 library articles already link to (e.g. *Coprime integers*) is a gap in the graph; adding it connects many existing notes at once.
+
 ## 2026-10-17 · 17:30-18:10
 **Done**
 - **cp-algorithms notes repaired** (`scripts/polish_sources.py`, rebuilt from each article's original page; the wording is untouched):
