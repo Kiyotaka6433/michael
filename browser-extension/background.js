@@ -9,7 +9,12 @@ const DEFAULTS = {
   blocked: [],          // hostnames where the pop-up never appears ("Never on this site")
 };
 
+// settings are read on every message: keep them in memory and drop the copy when they change
+let cachedSettings = null;
+chrome.storage.onChanged.addListener((_, area) => { if (area === "sync") cachedSettings = null; });
+
 async function settings() {
+  if (cachedSettings) return cachedSettings;
   const s = Object.assign({}, DEFAULTS, await chrome.storage.sync.get(Object.keys(DEFAULTS)));
   if (!s.token) {
     // the backend writes local-token.json into this unpacked extension folder: connect without copy-paste
@@ -18,7 +23,7 @@ async function settings() {
       if (t) { s.token = t; await chrome.storage.sync.set({ token: t }); }
     } catch (e) { /* not there yet: the user can paste the token in Settings */ }
   }
-  return s;
+  return (cachedSettings = s);
 }
 
 async function api(path, body) {
@@ -36,13 +41,19 @@ async function api(path, body) {
 // one classification per page per browser session: the card and the toolbar pop-up share it
 const pageKey = (url) => `cls:${url.split("#")[0]}`;
 
+const inFlight = new Map();     // a prefetch still running: the card waits for it instead of asking twice
+
 async function classify(url, title, text) {
   const key = pageKey(url);
   const hit = (await chrome.storage.session.get(key))[key];
   if (hit) return hit;
-  const r = await api("/api/v1/classify", { url, title, text });
-  await chrome.storage.session.set({ [key]: r });
-  return r;
+  if (!text && !inFlight.has(key)) return api("/api/v1/classify", { url, title, text });   // badge check only
+  if (!inFlight.has(key)) {
+    inFlight.set(key, api("/api/v1/classify", { url, title, text })
+      .then(async (r) => { await chrome.storage.session.set({ [key]: r }); return r; })
+      .finally(() => inFlight.delete(key)));
+  }
+  return inFlight.get(key);
 }
 
 async function markSaved(tabId, saved) {

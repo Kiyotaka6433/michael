@@ -8,6 +8,7 @@ Used by the browser extension: a page you read is suggested a topic, and one cli
 """
 import json
 import re
+import threading
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
@@ -62,14 +63,33 @@ def topic_articles() -> dict[tuple[str, str], list[str]]:
     return out
 
 
-def topic_centroids(chunks_per_article: int = 4):
-    """One vector per topic: the mean embedding of the opening chunks of its articles (cached until the index
-    changes). Returns ([(subject, topic)], matrix)."""
+_rebuild = threading.Lock()
+
+
+def _centroid_key():
     with db.connect() as con:
         n = con.execute("SELECT COUNT(*) FROM vault_chunks").fetchone()[0]
-    key = (n, STATE.stat().st_mtime if STATE.exists() else 0)
+    return (n, STATE.stat().st_mtime if STATE.exists() else 0)
+
+
+def topic_centroids(chunks_per_article: int = 4, wait: bool = False):
+    """One vector per topic: the mean embedding of the opening chunks of its articles. Returns
+    ([(subject, topic)], matrix). Stale-while-revalidate: once built, a request never waits for a rebuild (any new
+    note changes the index key); the old centroids answer while a background thread recomputes them."""
+    key = _centroid_key()
     if _centroids["key"] == key:
         return _centroids["topics"], _centroids["matrix"]
+    if _centroids["matrix"] is not None and not wait:
+        if not _rebuild.locked():
+            threading.Thread(target=topic_centroids, kwargs={"wait": True}, daemon=True).start()
+        return _centroids["topics"], _centroids["matrix"]
+    with _rebuild:
+        if _centroids["key"] == key:
+            return _centroids["topics"], _centroids["matrix"]
+        return _build_centroids(key, chunks_per_article)
+
+
+def _build_centroids(key, chunks_per_article: int):
     from .archangel import EMBEDDER
     topics, vecs, per_topic = [], [], []
     with db.connect() as con:          # read everything first: db.connect's lock is not re-entrant

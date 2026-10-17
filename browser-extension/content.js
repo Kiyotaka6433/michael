@@ -9,10 +9,20 @@
 
   const send = (msg) => new Promise((resolve) => chrome.runtime.sendMessage(msg, (r) => resolve(r || { ok: false })));
 
+  // textContent, not innerText: innerText forces a layout of the whole page, which is slow on long articles.
+  // Stops once there is enough text to decide and classify (the backend reads 3,000 characters).
   function articleText() {
     const root = document.querySelector("article, main, [role=main]") || document.body;
-    const paras = Array.from(root.querySelectorAll("p, li")).map((p) => p.innerText.trim()).filter((t) => t.length > 40);
-    return paras.join("\n");
+    const out = [];
+    let words = 0;
+    for (const p of root.querySelectorAll("p, li")) {
+      const t = p.textContent.replace(/\s+/g, " ").trim();
+      if (t.length <= 40) continue;
+      out.push(t);
+      words += t.split(" ").length;
+      if (words > 1200) break;
+    }
+    return out.join("\n");
   }
 
   function looksLikeArticle(text) {
@@ -22,12 +32,29 @@
   }
 
   // state for the page being read; single-page sites change the URL without reloading, so it is reset per URL
-  let page = { url: "", fired: false, since: 0, timer: 0 };
+  let page = { url: "", fired: false, since: 0, timer: 0, prefetch: 0, text: null, article: null };
+
+  // read the page once per URL (the scroll handler would otherwise re-read it on every scroll event)
+  function pageText() {
+    if (page.text === null) {
+      page.text = articleText();
+      page.article = looksLikeArticle(page.text);
+    }
+    return page.text;
+  }
+
+  // classify in the background a few seconds after load: by the time the reading time is up the answer is
+  // already cached in the extension, so the card appears instantly instead of after a backend round trip
+  function prefetch() {
+    const text = pageText();
+    if (!page.fired && page.article)
+      send({ type: "classify", url: location.href, title: document.title, text: text.slice(0, 3000) });
+  }
 
   async function ask(force = false) {
     if (page.fired && !force) return;
-    const text = articleText();
-    if (!force && !looksLikeArticle(text)) return;
+    const text = force ? articleText() : pageText();
+    if (!force && !page.article) return;
     page.fired = true;
     const key = `michael:seen:${page.url}`;
     await chrome.storage.local.set({ [key]: Date.now() });
@@ -40,7 +67,8 @@
     const url = location.href.split("#")[0];
     if (url === page.url) return;
     clearTimeout(page.timer);
-    page = { url, fired: false, since: performance.now(), timer: 0 };
+    clearTimeout(page.prefetch);
+    page = { url, fired: false, since: performance.now(), timer: 0, prefetch: 0, text: null, article: null };
     const host = location.hostname;
     if (NEVER.test(host)) return;
     const res = await send({ type: "settings" });
@@ -52,6 +80,7 @@
       send({ type: "classify", url: location.href, title: document.title, text: "" });     // keep the ✓ badge right
       return;
     }
+    page.prefetch = setTimeout(prefetch, 3000);
     page.timer = setTimeout(() => ask(), (s.minSeconds || 20) * 1000);
   }
 
@@ -59,6 +88,7 @@
     watch();
     setInterval(watch, 1500);                       // URL changes on single-page sites (cheap string compare)
     addEventListener("scroll", () => {
+      if (page.fired || page.article === false) return;
       const seen = (scrollY + innerHeight) / Math.max(document.body.scrollHeight, 1);
       if (seen > 0.3 && performance.now() - page.since > 8000) ask();
     }, { passive: true });
