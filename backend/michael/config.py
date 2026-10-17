@@ -45,8 +45,8 @@ class Settings:
     math_upgrade: bool = _env("MATH_UPGRADE", "1") == "1"   # PARTIAL + every formula proven equivalent -> SUPPORTED
     decontextualise: bool = _env("DECONTEXTUALISE", "0") == "1"   # retry "It ..." with the cited source's subject
     conflict_check: bool = _env("CONFLICT_CHECK", "0") == "1"     # flag passages from other sources that contradict
-    decompose: bool = _env("DECOMPOSE", "0") == "1"               # prove "X does A and B" as "X does A" + "X does B"
-    titled_premise: bool = _env("TITLED_PREMISE", "0") == "1"     # retry failures with "Title - Section:" before the quote
+    decompose: bool = _env("DECOMPOSE", "1") == "1"               # prove "X does A and B" as "X does A" + "X does B"
+    titled_premise: bool = _env("TITLED_PREMISE", "1") == "1"     # retry failures with "Title - Section:" before the quote
     semantic_windows: bool = _env("SEMANTIC_WINDOWS", "1") == "1"   # rank quote windows by meaning too
     partial_threshold: float = 0.40  # entailment probability for PARTIAL
     max_repair_rounds: int = 1

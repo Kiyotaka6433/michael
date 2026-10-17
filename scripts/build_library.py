@@ -54,7 +54,7 @@ def site_of(url: str) -> str:
     from urllib.parse import urlsplit
     host = urlsplit(url).netloc.lower()
     return next((v for k, v in SITES.items() if host == k or host.endswith("." + k)), host.removeprefix("www."))
-KEYPOINT_ORDER = {"arxiv": 0, "cp": 1, "skl": 2, "d2l": 3, "wiki": 4}    # papers first: the longest reads
+KEYPOINT_ORDER = {"arxiv": 0, "cp": 1, "url": 2, "skl": 3, "d2l": 4, "wiki": 5}   # papers first: the longest reads
 
 
 def resolve(item: str) -> dict:
@@ -202,7 +202,7 @@ def better(new: dict, old: dict) -> bool:
     return new["supported"] > old["supported"] or new["sources"] > old["sources"]
 
 
-def phase_retopics(vault, manifest, state, subject=None, limit=None):
+def phase_retopics(vault, manifest, state, subject=None, limit=None, every=False):
     """Rewrite topic notes whose topic gained sources since the note was written. The rewrite goes to a hidden
     candidate file; it replaces the current note only when better(), and the old note moves to <Subject>/Archive/
     (nothing is deleted)."""
@@ -220,7 +220,7 @@ def phase_retopics(vault, manifest, state, subject=None, limit=None):
             text = note.read_text(encoding="utf8")
             # the intro links every source it was built from: a missing one means the topic gained sources; thin notes
             # (fewer than 4 verified sentences) are retried too - better() keeps the current note unless the rewrite wins
-            if any(f"[[{p.stem}]]" not in text for p in paths) or cur.get("supported", 0) < 4:
+            if every or any(f"[[{p.stem}]]" not in text for p in paths) or cur.get("supported", 0) < 4:
                 todo.append((subj, topic, key, paths, note))
     print(f"retopics: {len(todo)} topic notes to rewrite and compare", flush=True)
     for n, (subj, topic, key, paths, note) in enumerate(todo[:limit] if limit else todo, 1):
@@ -507,6 +507,7 @@ def main():
     ap.add_argument("--subject", default=None)
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--all-kinds", action="store_true", help="key points for Wikipedia articles too")
+    ap.add_argument("--all-topics", action="store_true", help="retopics: rewrite and compare every topic note")
     a = ap.parse_args()
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
@@ -522,7 +523,7 @@ def main():
         phase_topics(a.vault, manifest, state, a.subject, a.limit)
         phase_hubs(a.vault, manifest, state)
     if a.phase == "retopics":
-        phase_retopics(a.vault, manifest, state, a.subject, a.limit)
+        phase_retopics(a.vault, manifest, state, a.subject, a.limit, a.all_topics)
         phase_hubs(a.vault, manifest, state)
     if a.phase == "cards":
         phase_cards(a.vault, manifest, state)

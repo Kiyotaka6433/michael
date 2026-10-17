@@ -216,7 +216,7 @@ def _titled_retry(claims, found, evidence, nli, recite):
                 wins.append((c, s, e, f"{head}: {c.text[s:e]}"))
         jobs += [(i, w) for w in wins]
     if not jobs:
-        return
+        return set()
     scores = nli.scores([(w[3], claims[i].sentence) for i, w in jobs])
     best = {}
     for (i, (c, s, e, _)), (ent, con) in zip(jobs, scores):
@@ -225,6 +225,7 @@ def _titled_retry(claims, found, evidence, nli, recite):
     for i, f in best.items():
         found[i] = f
         claims[i].citations = [f[0][0].label]
+    return set(best)
 
 
 def verify_claims(claims: list[Claim], evidence: dict[str, Chunk], nli: NLI, recite: bool = True) -> list[Verdict]:
@@ -268,8 +269,7 @@ def verify_claims(claims: list[Claim], evidence: dict[str, Chunk], nli: NLI, rec
             if alt and alt[1][0] >= settings.support_threshold:
                 found[i] = alt
                 claims[i].citations = [alt[0][0].label]
-    if settings.titled_premise:
-        _titled_retry(claims, found, evidence, nli, recite)
+    titled = _titled_retry(claims, found, evidence, nli, recite) if settings.titled_premise else set()
     proven = _prove_parts(claims, found, evidence, nli, recite) if settings.decompose else {}
     verdicts = []
     for i, (cl, f) in enumerate(zip(claims, found)):
@@ -302,7 +302,7 @@ def verify_claims(claims: list[Claim], evidence: dict[str, Chunk], nli: NLI, rec
         verdicts.append(Verdict(claim_index=cl.index, label=label, chunk_id=chunk.id,
                                 evidence_label=chunk.label, quote=quote, quote_start=s, quote_end=e,
                                 entailment=ent, contradiction=con, in_context=in_context, math=math,
-                                parts=len(proven.get(i, []))))
+                                parts=len(proven.get(i, [])), titled=i in titled and i not in proven))
     if settings.conflict_check:
         flag_conflicts(claims, verdicts, evidence, nli)
     return verdicts

@@ -36,6 +36,8 @@ def render(question: str, claims: list[Claim], verdicts: dict[int, Verdict], evi
             ctx += {"match": " · formulas and numbers checked", "proven": " · formulas proven equivalent"}.get(getattr(v, "math", ""), "")
             if getattr(v, "parts", 0):
                 ctx += f" · proven in {v.parts} parts"
+            if getattr(v, "titled", False):
+                ctx += " · judged with its source title as context"
             note = f'[^{n}]: "{quote}" - {chunk.link} · {v.label.lower()}{ctx} (entailment {v.entailment:.2f})'
             other = by_label.get(getattr(v, "conflict_label", ""))
             if other is not None:            # shown, never resolved silently: the reader sees both quotes
