@@ -11,3 +11,4 @@ data_install.log
 library/state.json
 library/*.log
 browser-extension/local-token.json
+library/html_cache/
