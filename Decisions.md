@@ -4,6 +4,17 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-17 · 18:20-18:35
+**Done**
+- Evening batch resumed: overview notes for the 2 new topics, then 72 key-points notes (about 7 h).
+- **The Geometry overview came out thin:** 0/2 verified, 2 partial, and 4 sentences removed, including a wrong dot-product formula. The verifier did its job, but the evidence came from only 2 of the 6 articles.
+- **Fix:** topic notes now also search with every article's title, and keep up to 12 passages instead of 8, so each article contributes evidence. 59 tests pass.
+- Both new topic notes are queued to be rewritten once the batch finishes (`scripts/after_batch.ps1`, `scripts/redo_topics.py`).
+
+**Choices and why**
+- **The rewrite waits until the batch is finished**, because two build processes would overwrite each other's `library/state.json`. The first waiter used `wmic`, which isn't available here and could have fired early; it was stopped and replaced by a PowerShell one that needs two idle checks in a row, since the batch has a short gap between topics and key points.
+- **The thin note was left in place, not hidden:** what it shows is verified or marked partial, and it will be replaced automatically.
+
 ## 2026-10-17 · 18:00-18:20 (sprint wrap-up)
 **Done**
 - **Controlled baseline, 3B writer** (112 drafts, all labelled `claude-audit`):
