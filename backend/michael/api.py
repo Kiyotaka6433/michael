@@ -231,6 +231,89 @@ async def vault_events():
     return _sse(q, lambda: watcher.listeners.remove(q.put) if q.put in watcher.listeners else None)
 
 
+# ------------------------------------------------------------------ v1: library (read-only, for the web app)
+def _vault() -> "Path":
+    from pathlib import Path
+    v = jobs.kv_get("vault_path") or settings.vault_path
+    if not v:
+        raise HTTPException(400, "no vault known yet")
+    return Path(v).resolve()
+
+
+@app.get("/api/v1/library")
+def library():
+    """Subjects -> topics -> overview, articles (with key points), saved links. Built from the manifest, the build
+    state and the files actually present in the vault."""
+    from pathlib import Path
+    from .host import raziel
+    vault = _vault()
+    manifest = json.loads(raziel.MANIFEST.read_text(encoding="utf8"))
+    state = json.loads(raziel.STATE.read_text(encoding="utf8")) if raziel.STATE.exists() else {}
+    rel = lambda p: Path(p).resolve().relative_to(vault).as_posix() if p and Path(p).exists() else None
+    out = []
+    for subj in manifest["subjects"]:
+        links = {}
+        for p in sorted((vault / subj["name"] / "Links").glob("*.md")):
+            m = re.search(r'(?m)^topic: "(.*)"$', p.read_text(encoding="utf8", errors="ignore")[:800])
+            links.setdefault(m.group(1) if m else "Inbox", []).append({"title": p.stem, "path": rel(p)})
+        topics = []
+        for t in subj["topics"]:
+            ts = state.get(f"topic:{subj['name']}/{t['name']}", {})
+            arts = []
+            for i in t["items"]:
+                st = state.get(i, {})
+                if st.get("status") == "saved":
+                    arts.append({"title": st["title"], "path": rel(st["path"]), "route": st.get("route"),
+                                 "formulas": st.get("formulas"), "rendered": st.get("rendered"),
+                                 "keypoints": rel(st.get("keypoints")), "url": st.get("url")})
+            topics.append({"name": t["name"], "overview": rel(ts.get("note")), "verified": ts.get("supported"),
+                           "total": ts.get("total"), "deck": rel(ts.get("deck")), "articles": arts,
+                           "links": links.get(t["name"], [])})
+        out.append({"name": subj["name"], "tag": subj["tag"], "intro": subj["intro"], "topics": topics,
+                    "inbox": links.get("Inbox", [])})
+    return out
+
+
+@app.get("/api/v1/note")
+def note(path: str):
+    """One vault note as Markdown, with [[wikilinks]] resolved to vault paths, plus its backlinks.
+    Only files inside the vault can be read."""
+    from pathlib import Path
+    from . import vault_index
+    vault = _vault()
+    f = (vault / path).resolve()
+    if vault not in f.parents or f.suffix != ".md" or not f.exists():
+        raise HTTPException(404, "note not found")
+    text = f.read_text(encoding="utf8", errors="ignore")
+    front = {}
+    if m := re.match(r"\A---\n(.*?)\n---\n", text, re.S):
+        for line in m.group(1).splitlines():
+            k, _, v = line.partition(":")
+            front[k.strip()] = v.strip().strip('"')
+        text = text[m.end():]
+    stems = {}
+    for p in vault.rglob("*.md"):
+        if ".obsidian" not in p.parts and ".trash" not in p.parts:
+            stems.setdefault(p.stem, p.relative_to(vault).as_posix())
+
+    def link(m):
+        target, heading, label = m.group(1).strip(), m.group(2), m.group(3)
+        rp = stems.get(target)
+        shown = label or (f"{target} › {heading}" if heading else target)
+        from urllib.parse import quote          # paths have spaces: a Markdown link URL must not
+        return f"[{shown}](note:{quote(rp)}{'#' + quote(heading) if heading else ''})" if rp else shown
+
+    text = re.sub(r"\[\[([^\]|#]+)(?:#([^\]|]*))?(?:\|([^\]]*))?\]\]", link, text)
+    text = re.sub(r"(?s)<!-- /?michael:[a-z]+ -->", "", text)
+    vault_index.init()
+    with db.connect() as con:
+        back = [r["rel"] for r in con.execute(
+            "SELECT DISTINCT n.rel FROM vault_links l JOIN vault_notes n ON n.path = l.src WHERE l.dst = ?", (f.stem,))]
+    return {"path": f.relative_to(vault).as_posix(), "title": front.get("title") or front.get("question") or f.stem,
+            "frontmatter": front, "markdown": text, "backlinks": back,
+            "obsidian": f"obsidian://open?vault={vault.name}&file={f.relative_to(vault).as_posix()}"}
+
+
 # ------------------------------------------------------------------ v1: browser extension
 class ClassifyRequest(BaseModel):
     url: str
