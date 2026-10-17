@@ -33,17 +33,43 @@ async function api(path, body) {
   return res.json();
 }
 
+// one classification per page per browser session: the card and the toolbar pop-up share it
+const pageKey = (url) => `cls:${url.split("#")[0]}`;
+
+async function classify(url, title, text) {
+  const key = pageKey(url);
+  const hit = (await chrome.storage.session.get(key))[key];
+  if (hit) return hit;
+  const r = await api("/api/v1/classify", { url, title, text });
+  await chrome.storage.session.set({ [key]: r });
+  return r;
+}
+
+async function markSaved(tabId, saved) {
+  if (tabId == null) return;
+  await chrome.action.setBadgeText({ tabId, text: saved ? "✓" : "" });
+  if (saved) await chrome.action.setBadgeBackgroundColor({ tabId, color: "#36b37e" });
+}
+
 chrome.runtime.onMessage.addListener((msg, sender, reply) => {
   (async () => {
+    const tabId = sender.tab?.id ?? msg.tabId;
     try {
       const s = await settings();
       switch (msg.type) {
         case "settings":
           return reply({ ok: true, settings: s });
-        case "classify":
-          return reply({ ok: true, ...(await api("/api/v1/classify", { url: msg.url, title: msg.title, text: msg.text })) });
-        case "add":
-          return reply({ ok: true, ...(await api("/api/v1/links", { url: msg.url, title: msg.title, subject: msg.subject, topic: msg.topic })) });
+        case "classify": {
+          const r = await classify(msg.url, msg.title, msg.text);
+          await markSaved(tabId, !!r.already_saved);
+          return reply({ ok: true, ...r });
+        }
+        case "add": {
+          const r = await api("/api/v1/links", { url: msg.url, title: msg.title, subject: msg.subject, topic: msg.topic });
+          await chrome.storage.session.remove(pageKey(msg.url));     // next look-up says "already saved"
+          await markSaved(tabId, true);
+          return reply({ ok: true, ...r });
+        }
         case "topics":
           return reply({ ok: true, topics: await api("/api/v1/topics") });
         case "recent":
@@ -63,4 +89,11 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
     }
   })();
   return true;    // keep the channel open for the async reply
+});
+
+// Alt+Shift+M: ask about this page right now (no waiting, even if it was dismissed before)
+chrome.commands.onCommand.addListener(async (command) => {
+  if (command !== "add-page") return;
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (tab?.id != null) chrome.tabs.sendMessage(tab.id, { type: "now" }).catch(() => {});
 });

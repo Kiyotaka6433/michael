@@ -36,13 +36,13 @@ $("add").onclick = async () => {
     const [res] = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: () => document.body.innerText.slice(0, 3000) });
     text = res.result || text;
   } catch (e) { /* chrome:// pages etc. */ }
-  const c = await send({ type: "classify", url: tab.url, title: tab.title, text });
+  const c = await send({ type: "classify", tabId: tab.id, url: tab.url, title: tab.title, text });
   if (!c.ok) { $("result").textContent = c.error === "token" ? "Wrong token - check Settings." : "Michael is offline."; return; }
   if (c.already_saved) { $("result").textContent = `Already in your library: ${c.already_saved.subject} › ${c.already_saved.title}`; return; }
   const best = c.suggestions[0];
   if (!best) { $("result").textContent = "No library topics yet."; return; }
   const topic = c.inbox ? "Inbox" : best.topic;      // you asked for it, so even unrelated pages can go to an Inbox
-  const a = await send({ type: "add", url: tab.url, title: tab.title, subject: best.subject, topic });
+  const a = await send({ type: "add", tabId: tab.id, url: tab.url, title: tab.title, subject: best.subject, topic });
   $("result").textContent = a.ok ? `Added to ${best.subject} › ${topic}` : "Could not add - is Michael running?";
   init();
 };

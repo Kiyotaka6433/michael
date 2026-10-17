@@ -407,7 +407,8 @@ def classify(req: ClassifyRequest, x_michael_token: str | None = Header(None)):
     _check_token(x_michael_token)
     from .host import raziel
     saved = raziel.already_saved(req.url)
-    suggestions = [] if saved else raziel.classify(req.title, req.text)
+    # empty text = a badge-only check from a page already asked about: no need to classify
+    suggestions = [] if saved or not req.text.strip() else raziel.classify(req.title, req.text)
     top = suggestions[0]["similarity"] if suggestions else 0.0
     return {"already_saved": saved, "suggestions": suggestions,
             "relevant": bool(saved) or top >= raziel.RELEVANT_SIMILARITY,
