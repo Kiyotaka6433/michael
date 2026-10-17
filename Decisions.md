@@ -4,6 +4,35 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-17 · 19:30-21:00 (today's plan, blocks 1-4)
+**Done**
+- **Topic rewrites (overnight batch): 5 of 23 so far, all replaced the old note.**
+
+  | Topic | Old (verified / sources) | New |
+  |---|---|---|
+  | GCD | 6 / 1 | 13 / 4 |
+  | Primes | 2 / 2 | 10 / 3 |
+  | Modular arithmetic | 6 / 1 | 6 / 2 |
+  | Arithmetic functions | 5 / 2 | 8 / 4 |
+  | Orders and primitive roots | 3 / 2 | 9 / 6 |
+
+  Old notes are in `Number Theory/Archive/`.
+- **Precision gate:**
+  - `eval/gate.py` re-judges the labelled sentences with the current verifier; `pytest -m eval` runs it, and normal test runs skip it.
+  - Gold baseline: strict **91.8%**, lenient **99.5%**, 1 wrong sentence accepted. Floors are set at 91.5% / 99%.
+- **Trust side panel (Obsidian):** every sentence of the open note with its verdict, score, quote and source, plus disputes; clicking a row jumps to the sentence. It parses the note itself, so it works without the backend. Tested on the new GCD note: 13 of 13 rows parsed.
+- **Contradiction flags:** another source's passage with contradiction ≥ 0.90 and entailment < 0.10 is shown under the footnote and stored in a new `note_claims.conflict` column; `/claims?conflicts=true` lists them.
+- **Recall work:**
+  - The pronoun-substitution hypothesis was **disproved by data**: only 6 of 79 lost correct drafts start with a pronoun, and none passed after substitution.
+  - The real causes are compound sentences, and evidence truncated to 1,500 characters in the test set.
+  - Added compound-sentence proving: the sentence is split, each part gets the subject, and every part must be proven.
+  - The baseline drafts are now re-judged against their notes' full evidence (rebuilt deterministically, no LLM).
+- 67 tests pass; committed as `073ee73`.
+
+**Choices and why**
+- **New verifier features ship off** (`MICHAEL_DECOMPOSE`, `MICHAEL_CONFLICT_CHECK`, `MICHAEL_DECONTEXTUALISE`) until the gate shows recall up with no precision loss. A feature that sounds right is not evidence.
+- **The trust panel reads the note, not the database:** the note file is the source of truth, and the panel then also works offline.
+
 ## 2026-10-17 · 18:35-19:30
 **Done**
 - **About 80 pages from trusted subject-specific sites** (you asked for more than Wikipedia; nothing existing removed):
