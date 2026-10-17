@@ -4,6 +4,15 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-17 · 21:00-21:30
+- **Topic rewrites: 8 of 23, all replaced.**
+  - Quadratic residues: 6/2 → 11/6.
+  - Diophantine equations: 8/4 → 11/5.
+  - Applications: 4/1 → 5/1.
+  - (format: verified sentences / sources)
+- **Gate:** the full evidence for the 14 baseline notes is rebuilt and cached (`eval/baseline/evidence.json`). The 198 drafts are being re-judged against it now; this is slow because the batch shares the CPU.
+- No code changes this half hour.
+
 ## 2026-10-17 · 19:30-21:00 (today's plan, blocks 1-4)
 **Done**
 - **Topic rewrites (overnight batch): 5 of 23 so far, all replaced the old note.**
