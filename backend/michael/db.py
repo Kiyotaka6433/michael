@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS human_labels (
 );
 """
 
-_lock = threading.Lock()
+_lock = threading.RLock()   # re-entrant: a nested db.connect() in the same thread must not deadlock
 
 
 @contextmanager

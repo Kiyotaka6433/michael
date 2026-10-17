@@ -244,8 +244,11 @@ def classify(req: ClassifyRequest, x_michael_token: str | None = Header(None)):
     _check_token(x_michael_token)
     from .host import raziel
     saved = raziel.already_saved(req.url)
-    return {"already_saved": saved, "suggestions": [] if saved else raziel.classify(req.title, req.text),
-            "inbox_threshold": 0.35}
+    suggestions = [] if saved else raziel.classify(req.title, req.text)
+    top = suggestions[0]["similarity"] if suggestions else 0.0
+    return {"already_saved": saved, "suggestions": suggestions,
+            "relevant": bool(saved) or top >= raziel.RELEVANT_SIMILARITY,
+            "inbox": not saved and top < raziel.TOPIC_SIMILARITY}
 
 
 @app.post("/api/v1/links")
