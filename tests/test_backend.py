@@ -71,3 +71,21 @@ def test_vault_index_full_text_search_is_incremental(tmp_path):
     assert vault_index.index_vault(tmp_path, embed=False)["indexed"] == 0            # nothing changed
     hits = vault_index.search("primes eratosthenes", k=3, vector=False)
     assert hits and hits[0]["title"] == "Sieve" and hits[0]["kind"] == "source"
+
+
+def test_note_endpoint_reads_only_inside_the_vault(tmp_path, monkeypatch):
+    from fastapi.testclient import TestClient
+    from michael import api
+    (tmp_path / "Sources").mkdir()
+    (tmp_path / "Sources" / "Euclid.md").write_text('---\ntitle: "Euclid"\n---\n# Euclid\nSee [[Bezout|Bezout identity]].\n', encoding="utf8")
+    (tmp_path / "Bezout.md").write_text("# Bezout\n", encoding="utf8")
+    (tmp_path.parent / "secret.md").write_text("private", encoding="utf8")
+    monkeypatch.setattr(api, "_vault", lambda: tmp_path.resolve())
+    c = TestClient(api.app)
+    r = c.get("/api/v1/note", params={"path": "Sources/Euclid.md"}).json()
+    assert r["title"] == "Euclid" and "[Bezout identity](note:Bezout.md)" in r["markdown"]
+    (tmp_path / "Two words.md").write_text("# Two words\n", encoding="utf8")
+    (tmp_path / "Links to it.md").write_text("See [[Two words#Some heading]].\n", encoding="utf8")
+    r = c.get("/api/v1/note", params={"path": "Links to it.md"}).json()
+    assert "(note:Two%20words.md#Some%20heading)" in r["markdown"]          # spaces encoded: a valid link
+    assert c.get("/api/v1/note", params={"path": "../secret.md"}).status_code == 404
