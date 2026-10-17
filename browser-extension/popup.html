@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font: 13px/1.45 system-ui, "Segoe UI", sans-serif; width: 300px; margin: 0; padding: 12px; background: #1e1e2e; color: #e6e6f0; }
+    h1 { font-size: 14px; margin: 0 0 8px; }
+    .status { font-size: 12px; opacity: .75; margin-bottom: 10px; }
+    .ok { color: #7ee2a8; } .bad { color: #ff8a8a; }
+    button { font: inherit; width: 100%; border-radius: 8px; border: 1px solid #7c5cff; background: #7c5cff; color: white; padding: 7px; cursor: pointer; }
+    button:disabled { opacity: .5; cursor: default; }
+    .result { margin-top: 8px; font-size: 12px; }
+    h2 { font-size: 12px; margin: 14px 0 4px; opacity: .8; }
+    ul { margin: 0; padding-left: 16px; font-size: 12px; }
+    a { color: #c9b6ff; }
+    .links { margin-top: 12px; font-size: 12px; display: flex; justify-content: space-between; }
+  </style>
+</head>
+<body>
+  <h1>Michael</h1>
+  <div class="status" id="status">Checking backend…</div>
+  <button id="add">Add this page to the right topic</button>
+  <div class="result" id="result"></div>
+  <h2>Recently added</h2>
+  <ul id="recent"><li>-</li></ul>
+  <div class="links"><a href="#" id="options">Settings</a><a href="#" id="pause">Pause pop-ups</a></div>
+  <script src="popup.js"></script>
+</body>
+</html>

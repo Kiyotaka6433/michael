@@ -21,7 +21,7 @@ import queue
 import threading
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
@@ -43,7 +43,23 @@ async def lifespan(_app):
 
 app = FastAPI(title="Michael", version="0.2.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:3000", "app://obsidian.md", "capacitor://localhost"],
-                   allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?", allow_methods=["*"], allow_headers=["*"])
+                   allow_origin_regex=r"(https?://(localhost|127\.0\.0\.1)(:\d+)?|chrome-extension://[a-p]{32})",
+                   allow_methods=["*"], allow_headers=["*"])
+
+
+def extension_token() -> str:
+    """Shared secret for the browser extension (created once). Only callers that know it may write links."""
+    import secrets
+    token = jobs.kv_get("extension_token")
+    if not token:
+        token = secrets.token_urlsafe(24)
+        jobs.kv_set("extension_token", token)
+    return token
+
+
+def _check_token(token: str | None):
+    if not token or token != extension_token():
+        raise HTTPException(401, "missing or wrong X-Michael-Token (copy it from Obsidian: 'Michael: Copy extension token')")
 
 
 class ResearchRequest(BaseModel):
@@ -198,6 +214,68 @@ async def vault_events():
     q: queue.Queue = queue.Queue()
     watcher.listeners.append(q.put)
     return _sse(q, lambda: watcher.listeners.remove(q.put) if q.put in watcher.listeners else None)
+
+
+# ------------------------------------------------------------------ v1: browser extension
+class ClassifyRequest(BaseModel):
+    url: str
+    title: str = ""
+    text: str = ""
+
+
+class LinkRequest(BaseModel):
+    url: str
+    title: str
+    subject: str
+    topic: str
+
+
+@app.get("/api/v1/token")
+def get_token(request: Request):
+    """Only Obsidian (or a local command line, which sends no Origin) may read the extension token."""
+    origin = request.headers.get("origin")
+    if origin not in (None, "app://obsidian.md"):
+        raise HTTPException(403, "the token is only shown inside Obsidian")
+    return {"token": extension_token()}
+
+
+@app.post("/api/v1/classify")
+def classify(req: ClassifyRequest, x_michael_token: str | None = Header(None)):
+    _check_token(x_michael_token)
+    from .host import raziel
+    saved = raziel.already_saved(req.url)
+    return {"already_saved": saved, "suggestions": [] if saved else raziel.classify(req.title, req.text),
+            "inbox_threshold": 0.35}
+
+
+@app.post("/api/v1/links")
+def add_link(req: LinkRequest, x_michael_token: str | None = Header(None)):
+    _check_token(x_michael_token)
+    from .host import raziel
+    vault = jobs.kv_get("vault_path") or settings.vault_path
+    if not vault:
+        raise HTTPException(400, "no vault known yet: open Obsidian with the Michael plugin once")
+    path = raziel.link_note(vault, req.url, req.title.strip() or req.url, req.subject, req.topic,
+                            raziel.subject_tag(req.subject))
+    raziel.refresh_hubs(vault)
+    jobs.kv_set("recent_links", ([{"title": req.title, "url": req.url, "subject": req.subject, "topic": req.topic}]
+                                 + (jobs.kv_get("recent_links") or []))[:20])
+    return {"ok": True, "note": str(path)}
+
+
+@app.get("/api/v1/links")
+def recent_links(limit: int = 5, x_michael_token: str | None = Header(None)):
+    _check_token(x_michael_token)
+    return (jobs.kv_get("recent_links") or [])[:limit]
+
+
+@app.get("/api/v1/topics")
+def topics(x_michael_token: str | None = Header(None)):
+    """Every subject and topic, for the extension's 'Other topic' menu."""
+    _check_token(x_michael_token)
+    from .host import raziel
+    manifest = json.loads(raziel.MANIFEST.read_text(encoding="utf8"))
+    return [{"subject": s["name"], "topics": [t["name"] for t in s["topics"]] + ["Inbox"]} for s in manifest["subjects"]]
 
 
 # ------------------------------------------------------------------ runs (research history)
