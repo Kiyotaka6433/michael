@@ -4,6 +4,23 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-17 · 13:00-14:00
+**Done**
+- Restarted the backend and the batch after the 12:55 Windows restart, and set up this hourly decisions log.
+- Gold set grew from 64 to **165 AI-audited sentences** (DSA and ML topic notes added): **90.7% strict / 99.1% lenient precision, 1 wrong sentence left in notes, 83% of wrong drafts caught, 84% of removed sentences were true**.
+- Fixes found while labelling:
+  - Meta-sentences about "the provided passages" are dropped.
+  - The sentence splitter no longer breaks at name initials ("Vladimir N. Vapnik").
+  - Extraction handles `[` inside sentences.
+  - Job-queue race fixed: a client connecting at the moment a job finished could miss "done".
+- Batch restarted on the fixed code: 3 topics left, then key points.
+
+**Choices and why**
+- **Stable sentence IDs** (hash of note + sentence) instead of row numbers: re-extracting renumbered everything and would have mislabelled 64 sentences. Migrated the old labels from git history.
+- **Fragments from the splitting bug are labelled "partly", not "correct"**: honest numbers, even though the text was not false.
+- **Over-removal (84%) is reported, not tuned away.** Part of it is correct behaviour (a true sentence with no supporting quote among the selected passages *should* go). The next lever is better evidence selection, not a lower threshold.
+- **Rewrote `metatron.py` with the file editor** after finding invisible control characters (`\b` turned into backspace by the shell). Scanned every source file afterwards: none left.
+
 ## 2026-10-17 · 12:00-13:00
 **Done**
 - Chrome/Edge extension: suggests the library topic for the article being read; one click adds a link note (name + URL) to that topic. Backend `host/raziel.py`, API `/api/v1/classify|links|topics|token`, hubs show a "Reading list" per topic, links get a lighter subject colour in the graph.
