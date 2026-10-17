@@ -4,6 +4,28 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-17 · 18:35-19:30
+**Done**
+- **About 80 pages from trusted subject-specific sites** (you asked for more than Wikipedia; nothing existing removed):
+  - CP: Princeton *Algorithms* (14 chapters) and the USACO Guide (8 modules).
+  - Number Theory: Stanford's number theory notes (18), Brilliant (23) and the Prime Pages (1).
+  - ML: Stanford CS231n (7), Distill (3), Lil'Log (4) and colah's blog (1).
+  - Each site was test-extracted first: Codeforces and AoPS block downloads, MathWorld comes through almost empty, ProofWiki is cluttered and Google's ML crash course is too thin, so those were skipped.
+- **Builder improvements:**
+  - `url:` items labelled by site; a per-page title override for CS231n, whose pages share one title.
+  - Clean titles for Princeton pages; USACO code rebuilt line by line from its per-line page elements (29 of 29 blocks).
+  - An XML-declaration parsing fix (colah's blog).
+  - **Merge-safe `state.json` saves**, so fetching can run alongside the batch.
+- **Vault:** 426 notes and 7,697 links, with 1 unlinked note (it was 308 notes and 3,607 links at 18:00).
+- **"Replace old notes if the new ones are better":** a new `retopics` step rewrites every topic overview that gained sources. The rewrite replaces the current note only if it verifies at least as many sentences and either verifies more or uses more sources. The old note goes to `<Subject>/Archive/`, which is excluded from the claims index.
+- **Writer:** one sentence per algorithm step, and up to 14 sentences for overviews. The Geometry rewrite verified only 1 sentence because the writer compressed whole algorithms into single sentences that couldn't be proven against one quote.
+- Backend restarted on the new code; 59 tests pass.
+
+**Choices and why**
+- **Source articles are never replaced, only the generated overviews:** existing notes cite quotes inside the sources, so deleting or swapping a source would break those citations.
+- **The batch log now goes through `cmd`:** PowerShell 5.1 redirection had been writing UTF-16, which made the log unreadable.
+- **Topic rewrites run before the remaining key points:** overviews are what you read first, and they gained the most from the new sources.
+
 ## 2026-10-17 · 18:20-18:35
 **Done**
 - Evening batch resumed: overview notes for the 2 new topics, then 72 key-points notes (about 7 h).
