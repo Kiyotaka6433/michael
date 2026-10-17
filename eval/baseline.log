@@ -3,3 +3,16 @@ Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF
 Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]Loading weights:   3%|▎         | 6/201 [00:00<00:03, 59.64it/s]Loading weights:  10%|▉         | 20/201 [00:00<00:01, 102.44it/s]Loading weights:  18%|█▊        | 36/201 [00:00<00:01, 125.78it/s]Loading weights:  28%|██▊       | 57/201 [00:00<00:00, 148.94it/s]Loading weights:  40%|███▉      | 80/201 [00:00<00:00, 171.09it/s]Loading weights: 100%|██████████| 201/201 [00:00<00:00, 340.25it/s]
  8 drafts  191.9s  Modular arithmetic.md
  4 drafts  167.5s  Primes.md
+ 6 drafts  239.9s  Arithmetic functions.md
+ 6 drafts    0.0s  Graphs.md
+ 8 drafts    0.0s  Range queries.md
+ 8 drafts    0.0s  Dynamic programming.md
+ 4 drafts  151.3s  Ensembles.md
+ 7 drafts    0.0s  Neural networks.md
+ 4 drafts    0.0s  Attention Is All You Need - key points.md
+ 7 drafts    0.0s  BERT Pre-training of Deep Bidirectional Transformers for Language Understanding - key points.md
+ 4 drafts    0.0s  Deep Residual Learning for Image Recognition - key points.md
+ 8 drafts    0.0s  XGBoost A Scalable Tree Boosting System - key points.md
+ 7 drafts  183.6s  Dijkstra Algorithm cp-algorithms - key points.md
+ 5 drafts    0.0s  Extended Euclidean Algorithm cp-algorithms - key points.md
+86 draft sentences -> C:\Users\aryan\OneDrive\Desktop\michael\eval\baseline\drafts.jsonl

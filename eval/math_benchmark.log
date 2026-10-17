@@ -1,3 +1,6 @@
-C:\Users\aryan\OneDrive\Desktop\michael\.venv\Lib\site-packages\torch\jit\_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
-  warnings.warn(
-Loading weights:   0%|          | 0/394 [00:00<?, ?it/s]Loading weights:   1%|▏         | 5/394 [00:00<00:13, 27.87it/s]Loading weights:  11%|█         | 42/394 [00:00<00:01, 177.46it/s]Loading weights:  16%|█▋        | 65/394 [00:00<00:02, 163.33it/s]Loading weights:  23%|██▎       | 90/394 [00:00<00:01, 189.91it/s]Loading weights:  28%|██▊       | 112/394 [00:00<00:01, 195.15it/s]Loading weights:  34%|███▍      | 134/394 [00:00<00:01, 195.66it/s]Loading weights:  40%|███▉      | 157/394 [00:00<00:01, 199.68it/s]Loading weights:  45%|████▌     | 178/394 [00:00<00:01, 201.94it/s]Loading weights:  52%|█████▏    | 203/394 [00:01<00:00, 193.11it/s]Loading weights:  58%|█████▊    | 227/394 [00:01<00:00, 193.44it/s]Loading weights:  65%|██████▍   | 255/394 [00:01<00:00, 213.17it/s]Loading weights:  70%|███████   | 277/394 [00:01<00:00, 206.43it/s]Loading weights:  77%|███████▋  | 302/394 [00:01<00:00, 209.34it/s]Loading weights:  82%|████████▏ | 324/394 [00:01<00:00, 208.54it/s]Loading weights:  88%|████████▊ | 348/394 [00:01<00:00, 214.58it/s]Loading weights:  94%|█████████▍| 370/394 [00:01<00:00, 206.15it/s]Loading weights: 100%|██████████| 394/394 [00:01<00:00, 198.03it/s]
+400 pairs (99 formula, 301 number)
+             true kept: NLI   NLI+math    wrong accepted: NLI   NLI+math
+formula               89.9%      88.9%                   2.0%       1.0%
+number                91.4%      91.4%                   0.0%       0.0%
+all                   91.0%      90.8%                   0.5%       0.2%
+saved C:\Users\aryan\OneDrive\Desktop\michael\eval\reports\math_benchmark_20261017_163504.json
