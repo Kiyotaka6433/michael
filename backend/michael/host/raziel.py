@@ -71,23 +71,24 @@ def topic_centroids(chunks_per_article: int = 4):
     if _centroids["key"] == key:
         return _centroids["topics"], _centroids["matrix"]
     from .archangel import EMBEDDER
-    topics, vecs = [], []
-    with db.connect() as con:
+    topics, vecs, per_topic = [], [], []
+    with db.connect() as con:          # read everything first: db.connect's lock is not re-entrant
         for (subject, topic), paths in topic_articles().items():
             rows = []
             for p in paths:
-                rows += con.execute("SELECT hash, text FROM vault_chunks WHERE path=? ORDER BY start LIMIT ?",
-                                    (p, chunks_per_article)).fetchall()
-            if not rows:
-                continue
-            cached = db.get_embeddings([r["hash"] for r in rows], settings.embed_model)
-            missing = [r for r in rows if r["hash"] not in cached]
-            if missing:
-                for r, v in zip(missing, EMBEDDER.encode([r["text"] for r in missing])):
-                    cached[r["hash"]] = v
-            m = np.mean([cached[r["hash"]] for r in rows], axis=0)
-            topics.append((subject, topic))
-            vecs.append(m / (np.linalg.norm(m) or 1))
+                rows += [dict(r) for r in con.execute(
+                    "SELECT hash, text FROM vault_chunks WHERE path=? ORDER BY start LIMIT ?", (p, chunks_per_article))]
+            if rows:
+                per_topic.append(((subject, topic), rows))
+    for (subject, topic), rows in per_topic:
+        cached = db.get_embeddings([r["hash"] for r in rows], settings.embed_model)
+        missing = [r for r in rows if r["hash"] not in cached]
+        if missing:
+            for r, v in zip(missing, EMBEDDER.encode([r["text"] for r in missing])):
+                cached[r["hash"]] = v
+        m = np.mean([cached[r["hash"]] for r in rows], axis=0)
+        topics.append((subject, topic))
+        vecs.append(m / (np.linalg.norm(m) or 1))
     _centroids.update(key=key, topics=topics, matrix=np.stack(vecs) if vecs else None)
     return topics, _centroids["matrix"]
 
@@ -106,8 +107,15 @@ def classify(title: str, text: str, k: int = 3, embed=None, centroids=None, temp
     p = np.exp((sims - sims.max()) / temperature)
     p = p / p.sum()
     order = np.argsort(-p)[:k]
+    # "match" maps cosine similarity to 0-1 for display: unrelated pages sit around 0.55, real matches 0.8-0.9
     return [{"subject": topics[i][0], "topic": topics[i][1], "confidence": round(float(p[i]), 3),
-             "similarity": round(float(sims[i]), 3)} for i in order]
+             "similarity": round(float(sims[i]), 3), "match": round(float(np.clip((sims[i] - 0.6) / 0.3, 0, 1)), 2)}
+            for i in order]
+
+
+# decisions use raw similarity (stable), not the softmax share (depends on how many neighbouring topics exist)
+RELEVANT_SIMILARITY = 0.65      # below: the page has nothing to do with the library - no pop-up
+TOPIC_SIMILARITY = 0.75         # below (but relevant): file it in the subject's Inbox
 
 
 # ------------------------------------------------------------------ link notes

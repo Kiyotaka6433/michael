@@ -50,6 +50,7 @@
 
   // ------------------------------------------------------------------ the pop-up (shadow DOM: page CSS can't touch it)
   function showToast(r) {
+    if (!r.already_saved && (!r.relevant || !(r.suggestions || [])[0])) return;   // unrelated page: no card at all
     const host = document.createElement("div");
     host.style.cssText = "position:fixed;right:20px;bottom:20px;z-index:2147483647";
     const root = host.attachShadow({ mode: "open" });
@@ -79,7 +80,8 @@
       return;
     }
     const best = (r.suggestions || [])[0];
-    const low = !best || best.confidence < (r.inbox_threshold || 0.35);
+    if (!r.relevant || !best) { host.remove(); return; }      // nothing to do with the library: stay quiet
+    const low = r.inbox;
     let choice = best ? { subject: best.subject, topic: low ? "Inbox" : best.topic } : null;
     if (!choice) { close(); return; }
 
@@ -95,7 +97,7 @@
     label();
     body.querySelector(".conf").textContent = low
       ? "Not a clear match for any topic, so it goes to the Inbox."
-      : `${Math.round(best.confidence * 100)}% match` +
+      : `${Math.round(best.match * 100)}% match` +
         ((r.suggestions || [])[1] ? ` · next: ${r.suggestions[1].topic}` : "");
 
     body.querySelector(".add").onclick = async () => {

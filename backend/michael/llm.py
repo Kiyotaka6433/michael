@@ -67,7 +67,7 @@ def chat_json(system: str, user: str, temperature: float = 0.1, retries: int = 2
     last = None
     for _ in range(retries + 1):
         try:
-            r = httpx.post(f"{settings.ollama_url}/api/chat", json=payload, timeout=600)
+            r = httpx.post(f"{settings.ollama_url}/api/chat", json=payload, timeout=1200)
             r.raise_for_status()
             data = repair_latex(json.loads(r.json()["message"]["content"]))
             db.cache_put("llm", {key: data})
@@ -75,6 +75,6 @@ def chat_json(system: str, user: str, temperature: float = 0.1, retries: int = 2
         except httpx.ConnectError as e:
             raise LLMUnavailable(f"Ollama is not reachable at {settings.ollama_url}. Install it and run "
                                  f"`ollama pull {settings.llm_model}`.") from e
-        except (json.JSONDecodeError, KeyError, httpx.HTTPStatusError) as e:
+        except (json.JSONDecodeError, KeyError, httpx.HTTPStatusError, httpx.TimeoutException) as e:   # busy CPU: retry
             last = e
     raise LLMUnavailable(f"LLM did not return valid JSON: {last}")
