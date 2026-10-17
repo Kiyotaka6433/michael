@@ -4,6 +4,26 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-17 22:30 → 18 Oct 00:50 (plan blocks 2-5, results)
+**Done**
+- **Recall fix, measured and switched on** (full-evidence gate, 198 drafts):
+  - Title-before-quote retry: correct drafts lost 33.5% → **21.2%** (−37% relative, beating the −20% target), with **0** wrong accepted.
+  - Strict precision 96.7% → 95.3%, gold 91.8% → 91.1%; the extras are 5 "partly right" sentences.
+  - **You chose to switch it on, marked:** those sentences say "judged with its source title as context" in the footnote. The strict gate floor is now 90.5%; lenient stays at 99% and "0 wrong" stays.
+  - Compound splitting is also on (small gain: 60 → 58 lost, precision unchanged).
+- **Contradiction flags: tested, left off.** They fired on 3 of 123 verified sentences, and **none was a real disagreement**: the NLI flags unrelated passages (e.g. "XOR sums 2 bits, modulo 2" against the definition of congruence). They would need a relevance filter and a real disagreement set to evaluate.
+- **Topic rewrites, first pass done:**
+  - **20 of 23 replaced (87%, target ≥ 70%).**
+  - Median verified sentences 4 → **6**, short of the ≥ 10 target. Geometry (2) and ML Evaluation (3) are still under 4.
+  - These ran *before* the recall fix, so a **second pass over all 28 topics** (`retopics --all-topics`) is running now with it on, still replace-only-if-better.
+- **Bug found and fixed:** the key-points step crashed on the new `url:` sources (missing sort key), so tonight's key points would never have started. The queue now holds 178 notes.
+- Trust panel built and installed; the backend restarted on the new defaults. 68 tests pass and the eval gate is being re-run on the new defaults.
+
+**Choices and why**
+- **The precision/recall trade was your call:** I asked rather than lowering a gate floor on my own.
+- **A negative result is kept as a result:** the conflict flag would have looked like a feature, but on this data it is noise. Shipping it would make notes look disputed when they aren't.
+- **The second topic pass goes before the key points:** overviews are read first, and the targets were about them.
+
 ## 2026-10-17 · 21:30-22:30
 **Done**
 - **Topic rewrites: 13 of 23; 12 replaced and 1 kept** (verified sentences / sources):
