@@ -13,6 +13,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <nav className="nav">
             <a href="/library">Library</a>
             <a href="/search">Search</a>
+            <a href="/flashcards">Flashcards</a>
             <a href="/">Research runs</a>
           </nav>
           <span className="muted grow-right">every sentence backed by a quote</span>

@@ -314,6 +314,50 @@ def note(path: str):
             "obsidian": f"obsidian://open?vault={vault.name}&file={f.relative_to(vault).as_posix()}"}
 
 
+# ------------------------------------------------------------------ v1: flashcards (shared with the SR plugin)
+class ReviewRequest(BaseModel):
+    deck: str
+    line: int
+    question: str
+    grade: str                            # easy | good | hard
+
+
+def _resolve_wikilinks(text: str, vault) -> str:
+    from urllib.parse import quote
+    stems = {p.stem: p.relative_to(vault).as_posix() for p in vault.rglob("*.md")
+             if ".obsidian" not in p.parts and ".trash" not in p.parts}
+
+    def link(m):
+        target, heading, label = m.group(1).strip(), m.group(2), m.group(3)
+        rp, shown = stems.get(target), label or (f"{target} › {heading}" if heading else target)
+        return f"[{shown}](note:{quote(rp)}{'#' + quote(heading) if heading else ''})" if rp else shown
+
+    return re.sub(r"\[\[([^\]|#]+)(?:#([^\]|]*))?(?:\|([^\]]*))?\]\]", link, text)
+
+
+@app.get("/api/v1/flashcards")
+def flashcards(subject: str | None = None, limit: int = 50):
+    from . import cards
+    vault = _vault()
+    out = cards.due_cards(vault, subject, limit=min(limit, 200))
+    for c in out["cards"]:
+        c["answer"] = _resolve_wikilinks(c["answer"], vault)
+    return out
+
+
+@app.post("/api/v1/flashcards/review")
+def review_card(req: ReviewRequest):
+    from . import cards
+    try:
+        return cards.review(_vault(), req.deck, req.line, req.question, req.grade)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    except FileNotFoundError:
+        raise HTTPException(404, "deck not found")
+    except LookupError as e:
+        raise HTTPException(409, str(e))
+
+
 # ------------------------------------------------------------------ v1: browser extension
 class ClassifyRequest(BaseModel):
     url: str
