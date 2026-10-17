@@ -98,8 +98,30 @@ def flashcards(vault, subj, note_path: Path, facts) -> dict:
         return {"cards": 0}
     deck = Path(vault) / subj["name"] / "Flashcards" / f"{note_path.stem} - cards.md"
     deck.parent.mkdir(parents=True, exist_ok=True)
-    deck.write_text(zachriel.render_deck(note_path.stem, subj["tag"], cards, note_path.stem), encoding="utf8")
+    text = zachriel.render_deck(note_path.stem, subj["tag"], cards, note_path.stem)
+    if deck.exists():                      # keep any review history from the Spaced Repetition plugin
+        text = zachriel.keep_schedules(deck.read_text(encoding="utf8"), text)
+    deck.write_text(text, encoding="utf8")
     return {"cards": len(cards), "deck": str(deck)}
+
+
+def phase_cards(vault, manifest, state):
+    """Rebuild every deck from the verified sentences of the notes that already exist (one card per fact)."""
+    subjects = {s["name"]: s for s in manifest["subjects"]}
+    jobs = [(k, st, Path(st["note"])) for k, st in state.items() if k.startswith("topic:") and st.get("note")]
+    jobs += [(k, st, Path(st["keypoints"])) for k, st in state.items() if isinstance(st, dict) and st.get("keypoints")]
+    print(f"cards: rebuilding {len(jobs)} decks", flush=True)
+    for n, (key, st, note) in enumerate(jobs, 1):
+        if not note.exists():
+            continue
+        subj = subjects[note.relative_to(Path(vault)).parts[0]]
+        facts = zachriel.facts_from_note(note.read_text(encoding="utf8"))
+        fc = flashcards(vault, subj, note, facts)
+        st["cards" if key.startswith("topic:") else "kp_cards"] = fc["cards"]
+        if fc.get("deck"):
+            st["deck"] = fc["deck"] if key.startswith("topic:") else st.get("deck")
+        print(f"[{n}/{len(jobs)}] {fc['cards']}/{len(facts)} cards  {note.stem}", flush=True)
+        save_state(state)
 
 
 def phase_topics(vault, manifest, state, subject=None, limit=None):
@@ -380,7 +402,7 @@ def phase_canvas(vault, manifest, state):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("phase", choices=["fetch", "hubs", "topics", "keypoints", "all"])
+    ap.add_argument("phase", choices=["fetch", "hubs", "topics", "keypoints", "cards", "all"])
     ap.add_argument("--vault", default=str(DEFAULT_VAULT))
     ap.add_argument("--subject", default=None)
     ap.add_argument("--limit", type=int, default=None)
@@ -398,6 +420,9 @@ def main():
         phase_hubs(a.vault, manifest, state)
     if a.phase in ("topics", "all"):
         phase_topics(a.vault, manifest, state, a.subject, a.limit)
+        phase_hubs(a.vault, manifest, state)
+    if a.phase == "cards":
+        phase_cards(a.vault, manifest, state)
         phase_hubs(a.vault, manifest, state)
     if a.phase in ("keypoints", "all"):
         phase_keypoints(a.vault, manifest, state, a.subject, a.limit, a.all_kinds)

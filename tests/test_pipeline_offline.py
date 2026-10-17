@@ -278,3 +278,18 @@ def test_claim_driven_retrieval_rescues_a_sentence_proven_outside_the_selected_p
     claim = Claim(index=0, sentence="A Fenwick tree answers prefix sums in log n time.", citations=["p1"])
     kept, verdicts, removed = archangel.verify_and_repair("q", [claim], [shown], repair_enabled=False, pool=[shown, hidden])
     assert kept and not removed and verdicts[0].label == "SUPPORTED" and verdicts[0].chunk_id == hidden.id
+
+
+def test_decks_are_rebuilt_from_verified_sentences_and_keep_review_history():
+    from michael.host import zachriel
+    note = ('---\nquestion: "q"\n---\n# q\n\n> [!info] Trust panel\n> Verifier: NLI\n\n'
+            "A heap is a tree.[^1] ==Maybe partly true.==[^2] ⚠ Heaps give O(1) max.[^3]\n\n## Sources\n\n"
+            '[^1]: "A heap is a tree-based structure." - [[Heap]] · supported (entailment 0.95)\n'
+            '[^2]: "..." - [[Heap]] · partial (entailment 0.50)\n'
+            '[^3]: "The max is at the root." - [[Heap#Ops]] · supported in the context of its paragraph (entailment 0.93)\n')
+    assert zachriel.facts_from_note(note) == [("A heap is a tree.", "[[Heap]]"), ("Heaps give O(1) max.", "[[Heap#Ops]]")]
+    old = "What is a heap?::A heap is a tree. ([[Heap]]) <!--SR:!2026-10-20,3,250-->\n"
+    new = "Define a heap?::A heap is a tree. ([[Heap]])\nWhat is fast?::Heaps give O(1) max. ([[Heap#Ops]])\n"
+    out = zachriel.keep_schedules(old, new)
+    assert "Define a heap?::A heap is a tree. ([[Heap]]) <!--SR:!2026-10-20,3,250-->" in out
+    assert "What is fast?::Heaps give O(1) max. ([[Heap#Ops]])\n" in out
