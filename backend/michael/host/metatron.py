@@ -10,6 +10,7 @@ Rules:
 - Write 4 to 10 sentences. Each sentence states ONE fact taken from ONE passage, and cites that passage.
 - Stay close to the passage wording. Never add outside knowledge, never guess.
 - Do not join two facts with "while", "whereas" or "and"; write two sentences instead.
+- For an algorithm or procedure, write one sentence per step ("first ..., then ..., finally ..." is three sentences).
 - Cover every part of the question that the passages answer.
 
 Example
@@ -76,6 +77,11 @@ def parse_sentences(data: dict, valid_labels: set) -> list[Claim]:
     return claims
 
 
-def write(question: str, evidence: list[Chunk]) -> list[Claim]:
-    data = chat_json(SYSTEM, f"Question: {question}\n\nEvidence passages:\n\n{evidence_block(evidence)}", schema=SCHEMA)
+def write(question: str, evidence: list[Chunk], max_sentences: int = 8) -> list[Claim]:
+    """max_sentences > 8 for overviews built from many articles (one or two facts per passage)."""
+    system, schema = SYSTEM, SCHEMA
+    if max_sentences != 8:
+        system = SYSTEM.replace("Write 4 to 10 sentences.", f"Write 6 to {max_sentences} sentences.", 1)
+        schema = {**SCHEMA, "properties": {"sentences": {**SCHEMA["properties"]["sentences"], "maxItems": max_sentences}}}
+    data = chat_json(system, f"Question: {question}\n\nEvidence passages:\n\n{evidence_block(evidence)}", schema=schema)
     return parse_sentences(data, {c.label for c in evidence})

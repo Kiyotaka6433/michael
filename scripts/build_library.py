@@ -218,7 +218,9 @@ def phase_retopics(vault, manifest, state, subject=None, limit=None):
             if not cur.get("note") or not note.exists():
                 continue
             text = note.read_text(encoding="utf8")
-            if any(f"[[{p.stem}]]" not in text for p in paths):       # intro links every source it was built from
+            # the intro links every source it was built from: a missing one means the topic gained sources; thin notes
+            # (fewer than 4 verified sentences) are retried too - better() keeps the current note unless the rewrite wins
+            if any(f"[[{p.stem}]]" not in text for p in paths) or cur.get("supported", 0) < 4:
                 todo.append((subj, topic, key, paths, note))
     print(f"retopics: {len(todo)} topic notes to rewrite and compare", flush=True)
     for n, (subj, topic, key, paths, note) in enumerate(todo[:limit] if limit else todo, 1):

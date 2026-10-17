@@ -158,11 +158,11 @@ def save_article(target: str, vault_path=None, subject=None, title=None, tags=()
 
 
 def verified_note(question: str, queries: list[str], chunks: list, note_path: Path, intro: str,
-                  emit=lambda *a, **k: None, run_id=None, keep: int | None = None) -> dict:
+                  emit=lambda *a, **k: None, run_id=None, keep: int | None = None, max_sentences: int = 8) -> dict:
     """Write -> verify -> repair over the given chunks and save an Obsidian note. Returns the note, its stats and
     the verified facts [(sentence, link to the supporting quote)] for flashcards."""
     evidence = select_evidence(question, queries, chunks, emit, keep)
-    claims = metatron.write(question, evidence)
+    claims = metatron.write(question, evidence, max_sentences)
     emit("write", f"{len(claims)} sentences drafted")
     drafted = len(claims)
     claims, verdicts, removed = verify_and_repair(question, claims, evidence, emit, pool=chunks)
@@ -203,7 +203,7 @@ def topic_note(subject: str, topic: str, sources: list[Path], note_path: Path, e
     titles = [re.sub(r"\s+cp-algorithms$|\s+scikit-learn$|\s+d2l\.ai$", "", p.stem) for p in sources]
     return verified_note(question, [question, topic, f"{topic} definition", f"{topic} theorem algorithm example"]
                          + titles, chunks, note_path, f"Overview of **{topic}** from: {links}.", emit,
-                         keep=min(12, max(8, len(sources))))
+                         keep=min(12, max(8, len(sources))), max_sentences=14)
 
 
 def add_article(target: str, summary: bool = True, vault_path: str | None = None, on_event=None,
