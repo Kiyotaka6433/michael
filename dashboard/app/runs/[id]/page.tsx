@@ -2,6 +2,7 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { get, post, RunDetail } from "@/lib/api";
+import Markdown from "../../Markdown";
 
 export default function RunPage() {
   const { id } = useParams<{ id: string }>();
@@ -65,7 +66,8 @@ export default function RunPage() {
       {run.markdown && (
         <section className="card">
           <h2>Obsidian note</h2>
-          <pre className="md">{run.markdown}</pre>
+          <Markdown text={run.markdown.replace(/^---\n[\s\S]*?\n---\n/, "")} />
+          <details><summary className="muted small">Markdown source</summary><pre className="md">{run.markdown}</pre></details>
         </section>
       )}
     </>
