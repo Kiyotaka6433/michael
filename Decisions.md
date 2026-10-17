@@ -4,6 +4,27 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-17 · 21:30-22:30
+**Done**
+- **Topic rewrites: 13 of 23; 12 replaced and 1 kept** (verified sentences / sources):
+  - CP: Complexity 3/3 → 5/3, Sorting and searching 6/2 → 10/2, Core data structures **1/1 → 11/5**, Graphs 4/3 → 9/4.
+  - **Range queries was kept**: the rewrite scored 4/3 against the old 6/3, so the comparison rule correctly refused it.
+- **Recall measurement on full evidence** (198 baseline drafts, no repair):
+
+  | Setting | Correct lost | Strict precision | Wrong accepted |
+  |---|---|---|---|
+  | Baseline | 33.5% (60/179) | 96.7% | 0 |
+  | + compound splitting | 32.4% (58/179) | 96.8% | 0 |
+  | + title before quote | running | | |
+
+- **What the data shows:** most of the lost correct drafts fail because the *quote* uses a pronoun ("In both contexts, it refers to..."), so the NLI model doesn't know the subject. Only 6 of the 60 are compound sentences and 5 start with a pronoun.
+- **New retry, off until measured:** a failing sentence is judged again with "Title - Section:" placed before each quote.
+- The gate now also records contradiction flags, for the block 3 measurement.
+
+**Choices and why**
+- **Compound splitting stays available but isn't the main lever:** it is safe (precision unchanged) but recovers only 2 sentences.
+- **Pronoun substitution is dropped from the plan:** it was tested and doesn't help. The fix moved from the sentence to the quote, where the data points.
+
 ## 2026-10-17 · 21:00-21:30
 - **Topic rewrites: 8 of 23, all replaced.**
   - Quadratic residues: 6/2 → 11/6.

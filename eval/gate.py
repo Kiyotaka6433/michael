@@ -81,6 +81,7 @@ def judge_baseline(rows):
                   for i, r in enumerate(rs)]
         for r, c, v in zip(rs, claims, verify_claims(claims, evidence, VERIFIER, recite=True)):
             r["verdict"], r["entailment"], r["shown"] = v.label, round(v.entailment, 3), c.sentence
+            r["conflict"] = v.conflict_quote and f"{evidence[v.conflict_label].title}: {v.conflict_quote}"
     return rows
 
 
@@ -110,7 +111,8 @@ def score(rows):
             "precision_lenient": pct(sum(r["label"] in ("correct", "partly") for r in acc), len(acc)),
             "wrong_accepted": sum(r["label"] == "wrong" for r in acc),
             "lost_correct": f"{sum(r['verdict'] != 'SUPPORTED' for r in correct)}/{len(correct)}",
-            "lost_correct_pct": pct(sum(r["verdict"] != "SUPPORTED" for r in correct), len(correct))}
+            "lost_correct_pct": pct(sum(r["verdict"] != "SUPPORTED" for r in correct), len(correct)),
+            "conflicts_flagged": sum(bool(r.get("conflict")) for r in acc)}
 
 
 def run():
