@@ -48,6 +48,9 @@ def split_compound(text: str) -> list[str]:
     parts = CONTRAST.split(text.strip())
     if len(parts) != 2 or any(len(p.split()) < 3 for p in parts):
         return [text]
+    first = parts[1].split()[0].lower()
+    if first.endswith("ing") or first in ("still", "also", "being", "maintaining", "keeping"):
+        return [text]        # "..., while still having lower complexity": a participle, not a second fact
     a, b = (p.strip().rstrip(".") for p in parts)
     return [a[0].upper() + a[1:] + ".", b[0].upper() + b[1:] + "."]
 

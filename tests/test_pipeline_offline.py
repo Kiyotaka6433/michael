@@ -293,3 +293,9 @@ def test_decks_are_rebuilt_from_verified_sentences_and_keep_review_history():
     out = zachriel.keep_schedules(old, new)
     assert "Define a heap?::A heap is a tree. ([[Heap]]) <!--SR:!2026-10-20,3,250-->" in out
     assert "What is fast?::Heaps give O(1) max. ([[Heap#Ops]])\n" in out
+
+
+def test_participle_while_is_not_split():
+    from michael.host.metatron import split_compound
+    s = "Our 152-layer net is the deepest on ImageNet, while still having lower complexity than VGG nets."
+    assert split_compound(s) == [s]
