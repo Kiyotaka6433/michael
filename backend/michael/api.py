@@ -34,6 +34,7 @@ from .config import settings
 async def lifespan(_app):
     db.init()
     jobs.start()                                           # worker + nightly scheduler
+    extension_token()                                      # writes browser-extension/local-token.json
     watcher.watch_vault(jobs.kv_get("vault_path") or settings.vault_path)
     from .host.archangel import warm_up
     threading.Thread(target=warm_up, daemon=True).start()  # models load while Obsidian starts up
@@ -54,7 +55,20 @@ def extension_token() -> str:
     if not token:
         token = secrets.token_urlsafe(24)
         jobs.kv_set("extension_token", token)
+    _write_extension_token(token)
     return token
+
+
+def _write_extension_token(token: str):
+    """Put the token next to the unpacked extension so it connects without any copy-paste.
+    The file is git-ignored and never leaves this computer."""
+    from pathlib import Path
+    f = Path(__file__).resolve().parents[2] / "browser-extension" / "local-token.json"
+    try:
+        if not f.exists() or token not in f.read_text(encoding="utf8"):
+            f.write_text(json.dumps({"token": token}), encoding="utf8")
+    except OSError:
+        pass
 
 
 def _check_token(token: str | None):

@@ -10,3 +10,4 @@ obsidian-michael/main.js
 data_install.log
 library/state.json
 library/*.log
+browser-extension/local-token.json
