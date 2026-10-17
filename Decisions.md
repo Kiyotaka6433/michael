@@ -4,7 +4,15 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
-## 2026-10-17 22:30 → 18 Oct 00:50 (plan blocks 2-5, results)
+## 2026-10-18 · 00:30-00:40
+- **The second topic pass (recall fix on) has started:**
+  - GCD kept (13/4 both times).
+  - Primes **10/3 → 12/4**, replaced.
+  - Modular arithmetic kept (6/2).
+  - Fast runs (48-178 s) mean the LLM cache returned the same drafts, so only the verification step changed.
+- The eval-gate run on the new defaults is still going (slow while the batch shares the CPU).
+
+## 2026-10-17 22:30 → 18 Oct 00:30 (plan blocks 2-5, results)
 **Done**
 - **Recall fix, measured and switched on** (full-evidence gate, 198 drafts):
   - Title-before-quote retry: correct drafts lost 33.5% → **21.2%** (−37% relative, beating the −20% target), with **0** wrong accepted.
