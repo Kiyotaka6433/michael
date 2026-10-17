@@ -1,0 +1,33 @@
+{"id": "b102688ad7a", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bb582715b44", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b0131d3a8ab", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b61b14c06cc", "label": "partly", "reason": "lumps cryptography and CS in with 'other areas of the social sciences'", "labeler": "claude-audit"}
+{"id": "be744e534d0", "label": "partly", "reason": "right definition, LaTeX garbled", "labeler": "claude-audit"}
+{"id": "bb107726f0f", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bb5ab1da938", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b58ddb26171", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b570203757b", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "be7d44f6fcd", "label": "partly", "reason": "the source's example starts from the totient, not M\u00f6bius", "labeler": "claude-audit"}
+{"id": "b6b5a415e96", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b5d9d9d6dfe", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b9f87fe9da1", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b0ae69344d2", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bacee08f545", "label": "partly", "reason": "mixes Bellman value functions with bottom-up DP", "labeler": "claude-audit"}
+{"id": "b0c0369f4b0", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b9955d663bc", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b2046b63c2d", "label": "partly", "reason": "garbled symbol '\u0394ReLU'", "labeler": "claude-audit"}
+{"id": "bc5f69c0621", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b3ab329097d", "label": "partly", "reason": "loose reading of a footnote", "labeler": "claude-audit"}
+{"id": "b04b53beaf1", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bbaec8afb72", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b09e5a29159", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b2fb1a1b94e", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b75a5a57077", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bcd57283787", "label": "partly", "reason": "O(n log n + m) needs a Fibonacci heap; the cited text gives O(n log n + m log n)", "labeler": "claude-audit"}
+{"id": "bce2442af61", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bb4124d79e7", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b849e36ce59", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b9304e4c90b", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b8502053b57", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "ba2ab71c4d7", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b162f57c5ee", "label": "correct", "reason": "", "labeler": "claude-audit"}

@@ -29,6 +29,7 @@ NUMBER = re.compile(r"(?<![\w.$\\^_{])(\d+(?:[.,]\d+)?)(?:\s*%)?(?![\w}])")
 class MathVerdict:
     status: str = "unchecked"                 # match | mismatch | unchecked
     details: list = field(default_factory=list)
+    complete: bool = False                    # every formula of the claim proven equivalent to the evidence
 
 
 # ------------------------------------------------------------------ LaTeX -> SymPy
@@ -48,10 +49,11 @@ def to_sympy(tex: str):
         return None
     try:
         from sympy.parsing.latex import parse_latex
+        from sympy import Expr
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             e = parse_latex(tex)
-        return e if getattr(e, "free_symbols", None) is not None else None
+        return e if isinstance(e, Expr) else None          # equations / relations inside a side: not comparable
     except Exception:
         return None
 
@@ -103,6 +105,10 @@ def equivalent(a, b, trials: int = 6) -> bool | None:
     sa, sb = a.free_symbols, b.free_symbols
     if sa != sb:
         return None
+    if not sa:                       # constants: only plain arithmetic is comparable ("2^{10} = 1024"), never an
+        from sympy import Function   # unknown function like \varphi(10) against some other number in the text
+        if a.atoms(Function) or b.atoms(Function) or not (a.is_number and b.is_number):
+            return None
     rng = random.Random(7)
     agree = tested = 0
     for _ in range(trials):
@@ -143,6 +149,15 @@ def _sides(tex: str):
 
 
 def compare_formula(claim_tex: str, evidence_tex: str) -> bool | None:
+    """True (equivalent), False (contradicts), None (not comparable). Never raises: anything SymPy can't handle
+    is simply 'not comparable', so the math check can only ever remove errors, not break verification."""
+    try:
+        return _compare(claim_tex, evidence_tex)
+    except Exception:
+        return None
+
+
+def _compare(claim_tex: str, evidence_tex: str) -> bool | None:
     rel_c, l_c, r_c = _sides(claim_tex)
     rel_e, l_e, r_e = _sides(evidence_tex)
     if rel_c == "order" or rel_e == "order":
@@ -167,9 +182,24 @@ def compare_formula(claim_tex: str, evidence_tex: str) -> bool | None:
     return None
 
 
-def _numbers(text: str) -> set[str]:
+WORDS = {w: str(i) for i, w in enumerate(
+    "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen "
+    "seventeen eighteen nineteen twenty".split())}
+WORDS.update({"thirty": "30", "forty": "40", "fifty": "50", "hundred": "100", "thousand": "1000",
+              "twice": "2", "half": "0.5", "double": "2", "triple": "3"})
+
+
+def _norm(n: str) -> str:
+    n = n.replace(",", "")
+    return n.rstrip("0").rstrip(".") if "." in n else n
+
+
+def _numbers(text: str, words: bool = False) -> set[str]:
     prose = re.sub(r"\$\$.*?\$\$|\$[^$]*\$|`[^`]*`|\[\^?\d+\]|\[\[.*?\]\]", " ", text, flags=re.S)
-    return {n.replace(",", "") for n in NUMBER.findall(prose)}
+    found = {_norm(n) for n in NUMBER.findall(prose)}
+    if words:                                    # evidence may spell numbers out ("eleven tasks", "twice")
+        found |= {WORDS[w] for w in re.findall(r"[a-z]+", prose.lower()) if w in WORDS}
+    return found
 
 
 def check(claim: str, evidence: str) -> MathVerdict:
@@ -177,9 +207,10 @@ def check(claim: str, evidence: str) -> MathVerdict:
     claim_math = [t for _, _, t, _ in find_math(claim)]
     evid_math = [t for _, _, t, _ in find_math(evidence)]
     results = []
+    evid_clean = {_clean(t) for t in evid_math}
     for ct in claim_math:
-        outcome = None
-        for et in evid_math:
+        outcome = True if _clean(ct) in evid_clean else None       # quoted verbatim: nothing to compute
+        for et in ([] if outcome else evid_math):
             r = compare_formula(ct, et)
             if r is True:
                 outcome = True
@@ -190,15 +221,17 @@ def check(claim: str, evidence: str) -> MathVerdict:
         if outcome is not None:
             v.details.append(f"{'✓' if outcome else '✗'} ${ct}$")
     # numbers in the prose of the claim must appear in the evidence (formatting-insensitive)
-    ev_numbers = _numbers(evidence) | {n for t in evid_math for n in re.findall(r"\d+(?:\.\d+)?", t)}
+    ev_numbers = _numbers(evidence, words=True) | {_norm(n) for t in evid_math for n in re.findall(r"\d+(?:\.\d+)?", t)}
     for n in _numbers(claim):
-        if len(n) == 1 and n in "0123456789" and not ev_numbers:
+        if len(n) == 1 and not ev_numbers:
             continue
-        ok = n in ev_numbers or n.rstrip("0").rstrip(".") in ev_numbers
+        ok = n in ev_numbers
         results.append(ok)
         v.details.append(f"{'✓' if ok else '✗'} {n}")
     if any(r is False for r in results):
         v.status = "mismatch"
     elif any(r is True for r in results):
         v.status = "match"
+        # every formula in the claim was proven equivalent (numbers alone don't count as proof of a formula claim)
+        v.complete = bool(claim_math) and all(r is True for r in results)
     return v
