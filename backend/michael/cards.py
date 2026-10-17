@@ -77,4 +77,4 @@ def review(vault: Path, deck_rel: str, line: int, question: str, grade: str, tod
     base = re.sub(r"\s*<!--SR:.*?-->\s*$", "", lines[line])
     lines[line] = f"{base} <!--SR:!{due.isoformat()},{interval},{ease}-->"
     deck.write_text("\n".join(lines), encoding="utf8")
-    return {"due": due.isoformat(), "interval": interval, "ease": ease}
+    return {"due": due.isoformat(), "interval": interval, "ease": ease, "was_new": is_new}

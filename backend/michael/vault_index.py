@@ -107,6 +107,9 @@ def index_vault(vault: str | Path, embed: bool = True, on_progress=None) -> dict
                             (cid, note["title"], c.heading, c.text))
                 new_chunks.append(c)
             con.executemany("INSERT INTO vault_links VALUES (?,?,?)", [(key, d, k) for d, k in links])
+        if note["generated"] and note["kind"] in ("topic", "keypoints", "answer"):
+            from .learning import index_note_claims          # every sentence, verdict and quote -> note_claims
+            index_note_claims(key, path.read_text(encoding="utf8", errors="ignore"))
         if on_progress and changed % 25 == 0:
             on_progress(f"indexed {changed} notes ({i + 1}/{len(files)} checked)")
     removed = [p for p in known if p not in seen]

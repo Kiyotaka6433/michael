@@ -89,3 +89,27 @@ def test_note_endpoint_reads_only_inside_the_vault(tmp_path, monkeypatch):
     r = c.get("/api/v1/note", params={"path": "Links to it.md"}).json()
     assert "(note:Two%20words.md#Some%20heading)" in r["markdown"]          # spaces encoded: a valid link
     assert c.get("/api/v1/note", params={"path": "../secret.md"}).status_code == 404
+
+
+def test_note_claims_reviews_and_calibration(tmp_path):
+    from datetime import date
+    from michael import learning
+    db.init()
+    note = ('---\nquestion: "q"\n---\n# q\n\n> Verifier: NLI\n\nA heap is a tree.[^1] ==Maybe.==[^2]\n\n'
+            "## Removed claims\n\n- ~~Heaps are slow.~~\n\n## Sources\n\n"
+            '[^1]: "A heap is a tree-based structure." - [[Heap]] · supported · formulas and numbers checked (entailment 0.95)\n'
+            '[^2]: "x" - [[Heap#Ops]] · partial (entailment 0.50)\n')
+    assert learning.index_note_claims("n1", note) == 3
+    r = learning.query_claims(status="partial")
+    assert [c["sentence"] for c in r["claims"]] == ["Maybe."] and r["totals"]["REMOVED"] == 1
+    assert learning.query_claims(source="Heap")["claims"][0]["math"] == "match"
+    learning.log_review("d.md", "Q?", "good", 3, 250, False)
+    learning.log_review("d.md", "Q2?", "hard", 1, 230, False)
+    s = learning.review_stats()
+    assert s["today"] == 2 and s["streak_days"] == 1 and s["retention_pct"] == 50.0
+    with db.connect() as con:
+        con.executemany("INSERT OR REPLACE INTO gold_labels VALUES (?,?,?,?,?,?,?,?)",
+                        [(f"x{i}", "n", "s", "SUPPORTED", e, l, "", "t") for i, (e, l) in
+                         enumerate([(0.99, "correct"), (0.95, "correct"), (0.75, "wrong"), (0.72, "correct")])])
+    c = learning.calibrate(target_precision=0.95)
+    assert c["recommended"] == 0.8

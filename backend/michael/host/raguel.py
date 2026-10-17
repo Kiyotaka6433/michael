@@ -145,11 +145,20 @@ def verify_claims(claims: list[Claim], evidence: dict[str, Chunk], nli: NLI, rec
             continue
         (chunk, s, e, js, je), (ent, con) = f
         in_context = (js, je) != (s, e)
+        label, math = label_for(ent), ""
+        if settings.math_check and label != "UNSUPPORTED":
+            # the NLI model reads formulas and numbers as text: check them against the evidence paragraph
+            from .ophaniel import check
+            ps, pe = paragraph_of(chunk.text, s, e)
+            mv = check(cl.sentence, chunk.text[min(ps, js):max(pe, je)])
+            math = mv.status
+            if mv.status == "mismatch":
+                label = "UNSUPPORTED"
         if in_context and je - js <= 700:            # judged in context: show the reader that whole paragraph
             s, e = js, je
-        verdicts.append(Verdict(claim_index=cl.index, label=label_for(ent), chunk_id=chunk.id,
+        verdicts.append(Verdict(claim_index=cl.index, label=label, chunk_id=chunk.id,
                                 evidence_label=chunk.label, quote=chunk.text[s:e], quote_start=s, quote_end=e,
-                                entailment=ent, contradiction=con, in_context=in_context))
+                                entailment=ent, contradiction=con, in_context=in_context, math=math))
     return verdicts
 
 

@@ -32,6 +32,7 @@ def render(question: str, claims: list[Claim], verdicts: dict[int, Verdict], evi
                 used.append(chunk.id)
             quote = " ".join(v.quote.split())
             ctx = " in the context of its paragraph" if getattr(v, "in_context", False) else ""
+            ctx += " · formulas and numbers checked" if getattr(v, "math", "") == "match" else ""
             notes.append(f'[^{n}]: "{quote}" - {chunk.link} · {v.label.lower()}{ctx} (entailment {v.entailment:.2f})')
             body.append(f"{text}[^{n}]{ICON[v.label]}")
         else:
