@@ -10,7 +10,15 @@ const DEFAULTS = {
 };
 
 async function settings() {
-  return Object.assign({}, DEFAULTS, await chrome.storage.sync.get(Object.keys(DEFAULTS)));
+  const s = Object.assign({}, DEFAULTS, await chrome.storage.sync.get(Object.keys(DEFAULTS)));
+  if (!s.token) {
+    // the backend writes local-token.json into this unpacked extension folder: connect without copy-paste
+    try {
+      const t = (await (await fetch(chrome.runtime.getURL("local-token.json"))).json()).token;
+      if (t) { s.token = t; await chrome.storage.sync.set({ token: t }); }
+    } catch (e) { /* not there yet: the user can paste the token in Settings */ }
+  }
+  return s;
 }
 
 async function api(path, body) {

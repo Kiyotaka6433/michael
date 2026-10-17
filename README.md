@@ -232,7 +232,7 @@ Other commands: **Re-index the vault**, **Check that every citation still matche
 `browser-extension/` suggests the right library topic for the article you are reading and adds its **link** (name + URL) to that topic with one click.
 
 1. Chrome → `chrome://extensions` → turn on **Developer mode** → **Load unpacked** → choose `browser-extension/`.
-2. In Obsidian run **Michael: Copy extension token**, open the extension's **Settings**, paste it, save.
+2. Nothing to paste: the backend writes `browser-extension/local-token.json` (git-ignored) and the extension picks it up. (Fallback: **Michael: Copy extension token** in Obsidian, then paste it in the extension's Settings.)
 3. Read an article for ~20 s (or scroll a third of it): a small card asks *"Add this page to Number Theory › Modular arithmetic?"* with **Add / Other topic / Not now / Never on this site**.
 
 It never appears on mail, search, social, shopping, banking or video sites, or on pages that are not articles. A page that is already in the vault says so instead. **Add** writes `<Subject>/Links/<Title>.md` (`michael: link`, never used as evidence) and lists it under the topic's *Reading list* in the hub; links get a lighter shade of their subject colour in the graph.
