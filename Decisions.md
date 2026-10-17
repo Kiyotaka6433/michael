@@ -4,6 +4,33 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-17 · 16:30-17:30
+**Done**
+- **Maths benchmark (400 pairs) finished.** Wrong formulas accepted: NLI 2.0% → NLI+maths 1.0%. Wrong numbers accepted: 0% → 0%. True sentences kept: unchanged (91.0%). On near-verbatim edits, NLI already notices most changes.
+- **Harder benchmark: the same formula written differently** (150 pairs; SymPy rewrites the formula into an equivalent form, e.g. expanded or factored, and the negatives are rewritten mutations):
+
+  | | True kept | Wrong accepted |
+  |---|---|---|
+  | NLI | 56.0% | 2.0% |
+  | NLI + maths | **69.3%** | **0%** |
+
+  This is where text-only verification fails and the maths check shines.
+- **Upgrade rule:** a PARTIAL sentence (0.40-0.70) becomes SUPPORTED only when *every* formula in it is proven equivalent to the evidence. It rescued 20 of the true sentences and none of the wrong ones. Config `MICHAEL_MATH_UPGRADE` (on).
+- **Controlled baseline, 7B writer** (86 draft sentences, all labelled):
+  - Without the verifier: 90.7% correct, 9.3% partly, 0% wrong.
+  - With the verifier: 95.2% correct, 4.8% partly, 0% wrong.
+  - 19 of 78 correct drafts were dropped. A 3B writer is running as a stress test.
+- **Extension speed:**
+  - The first suggestion after a vault change took 11.7 s (the topic vectors were rebuilt on the request path). The classifier now answers from the previous vectors while it rebuilds in the background.
+  - The extension pre-classifies 3 s after an article loads, so the card appears instantly at the 20 s mark.
+  - The page is read once (textContent, capped at about 1,200 words) instead of on every scroll event.
+  - Settings are cached in memory.
+
+**Choices and why**
+- **The upgrade requires *all* formulas proven, and numbers alone never count.** A sentence can't be promoted on the strength of one formula while another part is unchecked.
+- **Equivalence pairs were filtered to plain algebra.** In CS articles, `+` can mean string concatenation and brackets mean array indexing, where SymPy's rewrites would change the meaning. Those were excluded so the benchmark doesn't reward wrong rewrites.
+- **The baseline reports that the 7B writer rarely makes outright errors.** That's the honest finding. So the verifier's measurable value at 7B is precision (fewer imprecise sentences) and provenance, not catching wrong ones. The 3B run tests whether that changes with a weaker writer.
+
 ## 2026-10-17 · 15:30-16:30 (3.5-hour sprint: database + baseline + maths-aware checking, deadline 19:12)
 **Done**
 - **Database completion (Phase 2B):**

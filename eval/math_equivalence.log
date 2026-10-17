@@ -1,0 +1,33 @@
+C:\Users\aryan\OneDrive\Desktop\michael\.venv\Lib\site-packages\torch\jit\_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+Loading weights:   0%|          | 0/394 [00:00<?, ?it/s]Loading weights:  12%|█▏        | 47/394 [00:00<00:00, 393.71it/s]Loading weights:  22%|██▏       | 87/394 [00:00<00:00, 378.49it/s]Loading weights:  32%|███▏      | 125/394 [00:00<00:00, 368.03it/s]Loading weights:  41%|████      | 162/394 [00:00<00:00, 366.91it/s]Loading weights:  51%|█████     | 199/394 [00:00<00:00, 342.10it/s]Loading weights:  59%|█████▉    | 234/394 [00:00<00:00, 339.91it/s]Loading weights:  68%|██████▊   | 269/394 [00:00<00:00, 335.10it/s]Loading weights:  77%|███████▋  | 303/394 [00:00<00:00, 307.26it/s]Loading weights:  85%|████████▌ | 335/394 [00:01<00:00, 296.20it/s]Loading weights:  93%|█████████▎| 365/394 [00:01<00:00, 278.33it/s]Loading weights: 100%|██████████| 394/394 [00:01<00:00, 321.44it/s]
+{
+ "pairs": 150,
+ "seconds": 2447.9,
+ "true_accepted": {
+  "nli": 56.0,
+  "nli_math": 69.3
+ },
+ "false_accepted": {
+  "nli": 2.0,
+  "nli_math": 0.0
+ },
+ "math_status_true": {
+  "match": 150,
+  "mismatch": 0,
+  "unchecked": 0
+ },
+ "math_status_false": {
+  "match": 9,
+  "mismatch": 141,
+  "unchecked": 0
+ }
+}
+true 0.975 match | Equivalently, the parent of a vertex at index $i$ is stored at $\frac{i}{2}$ (integer division).
+true 0.786 match | Let's look at a vertex at index $v$ , and let it be responsible for the segment $[l, r]$ , and let $mid = \frac{l}{2} + 
+true 0.81 match | Take a string $t = c + s$ and invert it (write its characters in reverse order).
+true 0.896 match | - $m_{h}$ $=2^{\lfloor (h+1)/2\rfloor }+2^{\lfloor h/2\rfloor }-2$ $={\Biggl \{}$ $2\cdot 2^{\tfrac {h}{2}}-2 = 2 \cdot 
+false 0.001 mismatch | Equivalently, the parent of a vertex at index $i$ is stored at $\frac{i}{4}$ (integer division).
+false 0.003 mismatch | Let's look at a vertex at index $v$ , and let it be responsible for the segment $[l, r]$ , and let $mid = \frac{l}{2} - 
+false 0.0 match | Take a string $t = - c + s$ and invert it (write its characters in reverse order).
+saved C:\Users\aryan\OneDrive\Desktop\michael\eval\reports\math_equivalence_20261017_172258.json

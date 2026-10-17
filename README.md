@@ -206,6 +206,23 @@ In Obsidian: the first time, click **Turn on community plugins** when asked. The
 | Drafted sentences kept as verified (yield) | 66.2% | **91.1%** |
 | Drafted sentences removed | 26% | **7%** |
 
+**Maths-aware checking** (`host/ophaniel.py`: LaTeX → SymPy, equivalence by evaluation at random points, big-O by growth rate, numbers must appear in the evidence). Pairs are real sentences from the library, each with a copy that has one quantity changed:
+
+| Benchmark | Rule | True sentences accepted | Wrong sentences accepted |
+|---|---|---|---|
+| Changed formula or number, same notation (400 pairs, `eval/math_benchmark.py`) | NLI | 91.0% | 0.5% (formulas: 2.0%) |
+| | NLI + maths | 91.0% | **0.2%** (formulas: **1.0%**) |
+| Same formula in a different form, e.g. expanded or factored (150 pairs, `eval/math_equivalence_benchmark.py`) | NLI | 56.0% | 2.0% |
+| | NLI + maths | **69.3%** | **0%** |
+
+In the second benchmark, a PARTIAL sentence is upgraded to verified only when every formula in it is proven equivalent to the evidence's (`MICHAEL_MATH_UPGRADE`).
+
+**Baseline: the same drafts with and without the verifier** (`eval/baseline_drafts.py`, `eval/baseline_controlled.py`; 14 notes, labels `claude-audit`):
+
+| Writer | Without verifier: correct / partly / wrong | With verifier (only SUPPORTED shown) | Correct drafts dropped |
+|---|---|---|---|
+| qwen2.5:7b (86 drafts) | 90.7% / 9.3% / 0% | **95.2% / 4.8% / 0%** | 19 of 78 |
+
 **Speed and fidelity**
 - Key-points note for one paper: 29 min → 8.5 min (3.4×), then ~5–6 min with qwen2.5:7b and batching. Fixes: float32 instead of float16 on CPU (verifier 9.3× faster), all CPU threads for Ollama (1.7×), batched NLI, result caches.
 - Library: 184 articles saved from Wikipedia, cp-algorithms, scikit-learn, d2l.ai and arXiv; **20,335 / 20,438 formulas (99.5%) render** (arXiv papers from their LaTeX source via pandoc, others from MathJax/KaTeX/LaTeXML alt-text, every formula checked with MathJax).
