@@ -154,6 +154,10 @@ def verify_claims(claims: list[Claim], evidence: dict[str, Chunk], nli: NLI, rec
             math = mv.status
             if mv.status == "mismatch":
                 label = "UNSUPPORTED"
+            elif label == "PARTIAL" and mv.complete and settings.math_upgrade:
+                # the text is partly entailed and every formula is proven equivalent to the evidence's: the gap
+                # was the notation (e.g. d_k^{-1/2} vs 1/sqrt(d_k)), not the content
+                label, math = "SUPPORTED", "proven"
         if in_context and je - js <= 700:            # judged in context: show the reader that whole paragraph
             s, e = js, je
         verdicts.append(Verdict(claim_index=cl.index, label=label, chunk_id=chunk.id,

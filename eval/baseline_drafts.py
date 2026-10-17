@@ -34,6 +34,16 @@ def sid(note, sentence):
 
 
 def main():
+    import argparse
+    from michael.config import settings
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--model", default=None, help="writer model, e.g. qwen2.5:3b (default: the configured one)")
+    ap.add_argument("--out", default=str(OUT))
+    a = ap.parse_args()
+    if a.model:
+        settings.llm_model = a.model
+    global OUT_PATH
+    OUT_PATH = Path(a.out)
     db.init()
     state = json.loads((ROOT / "library" / "state.json").read_text(encoding="utf8"))
     manifest = json.loads((ROOT / "library" / "manifest.json").read_text(encoding="utf8"))
@@ -55,18 +65,27 @@ def main():
         question = f"What are the key points of “{st['title']}”?"
         ev = select_evidence(question, [question] + pravuil.SUMMARY_QUERIES, file_chunks(src))
         rows += draft(f"{src.stem} - key points.md", question, ev)
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n", encoding="utf8")
-    print(f"{len(rows)} draft sentences -> {OUT}")
+    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    OUT_PATH.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n", encoding="utf8")
+    print(f"{len(rows)} draft sentences -> {OUT_PATH}")
 
 
 def draft(note, question, evidence):
+    """The writer's drafts, plus what the verifier alone (no repair, no rescue) says about each of them -
+    so the same sentences can be scored with and without verification."""
+    from copy import deepcopy
+    from michael.host.archangel import VERIFIER
+    from michael.host.raguel import verify_claims
     t = time.time()
     claims = metatron.write(question, evidence)
     by_label = {c.label: c for c in evidence}
-    print(f"{len(claims):2d} drafts  {time.time() - t:5.1f}s  {note}", flush=True)
+    verdicts = verify_claims([deepcopy(c) for c in claims], by_label, VERIFIER) if claims else []
+    print(f"{len(claims):2d} drafts, {sum(v.label == 'SUPPORTED' for v in verdicts)} verified  "
+          f"{time.time() - t:5.1f}s  {note}", flush=True)
     return [{"id": sid(note, c.sentence), "note": note, "sentence": c.sentence, "citations": c.citations,
-             "cited_text": " ".join(by_label[l].text for l in c.citations if l in by_label)[:1500]} for c in claims]
+             "verdict": v.label, "math": v.math, "entailment": round(v.entailment, 3),
+             "cited_text": " ".join(by_label[l].text for l in c.citations if l in by_label)[:1500]}
+            for c, v in zip(claims, verdicts)]
 
 
 if __name__ == "__main__":

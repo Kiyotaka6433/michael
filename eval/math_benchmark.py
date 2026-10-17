@@ -110,14 +110,18 @@ def make_pairs(n: int, seed: int = 0):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--n", type=int, default=200)
+    ap.add_argument("--rescore", default=None, help="saved report: reuse its NLI scores, re-run only the math check")
     a = ap.parse_args()
     pairs = make_pairs(a.n)
-    from michael.host.raguel import NLI
-    nli = NLI()
-    t0 = time.time()
-    flat = [(p["evidence"], p["true"]) for p in pairs] + [(p["evidence"], p["false"]) for p in pairs]
-    scores = nli.scores(flat)
     k = len(pairs)
+    t0 = time.time()
+    if a.rescore:
+        old = json.loads(Path(a.rescore).read_text(encoding="utf8"))["rows"]
+        scores = [(r["entailment"], 0.0) for r in old[0::2]] + [(r["entailment"], 0.0) for r in old[1::2]]
+    else:
+        from michael.host.raguel import NLI
+        flat = [(p["evidence"], p["true"]) for p in pairs] + [(p["evidence"], p["false"]) for p in pairs]
+        scores = NLI().scores(flat)
     rows = []
     for i, p in enumerate(pairs):
         for which, claim, (ent, _) in (("true", p["true"], scores[i]), ("false", p["false"], scores[k + i])):
