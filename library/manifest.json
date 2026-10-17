@@ -16,7 +16,11 @@
       "wiki:Least common multiple",
       "cp:algebra/euclid-algorithm",
       "cp:algebra/extended-euclid-algorithm",
-      "cp:algebra/linear-diophantine-equation"
+      "cp:algebra/linear-diophantine-equation",
+      "wiki:Greatest common divisor",
+      "wiki:Coprime integers",
+      "wiki:Euclidean division",
+      "wiki:Euclid's lemma"
      ]
     },
     {
@@ -31,7 +35,17 @@
       "cp:algebra/sieve-of-eratosthenes",
       "cp:algebra/prime-sieve-linear",
       "cp:algebra/primality_tests",
-      "cp:algebra/factorization"
+      "cp:algebra/factorization",
+      "wiki:Integer factorization",
+      "wiki:Composite number",
+      "wiki:Primality test",
+      "wiki:Euclid's theorem",
+      "wiki:Fermat primality test",
+      "wiki:Carmichael number",
+      "wiki:Dirichlet's theorem on arithmetic progressions",
+      "wiki:Goldbach's conjecture",
+      "wiki:Twin prime",
+      "wiki:Quadratic sieve"
      ]
     },
     {
@@ -49,7 +63,11 @@
       "cp:algebra/chinese-remainder-theorem",
       "cp:algebra/garners-algorithm",
       "cp:algebra/factorial-modulo",
-      "cp:algebra/montgomery_multiplication"
+      "cp:algebra/montgomery_multiplication",
+      "wiki:Multiplicative group of integers modulo n",
+      "wiki:Lucas's theorem",
+      "wiki:Legendre's formula",
+      "cp:algebra/linear_congruence_equation"
      ]
     },
     {
@@ -63,7 +81,11 @@
       "wiki:Möbius inversion formula",
       "wiki:Dirichlet convolution",
       "cp:algebra/phi-function",
-      "cp:algebra/divisors"
+      "cp:algebra/divisors",
+      "wiki:Riemann zeta function",
+      "wiki:Von Mangoldt function",
+      "wiki:Mertens function",
+      "wiki:Liouville function"
      ]
     },
     {
@@ -75,7 +97,10 @@
       "wiki:Carmichael function",
       "cp:algebra/primitive-root",
       "cp:algebra/discrete-log",
-      "cp:algebra/discrete-root"
+      "cp:algebra/discrete-root",
+      "wiki:Cyclic group",
+      "wiki:Baby-step giant-step",
+      "wiki:Pohlig–Hellman algorithm"
      ]
     },
     {
@@ -84,7 +109,11 @@
       "wiki:Quadratic residue",
       "wiki:Legendre symbol",
       "wiki:Quadratic reciprocity",
-      "wiki:Euler's criterion"
+      "wiki:Euler's criterion",
+      "wiki:Jacobi symbol",
+      "wiki:Tonelli–Shanks algorithm",
+      "wiki:Cipolla's algorithm",
+      "wiki:Fermat's theorem on sums of two squares"
      ]
     },
     {
@@ -96,7 +125,10 @@
       "wiki:Lifting-the-exponent lemma",
       "wiki:Hensel's lemma",
       "cp:algebra/continued-fractions",
-      "cp:others/stern_brocot_tree_farey_sequences"
+      "cp:others/stern_brocot_tree_farey_sequences",
+      "wiki:Pythagorean triple",
+      "wiki:Lagrange's four-square theorem",
+      "wiki:Fermat's Last Theorem"
      ]
     },
     {
@@ -106,7 +138,9 @@
       "wiki:Fibonacci sequence",
       "cp:algebra/fibonacci-numbers",
       "cp:combinatorics/binomial-coefficients",
-      "cp:algebra/big-integer"
+      "cp:algebra/big-integer",
+      "wiki:Diffie–Hellman key exchange",
+      "wiki:Finite field"
      ]
     }
    ]

@@ -31,3 +31,109 @@
 {"id": "b8502053b57", "label": "correct", "reason": "", "labeler": "claude-audit"}
 {"id": "ba2ab71c4d7", "label": "correct", "reason": "", "labeler": "claude-audit"}
 {"id": "b162f57c5ee", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b229e78f71d", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bc65a887ba5", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b7fc5f44cf1", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b12a77d9f40", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bd51f12ba39", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b40cc1805a7", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bf57a950120", "label": "partly", "reason": "inverse notation garbled (a^-1 lost)", "labeler": "claude-audit"}
+{"id": "ba2cfff949c", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b3254011c42", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b9cfe87999b", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b24053495b6", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b28f3488180", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b865bbc5195", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b9e811a02f5", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b955a0b949f", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b606b21db09", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b89da419cbd", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b197777f1c8", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b13618558a6", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b86309795b9", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b1c67dd6b47", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "ba3ce7a7374", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bdd4c2a701e", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b9b7b9c717e", "label": "partly", "reason": "meta reference to a table, not a fact", "labeler": "claude-audit"}
+{"id": "b739c4444d7", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b4d937c0355", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b8259430ea8", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bcd668320c8", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b83d98d9a3a", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bfbebb4e93d", "label": "wrong", "reason": "Dijkstra is O(n^2+m) / O(m log n), not O(m+n)", "labeler": "claude-audit"}
+{"id": "bb51c6e6785", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b60dfa89067", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bee56808eda", "label": "partly", "reason": "vacuous", "labeler": "claude-audit"}
+{"id": "b940d3fbe2f", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bbce08f80db", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b396d83171c", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b54e4605036", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b355430bf89", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b2678ae4224", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b6d02dda0b1", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bd15c79615b", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b257a4fa4d7", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b6650f352b5", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b82fd6fa11f", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b9e2b580c99", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "ba6d0f560f3", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bc6bd037373", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bf2945c79df", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "becfc28cfc2", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b15f68e9864", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b6bee7308ed", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bd0016a5353", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b5f2d4db12f", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b915fbccc9d", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b6c654d15e1", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b21f70483e7", "label": "partly", "reason": "backprop computes gradients; not itself the learning algorithm", "labeler": "claude-audit"}
+{"id": "b7d7cd91feb", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b3bea26271e", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bbf18e2b314", "label": "partly", "reason": "\"topographical grid\" not supported", "labeler": "claude-audit"}
+{"id": "b1fee5512e4", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bc64e2910e6", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b6a272f6449", "label": "partly", "reason": "\"prevent\" overstates; ReLU mitigates vanishing gradients", "labeler": "claude-audit"}
+{"id": "be471d3367d", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b176fe447cb", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b24ca72c145", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b8b34049597", "label": "partly", "reason": "\"and others\": the list is complete", "labeler": "claude-audit"}
+{"id": "bbd0575c462", "label": "partly", "reason": "garbled comparison with dot-product attention", "labeler": "claude-audit"}
+{"id": "b8ea8a39050", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b58db52eee0", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b0ff9cc8810", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bf0fb2102dd", "label": "wrong", "reason": "misattributes design/visualisation work", "labeler": "claude-audit"}
+{"id": "b55b4675211", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b3063d6b14f", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b423d384322", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "beb593b3b9a", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b575845c30a", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b51d18975d3", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bf3ad8157ae", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "ba8f8c28a05", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bf2b8cb8597", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b60c2309876", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bc80f005001", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bdf06068a1d", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bcd9f0b98fd", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b1f1a7820ec", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bf1d8fa549c", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b6c7ef1456f", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b2d04983ce3", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b97a3d7c83a", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b9fba96404a", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b65baadd722", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b980ebd44da", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bf69aeef2cd", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b0a076b6bad", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b011de683ce", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b8bf280f156", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b9f229b59c3", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b54d74fd3af", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b2305c699c3", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bdf03ae9458", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bbd33464326", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bfe875b1285", "label": "partly", "reason": "negative-integer claim is about the recursive version", "labeler": "claude-audit"}
+{"id": "b83d977affc", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "ba3a265bb0f", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bac118cae0b", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b1036d71b7c", "label": "correct", "reason": "", "labeler": "claude-audit"}

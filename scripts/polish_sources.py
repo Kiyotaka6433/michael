@@ -18,7 +18,7 @@ import re
 import sys
 from collections import Counter
 from pathlib import Path
-from urllib.parse import urljoin, urldefrag
+from urllib.parse import unquote, urljoin, urldefrag
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
@@ -115,17 +115,74 @@ def polish(path: Path, url: str, by_url: dict[str, str]):
     return n_code, len(code), added_practice, len(links), missing
 
 
+WIKI = "https://en.wikipedia.org/wiki/"
+wiki_key = lambda title: unquote(title).replace("_", " ").strip().lower()
+
+
+def wiki_links(path: Path, url: str, by_title: dict[str, str]):
+    """Wikipedia: the article's own links (body and "See also") to other library articles, in reading order."""
+    CACHE.mkdir(parents=True, exist_ok=True)
+    f = CACHE / ("wiki_" + re.sub(r"[^\w]+", "_", unquote(url.removeprefix(WIKI))) + ".html")
+    if not f.exists():
+        f.write_text(get(url).text, encoding="utf8")
+    doc = lhtml.fromstring(f.read_text(encoding="utf8"))
+    body = (doc.xpath("//*[@id='mw-content-text']") or [doc])[0]
+    seen, links, missing = set(), [], []
+    for a in body.iter("a"):
+        href = (a.get("href") or "").removeprefix("https://en.wikipedia.org")
+        if not href.startswith("/wiki/") or ":" in href:
+            continue
+        key = wiki_key(href[6:].split("#")[0])
+        if key in seen:
+            continue
+        seen.add(key)
+        if key in by_title and by_title[key] != path.stem:
+            links.append(f"- [[{by_title[key]}]]")
+        elif key not in by_title:
+            missing.append(WIKI + href[6:].split("#")[0])
+    text = path.read_text(encoding="utf8")
+    text = re.sub(r"\n?" + re.escape(LINKS_START) + r".*?" + re.escape(LINKS_END) + r"\n?", "\n", text, flags=re.S)
+    if links:
+        block = f"{LINKS_START}\n## Linked in the article\n" + "\n".join(links) + f"\n{LINKS_END}\n"
+        if "<!-- michael:" in text:
+            i = text.index("<!-- michael:")
+            text = text[:i].rstrip() + "\n\n" + block + "\n" + text[i:]
+        else:
+            text = text.rstrip() + "\n\n" + block
+    path.write_text(text.rstrip() + "\n", encoding="utf8")
+    return len(links), missing
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--candidates", action="store_true")
+    ap.add_argument("--subject", default=None)
     a = ap.parse_args()
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
     state = json.loads(STATE.read_text(encoding="utf8"))
-    saved = {k: v for k, v in state.items() if isinstance(v, dict) and v.get("status") == "saved"}
-    by_url = {v["url"]: Path(v["path"]).stem for v in saved.values() if v.get("url")}
+    saved = {k: v for k, v in state.items() if isinstance(v, dict) and v.get("status") == "saved"
+             and (not a.subject or v.get("subject") == a.subject)}
+    every = {k: v for k, v in state.items() if isinstance(v, dict) and v.get("status") == "saved"}
+    by_url = {v["url"]: Path(v["path"]).stem for v in every.values() if v.get("url")}
+    by_title = {}
+    for k, v in every.items():
+        if k.startswith("wiki:"):
+            by_title[wiki_key(k[5:])] = Path(v["path"]).stem
+            if v.get("url", "").startswith(WIKI):
+                by_title[wiki_key(v["url"].removeprefix(WIKI))] = Path(v["path"]).stem
     totals, wanted = Counter(), Counter()
     for item, st in sorted(saved.items()):
+        if item.startswith("wiki:") and Path(st["path"]).exists():
+            try:
+                n_links, missing = wiki_links(Path(st["path"]), st["url"], by_title)
+            except Exception as e:
+                print(f"  ! {item}: {e}")
+                continue
+            totals.update(wiki_notes=1, wiki_links=n_links)
+            wanted.update(missing)
+            print(f"{item:55s} links {n_links}")
+            continue
         if not item.startswith("cp:") or not Path(st["path"]).exists():
             continue
         try:
