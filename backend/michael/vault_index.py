@@ -113,12 +113,28 @@ def index_vault(vault: str | Path, embed: bool = True, on_progress=None) -> dict
     with db.connect() as con:
         for p in removed:
             _delete(con, p)
-    if embed and new_chunks:
-        from .host.archangel import EMBEDDER
-        EMBEDDER.chunks(new_chunks)                      # fills the shared embedding cache
-    if changed or removed:
+    embedded = _backfill_embeddings(on_progress) if embed else 0
+    if changed or removed or embedded:
         _vectors["key"] = None
-    return {"indexed": changed, "unchanged": len(seen) - changed, "removed": len(removed)}
+    return {"indexed": changed, "unchanged": len(seen) - changed, "removed": len(removed), "embedded": embedded}
+
+
+def _backfill_embeddings(on_progress=None, batch: int = 256) -> int:
+    """Embed every indexed chunk that has no vector yet: new chunks, and chunks left over by an interrupted run."""
+    with db.connect() as con:
+        rows = con.execute("SELECT DISTINCT hash, text FROM vault_chunks").fetchall()
+    have = db.get_embeddings([r["hash"] for r in rows], settings.embed_model)
+    todo = [r for r in rows if r["hash"] not in have]
+    if not todo:
+        return 0
+    from .host.archangel import EMBEDDER
+    for i in range(0, len(todo), batch):
+        part = todo[i:i + batch]
+        vecs = EMBEDDER.encode([r["text"] for r in part])
+        db.put_embeddings({r["hash"]: v for r, v in zip(part, vecs)}, settings.embed_model)
+        if on_progress:
+            on_progress(f"embedded {min(i + batch, len(todo))}/{len(todo)} passages")
+    return len(todo)
 
 
 def _delete(con, path: str):

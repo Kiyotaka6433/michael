@@ -1,47 +1,54 @@
 """FastAPI server used by the Obsidian plugin and the dashboard.
 
-POST /research            start a run (background thread) -> {run_id}
-POST /articles            add an article (URL, arXiv id or PDF path) to the vault, optionally with key points
-GET  /runs/{id}/events    server-sent events with progress
+Long tasks are jobs in a persistent queue (jobs.py): they survive restarts, can be cancelled, and stream progress.
+
+POST /research            queue a research question -> {run_id}
+POST /articles            queue an article (URL, arXiv id or PDF path), optionally with key points
+GET  /runs/{id}/events    server-sent events: the job's history, then live progress
 GET  /runs, /runs/{id}    history and full results
 POST /verify              check one sentence against pasted evidence
 POST /runs/{id}/claims/{idx}/label   human correction (becomes evaluation data)
+
+/api/v1/jobs              list / create jobs (research, article, index, recheck, library); cancel; events
+/api/v1/search            hybrid search over the indexed vault
+/api/v1/index             bring the vault index up to date
+/api/v1/library/stats     counts of notes, chunks, links
+/api/v1/events            vault changes seen by the file watcher (server-sent events)
 """
 import asyncio
 import json
-from contextlib import asynccontextmanager
 import queue
 import threading
-import uuid
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
-from . import db, llm
+from . import db, jobs, llm, watcher
 from .config import settings
 
 
 @asynccontextmanager
 async def lifespan(_app):
     db.init()
+    jobs.start()                                           # worker + nightly scheduler
+    watcher.watch_vault(jobs.kv_get("vault_path") or settings.vault_path)
     from .host.archangel import warm_up
-    threading.Thread(target=warm_up, daemon=True).start()   # models load while Obsidian starts up
+    threading.Thread(target=warm_up, daemon=True).start()  # models load while Obsidian starts up
     yield
+    watcher.stop()
 
 
-app = FastAPI(title="Michael", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="Michael", version="0.2.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:3000", "app://obsidian.md", "capacitor://localhost"],
                    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?", allow_methods=["*"], allow_headers=["*"])
-
-_events: dict[str, queue.Queue] = {}
-_run_lock = threading.Lock()          # one run at a time: the models share one CPU
 
 
 class ResearchRequest(BaseModel):
     question: str
-    sources: list[str] | None = None      # subset of wikipedia, arxiv, openalex
+    sources: list[str] | None = None      # subset of the search sources
     urls: list[str] = []
     use_vault: bool = True
     vault_path: str | None = None        # sent by the Obsidian plugin (its own vault)
@@ -52,6 +59,14 @@ class ArticleRequest(BaseModel):
     target: str                           # web URL, arXiv link/id, PDF URL or local PDF path
     summary: bool = True                  # also write a verified key-points note
     vault_path: str | None = None
+    subject: str | None = None
+
+
+class JobRequest(BaseModel):
+    kind: str                             # research | article | index | recheck | library
+    params: dict = {}
+    title: str = ""
+    priority: int | None = None
 
 
 class VerifyRequest(BaseModel):
@@ -63,67 +78,91 @@ class LabelRequest(BaseModel):
     human_label: str                      # "supported" | "unsupported"
 
 
+def _remember_vault(path: str | None):
+    """The plugin tells us which vault it is in: remember it for the watcher and the nightly jobs."""
+    if path and path != jobs.kv_get("vault_path"):
+        jobs.kv_set("vault_path", path)
+    watcher.watch_vault(path)
+
+
 @app.get("/health")
 def health():
-    return {"ok": True, "llm": settings.llm_model, "llm_available": llm.available(),
-            "vault": settings.vault_path, "notes_dir": str(settings.notes_dir)}
-
-
-def _start(title: str, job) -> dict:
-    """Run job(on_event, run_id) in a background thread, one at a time; progress goes to an SSE queue."""
-    run_id = uuid.uuid4().hex[:12]
-    db.create_run(run_id, title, settings.llm_model, status="queued")   # visible to GET /runs/{id} at once
-    q: queue.Queue = queue.Queue()
-    _events[run_id] = q
-
-    def work():
-        with _run_lock:
-            try:
-                job(q.put, run_id)
-            except Exception:
-                pass                      # the error event has already been emitted
-            finally:
-                q.put(None)
-
-    q.put({"run_id": run_id, "stage": "queued", "detail": "waiting for the models", "t": 0})
-    threading.Thread(target=work, daemon=True).start()
-    return {"run_id": run_id}
+    return {"ok": True, "llm": settings.llm_model, "llm_available": llm.available(), "verifier": settings.nli_model,
+            "vault": jobs.kv_get("vault_path") or settings.vault_path, "notes_dir": str(settings.notes_dir),
+            "queued": len(jobs.list_jobs(status="queued")), "running": len(jobs.list_jobs(status="running"))}
 
 
 @app.post("/research")
 def research(req: ResearchRequest):
     if not req.question.strip():
         raise HTTPException(400, "question is empty")
-    from .host.archangel import run_research
-    return _start(req.question, lambda on_event, run_id: run_research(
-        req.question, kinds=req.sources, urls=req.urls, use_vault=req.use_vault, repair_enabled=req.repair,
-        on_event=on_event, run_id=run_id, vault_path=req.vault_path))
+    _remember_vault(req.vault_path)
+    job_id = jobs.enqueue("research", req.model_dump(), req.question)
+    db.create_run(job_id, req.question, settings.llm_model, status="queued")   # visible to GET /runs/{id} at once
+    return {"run_id": job_id}
 
 
 @app.post("/articles")
 def articles(req: ArticleRequest):
     if not req.target.strip():
         raise HTTPException(400, "target is empty")
-    from .host.pravuil import add_article
-    return _start(f"Add article: {req.target}", lambda on_event, run_id: add_article(
-        req.target.strip(), summary=req.summary, vault_path=req.vault_path, on_event=on_event, run_id=run_id))
+    _remember_vault(req.vault_path)
+    title = f"Add article: {req.target}"
+    job_id = jobs.enqueue("article", {**req.model_dump(), "target": req.target.strip()}, title)
+    db.create_run(job_id, title, settings.llm_model, status="queued")
+    return {"run_id": job_id}
+
+
+def _sse(q: queue.Queue, on_close=None):
+    async def stream():
+        try:
+            while True:
+                item = await asyncio.to_thread(q.get)
+                if item is None:
+                    break
+                yield {"event": item.get("stage", "message"), "data": json.dumps(item, default=str)}
+        finally:
+            if on_close:
+                on_close()
+    return EventSourceResponse(stream())
 
 
 @app.get("/runs/{run_id}/events")
+@app.get("/api/v1/jobs/{run_id}/events")
 async def events(run_id: str):
-    q = _events.get(run_id)
-    if q is None:
-        raise HTTPException(404, "unknown or finished run; use GET /runs/{id}")
+    if not jobs.get(run_id):
+        raise HTTPException(404, "unknown job")
+    q = jobs.subscribe(run_id)
+    return _sse(q, lambda: jobs.unsubscribe(run_id, q))
 
-    async def stream():
-        while True:
-            item = await asyncio.to_thread(q.get)
-            if item is None:
-                _events.pop(run_id, None)
-                break
-            yield {"event": item["stage"], "data": json.dumps(item)}
 
-    return EventSourceResponse(stream())
+# ------------------------------------------------------------------ v1: jobs
+@app.post("/api/v1/jobs")
+def create_job(req: JobRequest):
+    try:
+        return {"id": jobs.enqueue(req.kind, req.params, req.title, req.priority)}
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.get("/api/v1/jobs")
+def list_jobs(limit: int = 50, status: str | None = None):
+    return jobs.list_jobs(min(limit, 500), status)
+
+
+@app.get("/api/v1/jobs/{job_id}")
+def get_job(job_id: str):
+    j = jobs.get(job_id)
+    if not j:
+        raise HTTPException(404, "unknown job")
+    return j
+
+
+@app.post("/api/v1/jobs/{job_id}/cancel")
+def cancel_job(job_id: str):
+    if not jobs.cancel(job_id):
+        raise HTTPException(409, "job is not queued or running")
+    return {"ok": True}
 
 
 # ------------------------------------------------------------------ v1: vault index
@@ -140,11 +179,11 @@ class IndexRequest(BaseModel):
 
 @app.post("/api/v1/index")
 def reindex(req: IndexRequest):
-    from . import vault_index
-    vault = req.vault_path or settings.vault_path
+    vault = req.vault_path or jobs.kv_get("vault_path") or settings.vault_path
     if not vault:
         raise HTTPException(400, "no vault: pass vault_path or set MICHAEL_VAULT")
-    return {**vault_index.index_vault(vault), "stats": vault_index.stats()}
+    _remember_vault(vault)
+    return {"id": jobs.enqueue("index", {"vault_path": vault}, "re-index vault")}
 
 
 @app.get("/api/v1/library/stats")
@@ -153,6 +192,15 @@ def library_stats():
     return vault_index.stats()
 
 
+@app.get("/api/v1/events")
+async def vault_events():
+    """Live vault changes (from the file watcher), for clients that show the library."""
+    q: queue.Queue = queue.Queue()
+    watcher.listeners.append(q.put)
+    return _sse(q, lambda: watcher.listeners.remove(q.put) if q.put in watcher.listeners else None)
+
+
+# ------------------------------------------------------------------ runs (research history)
 @app.get("/runs")
 def runs():
     return db.list_runs()
