@@ -83,6 +83,13 @@ export default class MichaelPlugin extends Plugin {
     this.addCommand({ id: "reindex", name: "Re-index the vault (search)", callback: () => this.queueJob("index", {}, "Re-indexing the vault") });
     this.addCommand({ id: "check-citations", name: "Check that every citation still matches its source",
                       callback: () => this.queueJob("recheck", {}, "Checking citations - see Michael/Citation check", "Michael/Citation check.md") });
+    this.addCommand({ id: "copy-extension-token", name: "Copy extension token (for the Chrome extension)",
+                      callback: async () => {
+                        if (!(await this.ensureBackend(false))) return new Notice("Michael backend not reachable.");
+                        const r = await requestUrl({ url: `${this.settings.backendUrl}/api/v1/token` });
+                        await navigator.clipboard.writeText(r.json.token);
+                        new Notice("Token copied. Paste it in the Michael extension's Settings.", 8000);
+                      } });
     this.addCommand({ id: "copy-bookmarklet", name: "Copy the 'Send page to Michael' browser bookmarklet",
                       callback: async () => {
                         await navigator.clipboard.writeText(BOOKMARKLET);

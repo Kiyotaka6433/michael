@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Michael settings</title>
+  <style>
+    body { font: 14px/1.5 system-ui, "Segoe UI", sans-serif; max-width: 560px; margin: 32px auto; padding: 0 16px; background: #1e1e2e; color: #e6e6f0; }
+    label { display: block; margin: 16px 0 4px; font-weight: 600; }
+    input, textarea { font: inherit; width: 100%; box-sizing: border-box; background: #2a2a40; color: #e6e6f0; border: 1px solid #4a4a6a; border-radius: 8px; padding: 6px 8px; }
+    textarea { min-height: 90px; }
+    .hint { font-size: 12px; opacity: .7; }
+    button { margin-top: 18px; font: inherit; border-radius: 8px; border: 1px solid #7c5cff; background: #7c5cff; color: white; padding: 7px 16px; cursor: pointer; }
+    #saved { margin-left: 10px; color: #7ee2a8; }
+  </style>
+</head>
+<body>
+  <h1>Michael</h1>
+  <p class="hint">The extension only talks to Michael on this computer. Page text is never sent anywhere else.</p>
+  <label for="token">Extension token</label>
+  <input id="token" placeholder="paste from Obsidian: 'Michael: Copy extension token'">
+  <label for="backendUrl">Backend address</label>
+  <input id="backendUrl">
+  <label for="minSeconds">Ask after reading for (seconds)</label>
+  <input id="minSeconds" type="number" min="5" max="600">
+  <label for="blocked">Never ask on these sites (one per line)</label>
+  <textarea id="blocked"></textarea>
+  <button id="save">Save</button><span id="saved"></span>
+  <script src="options.js"></script>
+</body>
+</html>

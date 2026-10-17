@@ -234,6 +234,15 @@ def phase_mentions(state, cap=30):
     print(f"mentions: {total} concept links across {len(saved)} articles", flush=True)
 
 
+def saved_links(subject_dir: Path) -> dict[str, list[str]]:
+    """Link notes added from the browser extension, grouped by topic (from their frontmatter)."""
+    out = {}
+    for p in sorted((subject_dir / "Links").glob("*.md")):
+        m = re.search(r'(?m)^topic: "(.*)"$', p.read_text(encoding="utf8", errors="ignore")[:800])
+        out.setdefault(m.group(1) if m else "Inbox", []).append(p.stem)
+    return out
+
+
 def phase_hubs(vault, manifest, state):
     vault = Path(vault)
     home = ["---", "michael: hub", "tags: [hub]", "---", "# Home", "",
@@ -248,7 +257,8 @@ def phase_hubs(vault, manifest, state):
         lines = ["---", "michael: hub", f"tags: [hub, {subj['tag']}]", f"updated: {datetime.now():%Y-%m-%d %H:%M}",
                  "---", f"# {name}", "", subj["intro"], ""]
         n_saved = n_kp = n_cards = 0
-        for topic in subj["topics"]:
+        links = saved_links(vault / name)
+        for topic in subj["topics"] + ([{"name": "Inbox", "items": []}] if links.get("Inbox") else []):
             lines += [f"## {topic['name']}", ""]
             ts = state.get(f"topic:{name}/{topic['name']}", {})
             if ts.get("note") and Path(ts["note"]).exists():
@@ -269,9 +279,12 @@ def phase_hubs(vault, manifest, state):
                 if st.get("formulas"):
                     row += f" · {st['rendered']}/{st['formulas']} formulas"
                 lines.append(row)
+            if links.get(topic["name"]):
+                lines += ["", "### Reading list", ""] + [f"- [[{stem}]]" for stem in links[topic["name"]]]
             lines.append("")
+        n_links = sum(len(v) for v in links.values())
         lines.insert(8, f"> [!info] {n_saved} articles · {n_kp} with verified key points · {n_cards} flashcards"
-                        f" (tag #flashcards/{subj['tag']})\n")
+                        f" (tag #flashcards/{subj['tag']}) · {n_links} saved links\n")
         hub = vault / name / f"{name}.md"
         hub.parent.mkdir(parents=True, exist_ok=True)
         hub.write_text("\n".join(lines), encoding="utf8")
@@ -294,6 +307,12 @@ def phase_graph(vault, manifest):
     groups = [{"query": "tag:#hub", "color": {"a": 1, "rgb": HUB_RGB}},
               {"query": 'path:"/Topics/"', "color": {"a": 1, "rgb": TOPIC_RGB}},
               {"query": 'path:"Key points"', "color": {"a": 1, "rgb": KEYPOINT_RGB}}]
+    # links saved from the browser: a lighter shade of their subject's colour
+    lighten = lambda rgb: tuple((c + 255) // 2 for c in ((rgb >> 16) & 255, (rgb >> 8) & 255, rgb & 255))
+    groups += [{"query": f'path:"{s["name"]}/Links/"',
+                "color": {"a": 1, "rgb": (lambda r, g, b: (r << 16) | (g << 8) | b)(
+                    *lighten(SUBJECT_COLORS.get(s["tag"], (0x999999, ""))[0]))}}
+               for s in manifest["subjects"]]
     groups += [{"query": f'path:"{s["name"]}/"', "color": {"a": 1, "rgb": SUBJECT_COLORS.get(s["tag"], (0x999999, ""))[0]}}
                for s in manifest["subjects"]]
     # look: one round, dense web of small nodes with thin links and readable labels

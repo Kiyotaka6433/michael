@@ -226,3 +226,15 @@ All settings live in `backend/michael/config.py` and can be overridden with `MIC
 Run **Michael: Copy the 'Send page to Michael' browser bookmarklet** in Obsidian, create a browser bookmark and paste it as the URL. Clicking it on any page opens `obsidian://michael-add?url=...`, which saves the page (with exact math) and writes verified key points. `obsidian://michael-ask?q=...` starts a research question the same way, so a web page or the companion web app can link straight into Obsidian.
 
 Other commands: **Re-index the vault**, **Check that every citation still matches its source** (writes `Michael/Citation check.md`). The backend also runs these every night at 02:00 (`MICHAEL_NIGHTLY_HOUR`), plus key points for newly added articles.
+
+### Chrome / Edge extension: file what you read
+
+`browser-extension/` suggests the right library topic for the article you are reading and adds its **link** (name + URL) to that topic with one click.
+
+1. Chrome → `chrome://extensions` → turn on **Developer mode** → **Load unpacked** → choose `browser-extension/`.
+2. In Obsidian run **Michael: Copy extension token**, open the extension's **Settings**, paste it, save.
+3. Read an article for ~20 s (or scroll a third of it): a small card asks *"Add this page to Number Theory › Modular arithmetic?"* with **Add / Other topic / Not now / Never on this site**.
+
+It never appears on mail, search, social, shopping, banking or video sites, or on pages that are not articles. A page that is already in the vault says so instead. **Add** writes `<Subject>/Links/<Title>.md` (`michael: link`, never used as evidence) and lists it under the topic's *Reading list* in the hub; links get a lighter shade of their subject colour in the graph.
+
+How it picks the topic (`host/raziel.py`): the page's title and opening text are embedded (bge-small) and compared with each topic's centroid, the mean embedding of its saved articles. Confidence is a softmax over those similarities; below 0.35 the link goes to the subject's *Inbox*. No LLM, about 100 ms. Page text only goes to the local backend (`127.0.0.1`), which requires the token for every request.
