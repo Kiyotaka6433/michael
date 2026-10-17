@@ -36,6 +36,9 @@ def evidence_block(evidence: list[Chunk]) -> str:
     return "\n\n".join(f"[{c.label}] ({c.title}{' - ' + c.heading if c.heading else ''})\n{c.text}" for c in evidence)
 
 
+# sentences about the prompt instead of the topic ("... is not discussed in the provided passages")
+META = re.compile(r"\b(provided|given) (passages?|evidence|text|sources?)\b|\bthe passages?\b"
+                  r"|\bnot (explicitly )?(discussed|mentioned|covered|described) in the\b", re.I)
 CONTRAST = re.compile(r",?\s+(?:while|whereas)\s+", re.I)
 
 
@@ -61,6 +64,8 @@ def parse_sentences(data: dict, valid_labels: set) -> list[Claim]:
         # one claim per sentence: a two-sentence item could pass on the strength of only one of them
         parts = [p for sent in (split_sentences(text) if text else []) for p in split_compound(sent)]
         for part in parts:
+            if META.search(part):         # about the prompt, not the topic
+                continue
             key = " ".join(part.lower().split())
             if key not in seen:               # small models sometimes repeat sentences
                 seen.add(key)

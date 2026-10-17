@@ -3,6 +3,7 @@ import re
 
 from ..models import Chunk, Source
 
+INITIAL = re.compile(r"(?:^|[\s(])[A-Z][a-z]?\.$")      # "N." / "Ya." at the end of a span: a name initial
 _SENT_END = re.compile(r"(?<=[.!?])[\"')\]]*\s+(?=[\"'(\[]?[A-Z0-9])")
 
 
@@ -41,6 +42,13 @@ def sentence_spans(text: str) -> list[tuple[int, int]]:
             start = m.end()
         if start < b_end:
             spans.append((start, b_end))
+    merged = []
+    for sp in spans:                 # rejoin sentences that were cut after an initial like "N." or "Ya."
+        if merged and INITIAL.search(text[merged[-1][0]:merged[-1][1]]):
+            merged[-1] = (merged[-1][0], sp[1])
+        else:
+            merged.append(sp)
+    spans = merged
     out = []
     for s, e in spans:
         while s < e and text[s].isspace():

@@ -252,3 +252,17 @@ def test_latex_broken_by_json_escapes_is_repaired():
     assert "\t" in data["s"]                                                           # what the parser does
     assert repair_latex(data)["s"] == r"involves computing $\text{phi}(n)$ and $\frac{a}{b}$"
     assert repair_latex({"s": "plain sentence."}) == {"s": "plain sentence."}
+
+
+def test_initials_do_not_end_a_sentence():
+    text = "The original SVM algorithm was invented by Vladimir N. Vapnik and Alexey Ya. Chervonenkis in 1964. It was later extended."
+    assert [text[s:e] for s, e in sentence_spans(text)] == [
+        "The original SVM algorithm was invented by Vladimir N. Vapnik and Alexey Ya. Chervonenkis in 1964.",
+        "It was later extended."]
+
+
+def test_meta_sentences_about_the_passages_are_dropped():
+    claims = parse_sentences({"sentences": [
+        {"text": "Bottom-up dynamic programming is not explicitly discussed in the provided passages.", "citations": ["p1"]},
+        {"text": "RSA encrypts the text with the public key.", "citations": ["p1"]}]}, {"p1"})
+    assert [c.sentence for c in claims] == ["RSA encrypts the text with the public key."]
