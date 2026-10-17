@@ -119,6 +119,19 @@ TOPIC_SIMILARITY = 0.75         # below (but relevant): file it in the subject's
 
 
 # ------------------------------------------------------------------ link notes
+SITE_SUFFIX = re.compile(r"\s+[-|·–—]\s+(Wikipedia|GeeksforGeeks|Medium|Towards Data Science|Stack Overflow|"
+                         r"Mathematics Stack Exchange|Codeforces|CP-Algorithms|Algorithms for Competitive Programming|"
+                         r"Brilliant Math & Science Wiki|Khan Academy)\s*$", re.I)
+
+
+def clean_link_title(title: str) -> str:
+    """'Bloom filter - Wikipedia' -> 'Bloom filter' (the site is in the URL already)."""
+    title = " ".join(title.split())
+    while SITE_SUFFIX.search(title):
+        title = SITE_SUFFIX.sub("", title)
+    return title or "Link"
+
+
 def _yaml(s: str) -> str:
     return '"' + str(s).replace("\\", "\\\\").replace('"', '\\"') + '"'
 
