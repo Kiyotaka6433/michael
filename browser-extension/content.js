@@ -21,37 +21,59 @@
     return (document.querySelector("article") || og === "article") ? words > 250 : words > 600;
   }
 
-  async function main() {
+  // state for the page being read; single-page sites change the URL without reloading, so it is reset per URL
+  let page = { url: "", fired: false, since: 0, timer: 0 };
+
+  async function ask(force = false) {
+    if (page.fired && !force) return;
+    const text = articleText();
+    if (!force && !looksLikeArticle(text)) return;
+    page.fired = true;
+    const key = `michael:seen:${page.url}`;
+    await chrome.storage.local.set({ [key]: Date.now() });
+    const r = await send({ type: "classify", url: location.href, title: document.title, text: text.slice(0, 3000) || document.title });
+    if (r.ok) showToast(r, force);
+    else if (force) showToast({ offline: true }, true);
+  }
+
+  async function watch() {
+    const url = location.href.split("#")[0];
+    if (url === page.url) return;
+    clearTimeout(page.timer);
+    page = { url, fired: false, since: performance.now(), timer: 0 };
     const host = location.hostname;
     if (NEVER.test(host)) return;
     const res = await send({ type: "settings" });
     if (!res.ok) return;
     const s = res.settings;
     if (s.paused || !s.token || (s.blocked || []).includes(host)) return;
-    const key = `michael:seen:${location.href.split("#")[0]}`;
-    if ((await chrome.storage.local.get(key))[key]) return;      // asked about this page before
+    if ((await chrome.storage.local.get(`michael:seen:${url}`))[`michael:seen:${url}`]) {   // asked before:
+      page.fired = true;                                                                   // stay quiet, but
+      send({ type: "classify", url: location.href, title: document.title, text: "" });     // keep the ✓ badge right
+      return;
+    }
+    page.timer = setTimeout(() => ask(), (s.minSeconds || 20) * 1000);
+  }
 
-    let fired = false;
-    const fire = async () => {
-      if (fired) return;
-      const text = articleText();
-      if (!looksLikeArticle(text)) return;
-      fired = true;
-      await chrome.storage.local.set({ [key]: Date.now() });
-      const r = await send({ type: "classify", url: location.href, title: document.title, text: text.slice(0, 3000) });
-      if (r.ok) showToast(r);
-    };
-    setTimeout(fire, (s.minSeconds || 20) * 1000);
+  function main() {
+    watch();
+    setInterval(watch, 1500);                       // URL changes on single-page sites (cheap string compare)
     addEventListener("scroll", () => {
       const seen = (scrollY + innerHeight) / Math.max(document.body.scrollHeight, 1);
-      if (seen > 0.3 && performance.now() > 8000) fire();
+      if (seen > 0.3 && performance.now() - page.since > 8000) ask();
     }, { passive: true });
+    chrome.runtime.onMessage.addListener((msg) => {   // Alt+Shift+M from the background worker
+      if (msg.type === "now") ask(true);
+    });
   }
 
   // ------------------------------------------------------------------ the pop-up (shadow DOM: page CSS can't touch it)
-  function showToast(r) {
-    if (!r.already_saved && (!r.relevant || !(r.suggestions || [])[0])) return;   // unrelated page: no card at all
+  function showToast(r, force = false) {
+    // unrelated page: no card at all - unless you asked for it with the shortcut
+    if (!force && !r.already_saved && (!r.relevant || !(r.suggestions || [])[0])) return;
+    document.getElementById("michael-card")?.remove();
     const host = document.createElement("div");
+    host.id = "michael-card";
     host.style.cssText = "position:fixed;right:20px;bottom:20px;z-index:2147483647";
     const root = host.attachShadow({ mode: "open" });
     root.innerHTML = `
@@ -74,14 +96,18 @@
     let timer = setTimeout(close, 15000);
     host.addEventListener("mouseenter", () => clearTimeout(timer));
 
+    if (r.offline) {
+      body.innerHTML = `<span class="muted">Michael is offline - open Obsidian (the plugin starts it).</span>`;
+      return;
+    }
     if (r.already_saved) {
       body.innerHTML = `Already in your library: <span class="topic"></span>`;
       body.querySelector(".topic").textContent = `${r.already_saved.subject} › ${r.already_saved.title}`;
       return;
     }
     const best = (r.suggestions || [])[0];
-    if (!r.relevant || !best) { host.remove(); return; }      // nothing to do with the library: stay quiet
-    const low = r.inbox;
+    if (!best) { host.remove(); return; }
+    const low = r.inbox || !r.relevant;        // shortcut on an unrelated page: offer the Inbox
     let choice = best ? { subject: best.subject, topic: low ? "Inbox" : best.topic } : null;
     if (!choice) { close(); return; }
 
