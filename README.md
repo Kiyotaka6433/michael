@@ -220,3 +220,9 @@ All settings live in `backend/michael/config.py` and can be overridden with `MIC
 - Sentence-level checking struggles with conclusions that combine several passages; those show as PARTIAL.
 - On a CPU laptop a note takes several minutes with `qwen2.5:7b` (set `MICHAEL_LLM=qwen2.5:3b` for about 2x faster, plainer writing).
 - PDFs that are not on arXiv keep their text but not their math; a PDF-to-LaTeX model (Marker) is the planned next step.
+
+### Send any web page to Michael
+
+Run **Michael: Copy the 'Send page to Michael' browser bookmarklet** in Obsidian, create a browser bookmark and paste it as the URL. Clicking it on any page opens `obsidian://michael-add?url=...`, which saves the page (with exact math) and writes verified key points. `obsidian://michael-ask?q=...` starts a research question the same way, so a web page or the companion web app can link straight into Obsidian.
+
+Other commands: **Re-index the vault**, **Check that every citation still matches its source** (writes `Michael/Citation check.md`). The backend also runs these every night at 02:00 (`MICHAEL_NIGHTLY_HOUR`), plus key points for newly added articles.

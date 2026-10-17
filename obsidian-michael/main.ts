@@ -19,6 +19,9 @@ const DEFAULTS: MichaelSettings = {
   backendCommand: "michael",   // scripts/setup_obsidian.py writes the full path to .venv/Scripts/michael.exe
 };
 
+// a browser bookmark whose URL is this sends the current page to Michael (through the michael-add link handler)
+const BOOKMARKLET = "javascript:location.href='obsidian://michael-add?url='+encodeURIComponent(location.href)";
+
 interface RunEvent {
   run_id: string;
   stage: string;
@@ -77,6 +80,22 @@ export default class MichaelPlugin extends Plugin {
     this.addRibbonIcon("file-plus-2", "Michael: add an article", () => this.addArticle());
     this.addCommand({ id: "add-article", name: "Add an article (web, arXiv, PDF) with key points", callback: () => this.addArticle() });
     this.addCommand({ id: "start-backend", name: "Start the backend", callback: () => this.ensureBackend(true) });
+    this.addCommand({ id: "reindex", name: "Re-index the vault (search)", callback: () => this.queueJob("index", {}, "Re-indexing the vault") });
+    this.addCommand({ id: "check-citations", name: "Check that every citation still matches its source",
+                      callback: () => this.queueJob("recheck", {}, "Checking citations - see Michael/Citation check", "Michael/Citation check.md") });
+    this.addCommand({ id: "copy-bookmarklet", name: "Copy the 'Send page to Michael' browser bookmarklet",
+                      callback: async () => {
+                        await navigator.clipboard.writeText(BOOKMARKLET);
+                        new Notice("Bookmarklet copied. Create a browser bookmark and paste this as its URL.", 10000);
+                      } });
+
+    // links from the browser / the web app: obsidian://michael-add?url=...  and  obsidian://michael-ask?q=...
+    this.registerObsidianProtocolHandler("michael-add", (p) => {
+      if (p.url) this.startArticle(decodeURIComponent(p.url), p.summary !== "0");
+    });
+    this.registerObsidianProtocolHandler("michael-ask", (p) => {
+      if (p.q) this.startRun(decodeURIComponent(p.q));
+    });
 
     this.addSettingTab(new MichaelSettingTab(this.app, this));
     this.app.workspace.onLayoutReady(() => this.ensureBackend(false));
@@ -204,6 +223,36 @@ export default class MichaelPlugin extends Plugin {
 
   addArticle() {
     new ArticleModal(this.app, (target, summary) => this.startArticle(target, summary)).open();
+  }
+
+  /** Queue a backend job (index, recheck, ...) and report when it finishes. */
+  async queueJob(kind: string, params: Record<string, unknown>, notice: string, openWhenDone?: string) {
+    if (!(await this.ensureBackend(false))) return new Notice("Michael backend not reachable.");
+    try {
+      const r = await requestUrl({
+        url: `${this.settings.backendUrl}/api/v1/jobs`, method: "POST", contentType: "application/json",
+        body: JSON.stringify({ kind, params: { vault_path: this.vaultPath(), ...params } }),
+      });
+      new Notice(`Michael: ${notice}`);
+      const es = new EventSource(`${this.settings.backendUrl}/api/v1/jobs/${r.json.id}/events`);
+      es.onmessage = () => {};
+      for (const s of ["index", "recheck", "library"]) {
+        es.addEventListener(s, (ev: MessageEvent) => this.setStatus(`${s} - ${JSON.parse(ev.data).detail}`));
+      }
+      es.addEventListener("done", async () => {
+        es.close();
+        this.setIdle();
+        new Notice(`Michael: ${kind} finished.`);
+        if (openWhenDone) await this.app.workspace.openLinkText(openWhenDone, "", true);
+      });
+      es.addEventListener("error", (ev: MessageEvent) => {
+        es.close();
+        this.setIdle();
+        if (ev.data) new Notice(`Michael ${kind} failed: ${JSON.parse(ev.data).detail}`, 10000);
+      });
+    } catch (e) {
+      new Notice(`Michael: could not start ${kind}.`);
+    }
   }
 
   async startArticle(target: string, summary: boolean) {
