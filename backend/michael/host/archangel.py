@@ -22,6 +22,11 @@ EMBEDDER, RERANKER, VERIFIER = Embedder(), Reranker(), NLI()
 def warm_up():
     """Load every model before the first request (the API calls this at start-up, in the background)."""
     EMBEDDER.query("warm up")
+    try:                                     # topic vectors for the browser extension: first suggestion is instant
+        from .raziel import topic_centroids
+        topic_centroids()
+    except Exception:
+        pass
     RERANKER.model
     VERIFIER.scores([("warm up", "warm up")])
     llm.warm_up()

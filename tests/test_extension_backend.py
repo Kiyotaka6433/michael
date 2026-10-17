@@ -50,3 +50,9 @@ def test_link_notes_are_never_evidence(tmp_path):
     from michael.host.heralds.vault import vault_chunks
     raziel.link_note(tmp_path, "https://x.org/a", "A page", "Number Theory", "Inbox")
     assert vault_chunks(str(tmp_path)) == []
+
+
+def test_link_titles_drop_the_site_name():
+    assert raziel.clean_link_title("Bloom filter - Wikipedia") == "Bloom filter"
+    assert raziel.clean_link_title("Modular multiplicative inverse | GeeksforGeeks") == "Modular multiplicative inverse"
+    assert raziel.clean_link_title("Segment trees, explained") == "Segment trees, explained"

@@ -16,6 +16,7 @@ POST /runs/{id}/claims/{idx}/label   human correction (becomes evaluation data)
 /api/v1/events            vault changes seen by the file watcher (server-sent events)
 """
 import asyncio
+import re
 import json
 import queue
 import threading
@@ -272,7 +273,7 @@ def add_link(req: LinkRequest, x_michael_token: str | None = Header(None)):
     vault = jobs.kv_get("vault_path") or settings.vault_path
     if not vault:
         raise HTTPException(400, "no vault known yet: open Obsidian with the Michael plugin once")
-    path = raziel.link_note(vault, req.url, req.title.strip() or req.url, req.subject, req.topic,
+    path = raziel.link_note(vault, req.url, raziel.clean_link_title(req.title or req.url), req.subject, req.topic,
                             raziel.subject_tag(req.subject))
     raziel.refresh_hubs(vault)
     jobs.kv_set("recent_links", ([{"title": req.title, "url": req.url, "subject": req.subject, "topic": req.topic}]
