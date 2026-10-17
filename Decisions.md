@@ -1,0 +1,49 @@
+# Decisions log
+
+What was done each hour, the choices made, and why. Newest first. Times are local (IST).
+
+---
+
+## 2026-10-17 · 12:00-13:00
+**Done**
+- Chrome/Edge extension: suggests the library topic for the article being read; one click adds a link note (name + URL) to that topic. Backend `host/raziel.py`, API `/api/v1/classify|links|topics|token`, hubs show a "Reading list" per topic, links get a lighter subject colour in the graph.
+- Live test: modular inverse → Number Theory › Modular arithmetic, Fenwick tree → DSA › Range queries, LSTM → ML › Deep learning, Dijkstra → DSA › Graphs; a pasta recipe correctly gets no pop-up. The add-link flow writes the note and updates the hub.
+- Investigated the stop at 12:55: **Windows was restarted from the Start menu** (event 1074, clean restart, not a crash). Restarted the backend and the batch; finished work was kept.
+
+**Choices and why**
+- **Raw similarity instead of softmax "confidence"** to decide. Softmax spreads probability over neighbouring topics (modular inverse got only 0.28 and would have gone to the Inbox); cosine similarity separates real matches (0.82–0.87) from unrelated pages (~0.55). Thresholds: < 0.65 no pop-up, < 0.75 Inbox.
+- **Link note = name + URL only** (your choice): fast, no LLM, no clutter.
+- **Token required** for every extension call, readable only from Obsidian: so no other web page can write into the vault.
+- **Database lock made re-entrant (RLock)** after a second deadlock (`topic_centroids` read the DB inside an open connection). A nested call now waits a moment instead of freezing the backend.
+- **LLM calls retry on timeouts and wait up to 20 min**: one topic (Unsupervised learning) failed when the API and the batch shared Ollama on a busy CPU. It is retried automatically in the restarted batch.
+
+## 2026-10-17 · 10:30-12:00
+**Done**
+- Persistent job queue (`jobs.py`), vault watcher (`watcher.py`), nightly scheduler (02:00), citation re-check (`provenance.py`: 85/86 quotes still match), API v0.2.
+- Index backfills missing embeddings after an interrupted run.
+- Plugin: `obsidian://michael-add` / `michael-ask` links, a bookmarklet, and commands to re-index and check citations.
+
+**Choices and why**
+- **SQLite-backed queue instead of Redis/Celery**: nothing extra to install on Windows, survives restarts, and one worker at a time is fastest because the models share one CPU.
+- **The file always wins**: the vault (Markdown) is the source of truth, and the database is a rebuildable index. Edits in Obsidian can never be overwritten by the backend.
+- **Moved my early test copy of the Transformer notes to `.trash`** (recoverable) rather than deleting it.
+- Found that **the laptop slept because of a 3-hour idle timer while plugged in**, not because of the lid. Gave you the setting; I don't change system settings myself.
+
+## 2026-10-17 · 03:00-10:30
+**Done**
+- Vault index (SQLite FTS5 + vectors, RRF), LLM/NLI result caches, WAL mode.
+- Gold-set evaluation: 64 sentences audited: **0 wrong sentences reached a note, 4/4 wrong drafts caught, 93.2% strict precision, 61.5% over-removal**.
+- Fixes: LaTeX broken by JSON escapes (`\t` → tab), quote windows ranked by meaning as well as words, wider citation correction.
+
+**Choices and why**
+- **Labels marked `claude-audit`, not "human"**: honest metrics. You spot-check 15 to measure agreement.
+- **Over-removal was the main weakness**, so I fixed its three causes (LaTeX corruption, "our model" context, paraphrase) instead of loosening thresholds, which would hurt precision.
+
+## 2026-10-17 · 00:00-03:00
+**Done**
+- Switched the writer to **qwen2.5:7b**, the checker to **DeBERTa-v3-large** (benchmarked 5 models on SciFact), Canvas maps, dense concept-link graph (1,083 Mentions links), dark theme.
+
+**Choices and why**
+- **Large checker: 99% precision / 41% recall vs 95% / 29%** for base, at ~3× cost. Quotes are short, so it costs only seconds per note. MiniCheck was slower and worse here.
+- **Rejected int8 quantisation**: only 1.4× faster but changed verdicts by up to 0.93 probability.
+- **Found the float16-on-CPU slowdown** (newer transformers load half precision by default): forcing float32 made checking 9.3× faster with identical accuracy.
