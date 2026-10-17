@@ -93,3 +93,18 @@ def test_compound_sentence_with_one_false_part_stays_unproven(monkeypatch):
     claims = [Claim(index=0, sentence="Kruskal's algorithm was described by Kruskal in 1956 and runs in linear time.",
                     citations=["p1"])]
     assert verify_claims(claims, ev, FakeNLI(), recite=True)[0].label != "SUPPORTED"
+
+
+def test_quote_with_pronoun_passes_with_title_context_and_is_marked(monkeypatch):
+    class TitleNLI(FakeNLI):          # entailed only when the premise names the subject
+        def scores(self, pairs):
+            return [(0.9 if "Dynamic programming" in p else 0.05, 0.0) for p, h in pairs]
+    monkeypatch.setattr(settings, "titled_premise", True)
+    ev = {"p1": chunk("p1", "Dynamic programming", "In both contexts, it refers to simplifying a complicated problem.")}
+    claims = [Claim(index=0, sentence="Dynamic programming simplifies a complicated problem.", citations=["p1"])]
+    v = verify_claims(claims, ev, TitleNLI(), recite=False)[0]
+    assert v.label == "SUPPORTED" and v.titled
+    md = gabriel.render("Q?", claims, {0: v}, list(ev.values()), [], "m",
+                        {"supported": 1, "total": 1, "partial": 0, "unsupported": 0, "removed": 0})
+    assert "judged with its source title as context" in md
+    assert '"In both contexts, it refers to simplifying a complicated problem."' in md   # the quote itself is unchanged

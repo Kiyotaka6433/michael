@@ -9,7 +9,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "eval"))
 
-STRICT_FLOOR, LENIENT_FLOOR = 91.5, 99.0   # just under the 17 Oct baseline (91.8% / 99.5% gold)
+STRICT_FLOOR, LENIENT_FLOOR = 90.5, 99.0   # 18 Oct: title-context retry on (gold 91.1% / 99.5%), user-approved trade: +30 correct, +5 imprecise, 0 wrong
 
 
 @pytest.mark.eval
