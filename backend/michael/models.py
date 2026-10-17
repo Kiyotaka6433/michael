@@ -67,6 +67,7 @@ class Verdict:
     entailment: float = 0.0
     contradiction: float = 0.0
     in_context: bool = False  # judged together with its paragraph (e.g. "our model" -> "the Transformer")
+    math: str = ""            # formulas/numbers checked by ophaniel: match | mismatch | unchecked
 
     def to_dict(self):
         return asdict(self)

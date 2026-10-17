@@ -368,15 +368,41 @@ def flashcards(subject: str | None = None, limit: int = 50):
 
 @app.post("/api/v1/flashcards/review")
 def review_card(req: ReviewRequest):
-    from . import cards
+    from . import cards, learning
     try:
-        return cards.review(_vault(), req.deck, req.line, req.question, req.grade)
+        r = cards.review(_vault(), req.deck, req.line, req.question, req.grade)
+        learning.log_review(req.deck, req.question, req.grade, r["interval"], r["ease"], r.get("was_new", False))
+        return r
     except ValueError as e:
         raise HTTPException(400, str(e))
     except FileNotFoundError:
         raise HTTPException(404, "deck not found")
     except LookupError as e:
         raise HTTPException(409, str(e))
+
+
+@app.get("/api/v1/flashcards/stats")
+def flashcard_stats():
+    from . import learning
+    return learning.review_stats()
+
+
+# ------------------------------------------------------------------ v1: claims, labels, calibration
+@app.get("/api/v1/claims")
+def claims(status: str | None = None, source: str | None = None, subject: str | None = None,
+           q: str | None = None, limit: int = 100):
+    """Every sentence of Michael's notes with its verdict: e.g. ?status=partial, or ?source=Euclidean algorithm."""
+    from . import learning
+    return learning.query_claims(status, source, subject, q, min(limit, 1000))
+
+
+@app.get("/api/v1/calibration")
+def calibration(target: float = 0.95, strict: bool = True):
+    """Recommended support threshold from the gold labels (eval/gold, imported into the database)."""
+    from pathlib import Path
+    from . import learning
+    learning.import_gold(Path(__file__).resolve().parents[2] / "eval" / "gold")
+    return learning.calibrate(target, strict)
 
 
 # ------------------------------------------------------------------ v1: browser extension

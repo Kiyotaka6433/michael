@@ -17,12 +17,14 @@ export default function Flashcards() {
   const [shown, setShown] = useState(false);
   const [done, setDone] = useState(0);
   const [error, setError] = useState("");
+  const [stats, setStats] = useState<{ today: number; streak_days: number; retention_pct: number | null; total_reviews: number } | null>(null);
 
   async function load(s = subject) {
     setError(""); setI(0); setShown(false);
     try {
       const r = await fetch(`${API}/api/v1/flashcards?limit=40${s ? `&subject=${encodeURIComponent(s)}` : ""}`);
       setQueue(await r.json());
+      setStats(await (await fetch(`${API}/api/v1/flashcards/stats`)).json());
     } catch {
       setError("Michael's backend is not running.");
     }
@@ -50,6 +52,7 @@ export default function Flashcards() {
       </div>
       {queue && <p className="muted">{queue.due} due · {queue.new} new · {queue.total} cards · {done} reviewed this session ·
         every answer is a sentence Michael verified against its source</p>}
+      {stats && <p className="muted small">{stats.today} reviewed today · {stats.streak_days}-day streak · {stats.total_reviews} reviews in all{stats.retention_pct != null ? ` · ${stats.retention_pct}% recalled` : ""}</p>}
       {error && <div className="card error">{error}</div>}
       {queue && !card && <div className="card">Nothing left to review. <button onClick={() => load()}>Check again</button></div>}
       {card && (

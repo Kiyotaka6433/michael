@@ -34,7 +34,7 @@ def test_review_writes_the_plugin_format_and_keeps_the_text(tmp_path):
     v = _vault(tmp_path)
     deck = "Number Theory/Flashcards/Modular arithmetic - cards.md"
     r = cards.review(v, deck, 8, "When does an inverse exist?", "good", today=date(2026, 10, 17))
-    assert r == {"due": "2026-10-25", "interval": 8, "ease": 250}             # 3 days x 2.5
+    assert (r["due"], r["interval"], r["ease"]) == ("2026-10-25", 8, 250)    # 3 days x 2.5
     line = (v / deck).read_text(encoding="utf8").split("\n")[8]
     assert line == "When does an inverse exist?::When a and m are coprime. <!--SR:!2026-10-25,8,250-->"
     r = cards.review(v, deck, 7, "What is the modulus?", "easy", today=date(2026, 10, 17))

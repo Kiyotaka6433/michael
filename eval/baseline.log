@@ -1,0 +1,5 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights:  37%|███▋      | 74/199 [00:00<00:00, 695.32it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 1294.36it/s]
+Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]Loading weights:   3%|▎         | 6/201 [00:00<00:03, 59.64it/s]Loading weights:  10%|▉         | 20/201 [00:00<00:01, 102.44it/s]Loading weights:  18%|█▊        | 36/201 [00:00<00:01, 125.78it/s]Loading weights:  28%|██▊       | 57/201 [00:00<00:00, 148.94it/s]Loading weights:  40%|███▉      | 80/201 [00:00<00:00, 171.09it/s]Loading weights: 100%|██████████| 201/201 [00:00<00:00, 340.25it/s]
+ 8 drafts  191.9s  Modular arithmetic.md
+ 4 drafts  167.5s  Primes.md
