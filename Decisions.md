@@ -4,6 +4,28 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-17 · 15:30-16:30 (3.5-hour sprint: database + baseline + maths-aware checking, deadline 19:12)
+**Done**
+- **Database completion (Phase 2B):**
+  - Every sentence of every generated note is now queryable (256 sentences, 40 notes: 191 verified, 14 partial, 51 removed).
+  - A flashcard review log with streak and retention stats.
+  - The 247 gold labels are in the database, with automatic threshold calibration.
+  - New endpoints `/api/v1/claims`, `/flashcards/stats` and `/calibration`; a `/claims` explorer page in the web app.
+- **Maths-aware verification (`ophaniel.py`):**
+  - Formulas are parsed from LaTeX with SymPy and checked for equivalence by evaluation at random points.
+  - Big-O bounds are compared by growth rate.
+  - Every number in a claim must appear in its evidence (also as words: "eleven", "twice").
+  - A contradiction downgrades a sentence to unsupported. 12 unit tests.
+- **Baseline:** drafts for 14 notes regenerated *without* the verifier (86 sentences; cached prompts return the original drafts). Labelling them is next.
+- **Maths benchmark:** 400 sentences from the library (99 formula, 301 number), each with a copy changed in one quantity. Running.
+- The key-points batch is paused for the sprint (resumes afterwards; nothing lost).
+
+**Choices and why**
+- **Equivalence by random evaluation, not `simplify()`**: simplify often fails on equal expressions; evaluating both at several random points is fast and reliable for these.
+- **"Unchecked" is never a failure**: only a formula over the same symbols that evaluates differently counts as a contradiction, so the checker can only remove errors, never block true sentences it doesn't understand.
+- **The benchmark's wrong claims change the growth rate, not just a constant**: `O(1)` → `O(3)` isn't wrong, and counting it as an error would have flattered the checker.
+- **Calibration result reported as-is**: no threshold reaches 95% strict precision, because the remaining errors are imprecise wording, not low entailment. Threshold tuning is the wrong lever there.
+
 ## 2026-10-17 · 15:00-16:00
 **Done**
 - **Flashcards: one card per verified fact.** BERT's 7 verified facts had produced 1 card, because the model stopped after the first question. The schema now demands exactly N cards, and skipped facts are retried. All 38 existing decks were rebuilt; every deck checked came out one card per fact (e.g. 5/5, 7/7). Review history from the Spaced Repetition plugin is kept.
