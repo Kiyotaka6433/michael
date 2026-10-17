@@ -115,6 +115,48 @@ def polish(path: Path, url: str, by_url: dict[str, str]):
     return n_code, len(code), added_practice, len(links), missing
 
 
+def _lang(code: str) -> str:
+    if re.search(r"^\s*(def |class \w+.*:|import |from \w+ import)", code, re.M):
+        return "python"
+    if re.search(r"\b(public|private) (static )?\w+|System\.out", code):
+        return "java"
+    return "cpp" if re.search(r"[;{}]|#include", code) else ""
+
+
+def fix_flat_code(md: str, code: list[str]) -> tuple[str, int]:
+    """Some sites (USACO Guide) lose all line breaks in code: a paragraph like 'class DSU:def __init__(...' is the
+    whole snippet run together. Swap such paragraphs for the original <pre> block."""
+    unesc = lambda s: re.sub(r"\\([_\[\]*`#<>])", r"\1", s)
+    pool = [(norm(c), c) for c in code if len(norm(c)) > 40]
+    fixed, out = 0, []
+    for para in re.split(r"\n{2,}", md):
+        p = norm(unesc(para))
+        hit = next((c for n, c in pool if p == n or (p.endswith(n) and len(p) - len(n) < 80)), None)
+        if hit and not para.lstrip().startswith("```"):
+            label = unesc(para)[: max(0, len(unesc(para)) - len(hit))].strip() if p != norm(hit) else ""
+            label = re.sub(r"\(Click to expand\)", "", label).strip(" :")
+            out.append((f"**{label}**\n\n" if label and len(label) < 80 else "") + f"```{_lang(hit)}\n{hit}\n```")
+            fixed += 1
+        else:
+            out.append(para)
+    return "\n\n".join(out), fixed
+
+
+def polish_generic(path: Path, url: str):
+    """Pages from other trusted sites: restore code that lost its line breaks."""
+    doc = lhtml.fromstring(page(url))
+    code = []
+    for p in doc.xpath("//pre[not(.//pre)]"):            # innermost <pre> (USACO nests them)
+        lines = p.xpath(".//*[contains(concat(' ', @class, ' '), ' token-line ')]")
+        # Prism renders one element per line with no newline characters between them
+        code.append("\n".join(l.text_content().rstrip() for l in lines) if lines else p.text_content().rstrip("\n"))
+    text = path.read_text(encoding="utf8")
+    head, sep, tail = text.partition("<!-- michael:")
+    head, n = fix_flat_code(head, code)
+    path.write_text(head + sep + tail, encoding="utf8")
+    return n, len(code)
+
+
 WIKI = "https://en.wikipedia.org/wiki/"
 wiki_key = lambda title: unquote(title).replace("_", " ").strip().lower()
 
@@ -182,6 +224,15 @@ def main():
             totals.update(wiki_notes=1, wiki_links=n_links)
             wanted.update(missing)
             print(f"{item:55s} links {n_links}")
+            continue
+        if item.startswith("url:") and Path(st["path"]).exists():
+            try:
+                n, n_pre = polish_generic(Path(st["path"]), st["url"])
+            except Exception as e:
+                print(f"  ! {item}: {e}")
+                continue
+            totals.update(site_notes=1, site_code=n)
+            print(f"{item[:70]:70s} code {n}/{n_pre}")
             continue
         if not item.startswith("cp:") or not Path(st["path"]).exists():
             continue

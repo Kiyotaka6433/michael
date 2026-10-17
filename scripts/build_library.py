@@ -37,6 +37,23 @@ MANIFEST = ROOT / "library" / "manifest.json"
 STATE = ROOT / "library" / "state.json"
 DEFAULT_VAULT = ROOT.parent / "Michael Vault"
 SUFFIX = {"cp": " (cp-algorithms)", "skl": " (scikit-learn)", "d2l": " (d2l.ai)"}
+# "url:" items: trusted subject-specific sites, labelled by domain so the source is visible in every title
+SITES = {"usaco.guide": "USACO Guide", "algs4.cs.princeton.edu": "Princeton Algorithms",
+         "opendatastructures.org": "Open Data Structures", "artofproblemsolving.com": "AoPS Wiki",
+         "proofwiki.org": "ProofWiki", "brilliant.org": "Brilliant", "oeis.org": "OEIS",
+         "cs231n.github.io": "Stanford CS231n", "distill.pub": "Distill", "lilianweng.github.io": "Lil'Log",
+         "colah.github.io": "colah's blog", "developers.google.com": "Google ML Crash Course",
+         "cs229.stanford.edu": "Stanford CS229", "jeffe.cs.illinois.edu": "Erickson, Algorithms",
+         "people.csail.mit.edu": "MIT", "ocw.mit.edu": "MIT OCW", "mathworld.wolfram.com": "MathWorld",
+         "cp-algorithms.com": "cp-algorithms", "codeforces.com": "Codeforces", "topcoder.com": "Topcoder",
+         "web.stanford.edu": "Stanford", "www.cs.cmu.edu": "CMU", "cses.fi": "CSES", "primes.utm.edu": "Prime Pages",
+         "t5k.org": "Prime Pages", "numbertheory.org": "numbertheory.org", "d2l.ai": "d2l.ai"}
+
+
+def site_of(url: str) -> str:
+    from urllib.parse import urlsplit
+    host = urlsplit(url).netloc.lower()
+    return next((v for k, v in SITES.items() if host == k or host.endswith("." + k)), host.removeprefix("www."))
 KEYPOINT_ORDER = {"arxiv": 0, "cp": 1, "skl": 2, "d2l": 3, "wiki": 4}    # papers first: the longest reads
 
 
@@ -52,15 +69,34 @@ def resolve(item: str) -> dict:
         return {"kind": kind, "url": f"https://d2l.ai/{ref}.html", "title": None}
     if kind == "arxiv":
         return {"kind": kind, "url": ref, "title": None}
+    if kind == "url":                       # "url:<URL>" or "url:<URL> | <Title>" for sites whose pages share one title
+        url, _, title = ref.partition(" | ")
+        return {"kind": kind, "url": url, "title": f"{title} ({site_of(url)})" if title else None,
+                "suffix": f" ({site_of(url)})"}
     raise ValueError(f"unknown item {item}")
 
 
+_snapshot: dict = {}
+
+
 def load_state() -> dict:
-    return json.loads(STATE.read_text(encoding="utf8")) if STATE.exists() else {}
+    state = json.loads(STATE.read_text(encoding="utf8")) if STATE.exists() else {}
+    _snapshot.clear()
+    _snapshot.update(json.loads(json.dumps(state)))
+    return state
 
 
 def save_state(state: dict):
-    STATE.write_text(json.dumps(state, indent=1, ensure_ascii=False), encoding="utf8")
+    """Merge, don't overwrite: only the entries this process changed are written over what is on disk, so a
+    fetch can run while a long key-points batch is saving its own progress."""
+    disk = json.loads(STATE.read_text(encoding="utf8")) if STATE.exists() else {}
+    for k, v in state.items():
+        if _snapshot.get(k) != v:
+            disk[k] = v
+            _snapshot[k] = json.loads(json.dumps(v))
+    tmp = STATE.with_suffix(".tmp")
+    tmp.write_text(json.dumps(disk, indent=1, ensure_ascii=False), encoding="utf8")
+    tmp.replace(STATE)
 
 
 def items(manifest, subject_filter=None):
@@ -80,7 +116,7 @@ def phase_fetch(vault, manifest, state, subject=None, limit=None):
         t = time.time()
         try:
             a, path, math = pravuil.save_article(r["url"], str(vault), subj["name"], r["title"], tags=[subj["tag"]],
-                                                 title_suffix=SUFFIX.get(r["kind"], ""))
+                                                 title_suffix=r.get("suffix") or SUFFIX.get(r["kind"], ""))
             state[item] = {"status": "saved", "subject": subj["name"], "topic": topic["name"], "title": a.title,
                            "path": str(path), "route": a.route, "formulas": math["formulas"],
                            "rendered": math["rendered"], "chars": path.stat().st_size, "url": a.url}
@@ -148,6 +184,68 @@ def phase_topics(vault, manifest, state, subject=None, limit=None):
                   f"{time.time() - t:5.0f}s  {subj['name']} / {topic['name']}", flush=True)
         except Exception as e:
             state[key] = {"error": str(e)[:300]}
+            print(f"[{n}/{len(todo)}] FAIL {topic['name']}: {e}", flush=True)
+            traceback.print_exc()
+        save_state(state)
+
+
+def _cited_sources(md: str) -> int:
+    part = md.split("## Sources", 1)[1] if "## Sources" in md else ""
+    return len({m.split("#")[0] for m in re.findall(r"\[\[([^\]|]+)", part.split("\n## ", 1)[0])})
+
+
+def better(new: dict, old: dict) -> bool:
+    """A rewrite replaces the current note only if it proves at least as many sentences and either proves more
+    or draws on more distinct sources; ties keep the current note (and its flashcard history)."""
+    if new["supported"] < old["supported"]:
+        return False
+    return new["supported"] > old["supported"] or new["sources"] > old["sources"]
+
+
+def phase_retopics(vault, manifest, state, subject=None, limit=None):
+    """Rewrite topic notes whose topic gained sources since the note was written. The rewrite goes to a hidden
+    candidate file; it replaces the current note only when better(), and the old note moves to <Subject>/Archive/
+    (nothing is deleted)."""
+    todo = []
+    for subj in manifest["subjects"]:
+        if subject and subj["name"] != subject:
+            continue
+        for topic in subj["topics"]:
+            key = f"topic:{subj['name']}/{topic['name']}"
+            cur = state.get(key, {})
+            paths = [Path(state[i]["path"]) for i in topic["items"] if state.get(i, {}).get("status") == "saved"]
+            note = Path(cur.get("note", ""))
+            if not cur.get("note") or not note.exists():
+                continue
+            text = note.read_text(encoding="utf8")
+            if any(f"[[{p.stem}]]" not in text for p in paths):       # intro links every source it was built from
+                todo.append((subj, topic, key, paths, note))
+    print(f"retopics: {len(todo)} topic notes to rewrite and compare", flush=True)
+    for n, (subj, topic, key, paths, note) in enumerate(todo[:limit] if limit else todo, 1):
+        t = time.time()
+        try:
+            cand = note.parent / ".candidates" / note.name
+            r = pravuil.topic_note(subj["name"], topic["name"], paths, cand)
+            old_md = note.read_text(encoding="utf8")
+            old = {"supported": state[key].get("supported", 0), "sources": _cited_sources(old_md)}
+            new = {"supported": r["stats"]["supported"], "sources": _cited_sources(r["markdown"])}
+            verdict = "replaced" if better(new, old) else "kept"
+            if verdict == "replaced":
+                archive = Path(vault) / subj["name"] / "Archive" / f"{note.stem} ({datetime.now():%Y-%m-%d %H%M}).md"
+                archive.parent.mkdir(parents=True, exist_ok=True)
+                note.replace(archive)
+                cand.replace(note)
+                fc = flashcards(vault, subj, note, r["facts"])
+                state[key] = {**state[key], "supported": new["supported"], "total": r["stats"]["total"],
+                              "removed": r["stats"]["removed"], "seconds": round(time.time() - t, 1),
+                              "archived": str(archive), **fc}
+            else:
+                cand.unlink(missing_ok=True)
+            state[key] = {**state[key], "compared": f"{datetime.now():%Y-%m-%d %H:%M} old {old} new {new} {verdict}"}
+            print(f"[{n}/{len(todo)}] {verdict:8s} old {old['supported']} verified/{old['sources']} sources -> new "
+                  f"{new['supported']}/{new['sources']}  {time.time() - t:5.0f}s  {subj['name']} / {topic['name']}",
+                  flush=True)
+        except Exception as e:
             print(f"[{n}/{len(todo)}] FAIL {topic['name']}: {e}", flush=True)
             traceback.print_exc()
         save_state(state)
@@ -402,7 +500,7 @@ def phase_canvas(vault, manifest, state):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("phase", choices=["fetch", "hubs", "topics", "keypoints", "cards", "all"])
+    ap.add_argument("phase", choices=["fetch", "hubs", "topics", "retopics", "keypoints", "cards", "all"])
     ap.add_argument("--vault", default=str(DEFAULT_VAULT))
     ap.add_argument("--subject", default=None)
     ap.add_argument("--limit", type=int, default=None)
@@ -420,6 +518,9 @@ def main():
         phase_hubs(a.vault, manifest, state)
     if a.phase in ("topics", "all"):
         phase_topics(a.vault, manifest, state, a.subject, a.limit)
+        phase_hubs(a.vault, manifest, state)
+    if a.phase == "retopics":
+        phase_retopics(a.vault, manifest, state, a.subject, a.limit)
         phase_hubs(a.vault, manifest, state)
     if a.phase == "cards":
         phase_cards(a.vault, manifest, state)

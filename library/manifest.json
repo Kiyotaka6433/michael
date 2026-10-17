@@ -20,7 +20,13 @@
       "wiki:Greatest common divisor",
       "wiki:Coprime integers",
       "wiki:Euclidean division",
-      "wiki:Euclid's lemma"
+      "wiki:Euclid's lemma",
+      "url:https://crypto.stanford.edu/pbc/notes/numbertheory/euclid.html",
+      "url:https://crypto.stanford.edu/pbc/notes/numbertheory/division.html",
+      "url:https://brilliant.org/wiki/greatest-common-divisor/",
+      "url:https://brilliant.org/wiki/fundamental-theorem-of-arithmetic/",
+      "url:https://brilliant.org/wiki/extended-euclidean-algorithm/",
+      "url:https://brilliant.org/wiki/bezouts-identity/"
      ]
     },
     {
@@ -45,7 +51,13 @@
       "wiki:Dirichlet's theorem on arithmetic progressions",
       "wiki:Goldbach's conjecture",
       "wiki:Twin prime",
-      "wiki:Quadratic sieve"
+      "wiki:Quadratic sieve",
+      "url:https://crypto.stanford.edu/pbc/notes/numbertheory/millerrabin.html",
+      "url:https://crypto.stanford.edu/pbc/notes/numbertheory/carmichael.html",
+      "url:https://brilliant.org/wiki/prime-numbers/",
+      "url:https://brilliant.org/wiki/sieve-of-eratosthenes/",
+      "url:https://brilliant.org/wiki/infinitely-many-primes/",
+      "url:https://t5k.org/notes/proofs/infinite/euclids.html"
      ]
     },
     {
@@ -67,7 +79,15 @@
       "wiki:Multiplicative group of integers modulo n",
       "wiki:Lucas's theorem",
       "wiki:Legendre's formula",
-      "cp:algebra/linear_congruence_equation"
+      "cp:algebra/linear_congruence_equation",
+      "url:https://crypto.stanford.edu/pbc/notes/numbertheory/arith.html",
+      "url:https://crypto.stanford.edu/pbc/notes/numbertheory/crt.html",
+      "url:https://crypto.stanford.edu/pbc/notes/numbertheory/exp.html",
+      "url:https://brilliant.org/wiki/modular-arithmetic/",
+      "url:https://brilliant.org/wiki/fermats-little-theorem/",
+      "url:https://brilliant.org/wiki/eulers-theorem/",
+      "url:https://brilliant.org/wiki/chinese-remainder-theorem/",
+      "url:https://brilliant.org/wiki/wilsons-theorem/"
      ]
     },
     {
@@ -85,7 +105,12 @@
       "wiki:Riemann zeta function",
       "wiki:Von Mangoldt function",
       "wiki:Mertens function",
-      "wiki:Liouville function"
+      "wiki:Liouville function",
+      "url:https://crypto.stanford.edu/pbc/notes/numbertheory/units.html",
+      "url:https://crypto.stanford.edu/pbc/notes/numbertheory/mult.html",
+      "url:https://crypto.stanford.edu/pbc/notes/numbertheory/mobius.html",
+      "url:https://brilliant.org/wiki/eulers-totient-function/",
+      "url:https://brilliant.org/wiki/mobius-function/"
      ]
     },
     {
@@ -100,7 +125,12 @@
       "cp:algebra/discrete-root",
       "wiki:Cyclic group",
       "wiki:Baby-step giant-step",
-      "wiki:Pohlig–Hellman algorithm"
+      "wiki:Pohlig–Hellman algorithm",
+      "url:https://crypto.stanford.edu/pbc/notes/numbertheory/order.html",
+      "url:https://crypto.stanford.edu/pbc/notes/numbertheory/gen.html",
+      "url:https://crypto.stanford.edu/pbc/notes/numbertheory/cyclic.html",
+      "url:https://crypto.stanford.edu/pbc/notes/numbertheory/gengen.html",
+      "url:https://brilliant.org/wiki/primitive-roots/"
      ]
     },
     {
@@ -113,7 +143,12 @@
       "wiki:Jacobi symbol",
       "wiki:Tonelli–Shanks algorithm",
       "wiki:Cipolla's algorithm",
-      "wiki:Fermat's theorem on sums of two squares"
+      "wiki:Fermat's theorem on sums of two squares",
+      "url:https://crypto.stanford.edu/pbc/notes/numbertheory/qr.html",
+      "url:https://crypto.stanford.edu/pbc/notes/numbertheory/gausslemma.html",
+      "url:https://crypto.stanford.edu/pbc/notes/numbertheory/quadrecip.html",
+      "url:https://brilliant.org/wiki/quadratic-residues/",
+      "url:https://brilliant.org/wiki/legendre-symbol/"
      ]
     },
     {
@@ -128,7 +163,11 @@
       "cp:others/stern_brocot_tree_farey_sequences",
       "wiki:Pythagorean triple",
       "wiki:Lagrange's four-square theorem",
-      "wiki:Fermat's Last Theorem"
+      "wiki:Fermat's Last Theorem",
+      "url:https://brilliant.org/wiki/linear-diophantine-equations-one-equation/",
+      "url:https://brilliant.org/wiki/lifting-the-exponent/",
+      "url:https://brilliant.org/wiki/pythagorean-triples/",
+      "url:https://brilliant.org/wiki/continued-fractions/"
      ]
     },
     {
@@ -171,7 +210,10 @@
       "wiki:Counting sort",
       "wiki:Binary search",
       "cp:num_methods/ternary_search",
-      "cp:others/tortoise_and_hare"
+      "cp:others/tortoise_and_hare",
+      "url:https://algs4.cs.princeton.edu/23quicksort/",
+      "url:https://algs4.cs.princeton.edu/22mergesort/",
+      "url:https://usaco.guide/silver/binary-search"
      ]
     },
     {
@@ -183,7 +225,13 @@
       "wiki:Heap (data structure)",
       "wiki:Trie",
       "cp:data_structures/stack_queue_modification",
-      "cp:data_structures/disjoint_set_union"
+      "cp:data_structures/disjoint_set_union",
+      "url:https://algs4.cs.princeton.edu/24pq/",
+      "url:https://algs4.cs.princeton.edu/33balanced/",
+      "url:https://algs4.cs.princeton.edu/34hash/",
+      "url:https://algs4.cs.princeton.edu/32bst/",
+      "url:https://algs4.cs.princeton.edu/15uf/",
+      "url:https://usaco.guide/gold/dsu"
      ]
     },
     {
@@ -196,7 +244,9 @@
       "cp:data_structures/treap",
       "wiki:Segment tree",
       "wiki:Fenwick tree",
-      "cp:sequences/rmq"
+      "cp:sequences/rmq",
+      "url:https://usaco.guide/gold/PURS",
+      "url:https://usaco.guide/plat/segtree-ext"
      ]
     },
     {
@@ -229,7 +279,14 @@
       "cp:graph/hld",
       "cp:graph/dijkstra_sparse",
       "cp:graph/lca",
-      "cp:graph/bridge-searching-online"
+      "cp:graph/bridge-searching-online",
+      "url:https://algs4.cs.princeton.edu/41graph/",
+      "url:https://algs4.cs.princeton.edu/42digraph/",
+      "url:https://algs4.cs.princeton.edu/43mst/",
+      "url:https://algs4.cs.princeton.edu/44sp/",
+      "url:https://algs4.cs.princeton.edu/64maxflow/",
+      "url:https://usaco.guide/gold/shortest-paths",
+      "url:https://usaco.guide/gold/mst"
      ]
     },
     {
@@ -244,7 +301,9 @@
       "cp:string/suffix-automaton",
       "cp:string/rabin-karp",
       "cp:string/expression_parsing",
-      "cp:string/lyndon_factorization"
+      "cp:string/lyndon_factorization",
+      "url:https://algs4.cs.princeton.edu/52trie/",
+      "url:https://algs4.cs.princeton.edu/53substring/"
      ]
     },
     {
@@ -258,7 +317,9 @@
       "wiki:Longest common subsequence",
       "wiki:Knapsack problem",
       "cp:dynamic_programming/knuth-optimization",
-      "cp:dynamic_programming/profile-dynamics"
+      "cp:dynamic_programming/profile-dynamics",
+      "url:https://usaco.guide/gold/intro-dp",
+      "url:https://usaco.guide/gold/knapsack"
      ]
     },
     {
@@ -308,7 +369,10 @@
       "d2l:chapter_optimization/sgd",
       "d2l:chapter_optimization/adam",
       "arxiv:1609.04747",
-      "arxiv:1412.6980"
+      "arxiv:1412.6980",
+      "url:https://cs231n.github.io/optimization-1/ | Optimization and Stochastic Gradient Descent",
+      "url:https://distill.pub/2017/momentum/",
+      "url:https://cs231n.github.io/neural-networks-3/ | Neural Networks Part 3 - Learning and Evaluation"
      ]
     },
     {
@@ -321,7 +385,8 @@
       "wiki:Lasso (statistics)",
       "skl:linear_model",
       "d2l:chapter_linear-regression/linear-regression",
-      "d2l:chapter_linear-classification/softmax-regression"
+      "d2l:chapter_linear-classification/softmax-regression",
+      "url:https://cs231n.github.io/linear-classify/ | Linear Classification"
      ]
     },
     {
@@ -380,7 +445,10 @@
       "d2l:chapter_multilayer-perceptrons/dropout",
       "skl:neural_networks_supervised",
       "arxiv:1207.0580",
-      "arxiv:1502.03167"
+      "arxiv:1502.03167",
+      "url:https://cs231n.github.io/neural-networks-1/ | Neural Networks Part 1 - Setting up the Architecture",
+      "url:https://cs231n.github.io/optimization-2/ | Backpropagation Intuitions",
+      "url:https://cs231n.github.io/neural-networks-2/ | Neural Networks Part 2 - Setting up the Data and the Loss"
      ]
     },
     {
@@ -393,7 +461,12 @@
       "d2l:chapter_attention-mechanisms-and-transformers/transformer",
       "arxiv:1512.03385",
       "arxiv:1706.03762",
-      "arxiv:1810.04805"
+      "arxiv:1810.04805",
+      "url:https://cs231n.github.io/convolutional-networks/ | Convolutional Neural Networks",
+      "url:https://colah.github.io/posts/2015-08-Understanding-LSTMs/",
+      "url:https://lilianweng.github.io/posts/2018-06-24-attention/",
+      "url:https://distill.pub/2016/augmented-rnns/",
+      "url:https://distill.pub/2019/computing-receptive-fields/"
      ]
     },
     {
@@ -403,7 +476,10 @@
       "arxiv:1312.6114",
       "arxiv:1301.3781",
       "wiki:Autoencoder",
-      "wiki:Word embedding"
+      "wiki:Word embedding",
+      "url:https://lilianweng.github.io/posts/2018-08-12-vae/",
+      "url:https://lilianweng.github.io/posts/2017-08-20-gan/",
+      "url:https://lilianweng.github.io/posts/2021-07-11-diffusion-models/"
      ]
     },
     {

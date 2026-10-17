@@ -91,6 +91,9 @@ SITE_SUFFIX = re.compile(r"\s+[-—–|]\s+(Wikipedia|Algorithms for Competitive
 def clean_title(title: str) -> str:
     title = re.split(r"\s+(?:Colab \[|Open the notebook|SageMaker Studio)", title)[0]   # d2l.ai buttons
     title = SITE_SUFFIX.sub("", title.replace("¶", "")).strip()
+    title = re.sub(r"\.\s*Algorithms, 4th Edition by Robert Sedgewick and Kevin Wayne\.?$|\s+[-|·]\s+(USACO Guide|"
+                   r"ProofWiki|Art of Problem Solving|Brilliant Math & Science Wiki|Distill|Lil'Log|"
+                   r"colah's blog|Machine Learning\s+\|\s+Google for Developers.*|Google for Developers)$", "", title).strip()
     return re.sub(r"^\d+(\.\d+)*\.\s+", "", title)      # "1.4. Support Vector Machines" -> "Support Vector Machines"
 
 
