@@ -195,8 +195,12 @@ def topic_note(subject: str, topic: str, sources: list[Path], note_path: Path, e
     chunks = [c for p in sources for c in file_chunks(p)]
     emit("gather", f"{len(chunks)} sections from {len(sources)} articles")
     links = ", ".join(f"[[{p.stem}]]" for p in sources)
-    return verified_note(question, [question, topic, f"{topic} definition", f"{topic} theorem algorithm example"],
-                         chunks, note_path, f"Overview of **{topic}** from: {links}.", emit, keep=8)
+    # one query per article title as well: a broad topic ("Geometry") otherwise draws all its evidence from the
+    # one or two articles closest to the topic name, and the overview misses the rest
+    titles = [re.sub(r"\s+cp-algorithms$|\s+scikit-learn$|\s+d2l\.ai$", "", p.stem) for p in sources]
+    return verified_note(question, [question, topic, f"{topic} definition", f"{topic} theorem algorithm example"]
+                         + titles, chunks, note_path, f"Overview of **{topic}** from: {links}.", emit,
+                         keep=min(12, max(8, len(sources))))
 
 
 def add_article(target: str, summary: bool = True, vault_path: str | None = None, on_event=None,
