@@ -14,11 +14,14 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
   - Extraction handles `[` inside sentences.
   - Job-queue race fixed: a client connecting at the moment a job finished could miss "done".
 - Batch restarted on the fixed code: 3 topics left, then key points.
+- Obsidian was showing a new empty vault ("Obsidian Vault", created 13:18 in OneDrive\Documents after the restart). I closed and relaunched Obsidian on Michael Vault. The empty vault is left for you to delete.
+- The embedding backfill finished (the last 351 passages): vector search now covers the whole vault.
 
 **Choices and why**
 - **Stable sentence IDs** (hash of note + sentence) instead of row numbers: re-extracting renumbered everything and would have mislabelled 64 sentences. Migrated the old labels from git history.
 - **Fragments from the splitting bug are labelled "partly", not "correct"**: honest numbers, even though the text was not false.
 - **Over-removal (84%) is reported, not tuned away.** Part of it is correct behaviour (a true sentence with no supporting quote among the selected passages *should* go). The next lever is better evidence selection, not a lower threshold.
+- **Didn't delete the stray empty vault**: it's yours, it's harmless, and deleting files is your call.
 - **Rewrote `metatron.py` with the file editor** after finding invisible control characters (`\b` turned into backspace by the shell). Scanned every source file afterwards: none left.
 
 ## 2026-10-17 · 12:00-13:00
