@@ -162,7 +162,7 @@ def verified_note(question: str, queries: list[str], chunks: list, note_path: Pa
     claims = metatron.write(question, evidence)
     emit("write", f"{len(claims)} sentences drafted")
     drafted = len(claims)
-    claims, verdicts, removed = verify_and_repair(question, claims, evidence, emit)
+    claims, verdicts, removed = verify_and_repair(question, claims, evidence, emit, pool=chunks)
     stats = {"total": len(claims), "drafted": drafted, "removed": len(removed),
              "supported": sum(1 for c in claims if c.status == "SUPPORTED"),
              "partial": sum(1 for c in claims if c.status == "PARTIAL"),

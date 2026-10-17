@@ -266,3 +266,15 @@ def test_meta_sentences_about_the_passages_are_dropped():
         {"text": "Bottom-up dynamic programming is not explicitly discussed in the provided passages.", "citations": ["p1"]},
         {"text": "RSA encrypts the text with the public key.", "citations": ["p1"]}]}, {"p1"})
     assert [c.sentence for c in claims] == ["RSA encrypts the text with the public key."]
+
+
+def test_claim_driven_retrieval_rescues_a_sentence_proven_outside_the_selected_passages(monkeypatch):
+    from michael.host import archangel
+    shown = Chunk(source_id="a", kind="t", title="A", url="", text="Heaps support push and pop.", start=0, end=27, label="p1")
+    hidden = Chunk(source_id="b", kind="t", title="B", url="", text="A Fenwick tree answers prefix sums in log n time.",
+                   start=0, end=49)
+    monkeypatch.setattr(archangel, "VERIFIER", FakeNLI())
+    monkeypatch.setattr(archangel, "EMBEDDER", FakeEmbedder())
+    claim = Claim(index=0, sentence="A Fenwick tree answers prefix sums in log n time.", citations=["p1"])
+    kept, verdicts, removed = archangel.verify_and_repair("q", [claim], [shown], repair_enabled=False, pool=[shown, hidden])
+    assert kept and not removed and verdicts[0].label == "SUPPORTED" and verdicts[0].chunk_id == hidden.id

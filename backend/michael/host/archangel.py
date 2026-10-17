@@ -99,8 +99,43 @@ def _drop_duplicates(claims, verdicts):
     return kept
 
 
-def verify_and_repair(question, claims, evidence, emit=_noop, repair_enabled=True):
-    """Each round: verify all pending sentences in one NLI batch, then repair all failures in one LLM call."""
+def _rescue(failed, pool, evidence, by_label, verdicts, per_claim: int = 3) -> list:
+    """Claim-driven retrieval: a sentence that fails against the writer's passages may still be proven elsewhere
+    in the collected material. Search the whole pool with the sentence itself as the query, check the best few
+    passages, and keep the sentence (citing the new passage) if one proves it. Returns the claims still failing."""
+    if not pool or not failed:
+        return failed
+    known = {c.id for c in evidence}
+    rest = [c for c in pool if c.id not in known]
+    if not rest:
+        return failed
+    still = []
+    for claim in failed:
+        found = hybrid_search([claim.sentence], rest, EMBEDDER, per_claim)
+        extra = {}
+        for c in found:
+            if c.id not in known:
+                c.label = f"p{len(evidence) + 1}"
+                evidence.append(c)
+                by_label[c.label] = c
+                known.add(c.id)
+            extra[c.label] = c
+        if not extra:
+            still.append(claim)
+            continue
+        trial = Claim(index=claim.index, sentence=claim.sentence, citations=list(extra), rounds=claim.rounds)
+        v = verify_claims([trial], extra, VERIFIER, recite=False)[0]
+        if v.label == "SUPPORTED":
+            claim.citations, claim.status = trial.citations, "SUPPORTED"
+            verdicts[claim.index] = v
+        else:
+            still.append(claim)
+    return still
+
+
+def verify_and_repair(question, claims, evidence, emit=_noop, repair_enabled=True, pool=None):
+    """Each round: verify all pending sentences in one NLI batch, look for proof of the failures in the whole
+    collected pool (claim-driven retrieval), then repair what is left in one LLM call."""
     by_label = {c.label: c for c in evidence}
     by_id = {c.id: c for c in evidence}
     verdicts, removed = {}, []
@@ -112,7 +147,11 @@ def verify_and_repair(question, claims, evidence, emit=_noop, repair_enabled=Tru
             claim.status = v.label
             if v.label == "UNSUPPORTED":
                 failed.append(claim)
-        emit("verify", f"round {rnd}: {len(pending) - len(failed)}/{len(pending)} checked sentences passed")
+        before = len(failed)
+        failed = _rescue(failed, pool, evidence, by_label, verdicts)
+        by_id = {c.id: c for c in evidence}
+        rescued = f", {before - len(failed)} proven by other passages" if before - len(failed) else ""
+        emit("verify", f"round {rnd}: {len(pending) - len(failed)}/{len(pending)} checked sentences passed{rescued}")
         if not failed or not repair_enabled or rnd == settings.max_repair_rounds:
             break
         related = {c.index: set(c.citations) | ({by_id[verdicts[c.index].chunk_id].label}
@@ -163,7 +202,7 @@ def run_research(question: str, kinds=None, urls=(), pdfs=(), use_vault=True, re
         claims = metatron.write(question, evidence)
         emit("write", f"{len(claims)} sentences drafted")
         drafted = len(claims)
-        claims, verdicts, removed = verify_and_repair(question, claims, evidence, emit, repair_enabled)
+        claims, verdicts, removed = verify_and_repair(question, claims, evidence, emit, repair_enabled, pool=chunks)
         stats = {
             "total": len(claims),
             "drafted": drafted,
