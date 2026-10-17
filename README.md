@@ -226,6 +226,18 @@ In the second benchmark, a PARTIAL sentence is upgraded to verified only when ev
 
 The verifier removed both wrong 3B sentences (2 of 2: a wrong Dijkstra running time and a misattributed author contribution) and most of the imprecise ones. The cost is recall: about a third of correct drafts are dropped before repair. In the full pipeline, claim-driven retrieval re-cites most of them (yield 91%).
 
+**Recall without losing precision** (`eval/gate.py`: the 198 baseline drafts re-verified against their note's full evidence, no LLM repair; also run as the `pytest -m eval` regression gate):
+
+| Verifier setting | Correct drafts lost | Strict precision | Wrong accepted |
+|---|---|---|---|
+| Before | 33.5% (60/179) | 96.7% | 0 |
+| + compound sentences proven part by part | 32.4% | 96.8% | 0 |
+| + quotes judged with their source title as context | **21.2%** (38/179) | 95.3% | **0** |
+
+The quote is often worded with a pronoun ("In both contexts, *it* refers to…"), so the NLI model couldn't tell what it was about. Sentences that pass only with this title context are marked as such in their footnote. Contradiction flags between sources were tested and left off: the 3 flags raised were all false alarms.
+
+**Topic overviews rewritten from the new trusted sources** (`build_library.py retopics`): 20 of 23 rewrites beat the old note and replaced it, and the 3 that didn't were kept. Median verified sentences per overview went from 4 to 6, e.g. *Core data structures* 1 → 11 and *Divisibility and the GCD* 6 → 13. Old versions are kept in `<Subject>/Archive/`.
+
 **Speed and fidelity**
 - Key-points note for one paper: 29 min → 8.5 min (3.4×), then ~5–6 min with qwen2.5:7b and batching. Fixes: float32 instead of float16 on CPU (verifier 9.3× faster), all CPU threads for Ollama (1.7×), batched NLI, result caches.
 - Library: 184 articles saved from Wikipedia, cp-algorithms, scikit-learn, d2l.ai and arXiv; **20,335 / 20,438 formulas (99.5%) render** (arXiv papers from their LaTeX source via pandoc, others from MathJax/KaTeX/LaTeXML alt-text, every formula checked with MathJax).
