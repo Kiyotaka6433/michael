@@ -197,6 +197,36 @@ def _prove_parts(claims, found, evidence, nli, recite):
     return proven
 
 
+def _titled_retry(claims, found, evidence, nli, recite):
+    """Quotes often refer to their subject by pronoun ("In both contexts, it refers to simplifying a complicated
+    problem..."), so the NLI model can't tell that "it" is dynamic programming and scores a near-verbatim sentence
+    at ~0. Still-failing sentences are judged again with the source title and section heading in front of each
+    quote window: "Dynamic programming - Overview: In both contexts, it refers to ...". The shown quote is unchanged."""
+    jobs = []
+    for i, (cl, f) in enumerate(zip(claims, found)):
+        if f is not None and f[1][0] >= settings.support_threshold:
+            continue
+        cited = [evidence[l] for l in cl.citations if l in evidence]
+        pool = cited + ([c for c in evidence.values() if c not in cited] if recite else [])
+        wins = []
+        for c in pool[:12]:
+            subject = subject_of(c.title)
+            head = f"{subject} - {c.heading}" if c.heading and c.heading.lower() != subject.lower() else subject
+            for s, e in lexical_candidates(cl.sentence, c.text, top=2 if c in cited else 1):
+                wins.append((c, s, e, f"{head}: {c.text[s:e]}"))
+        jobs += [(i, w) for w in wins]
+    if not jobs:
+        return
+    scores = nli.scores([(w[3], claims[i].sentence) for i, w in jobs])
+    best = {}
+    for (i, (c, s, e, _)), (ent, con) in zip(jobs, scores):
+        if ent >= settings.support_threshold and ent > best.get(i, (None, (0, 0)))[1][0]:
+            best[i] = ((c, s, e, s, e), (ent, con))
+    for i, f in best.items():
+        found[i] = f
+        claims[i].citations = [f[0][0].label]
+
+
 def verify_claims(claims: list[Claim], evidence: dict[str, Chunk], nli: NLI, recite: bool = True) -> list[Verdict]:
     """Check every claim against quote windows of the passages it cites.
     If those fail but another passage proves the sentence, the citation is corrected to that passage
@@ -238,6 +268,8 @@ def verify_claims(claims: list[Claim], evidence: dict[str, Chunk], nli: NLI, rec
             if alt and alt[1][0] >= settings.support_threshold:
                 found[i] = alt
                 claims[i].citations = [alt[0][0].label]
+    if settings.titled_premise:
+        _titled_retry(claims, found, evidence, nli, recite)
     proven = _prove_parts(claims, found, evidence, nli, recite) if settings.decompose else {}
     verdicts = []
     for i, (cl, f) in enumerate(zip(claims, found)):
