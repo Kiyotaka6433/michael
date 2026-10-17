@@ -390,10 +390,11 @@ def flashcard_stats():
 # ------------------------------------------------------------------ v1: claims, labels, calibration
 @app.get("/api/v1/claims")
 def claims(status: str | None = None, source: str | None = None, subject: str | None = None,
-           q: str | None = None, limit: int = 100):
-    """Every sentence of Michael's notes with its verdict: e.g. ?status=partial, or ?source=Euclidean algorithm."""
+           q: str | None = None, limit: int = 100, path: str | None = None, conflicts: bool = False):
+    """Every sentence of Michael's notes with its verdict: e.g. ?status=partial, ?source=Euclidean algorithm,
+    ?path=Number Theory/Topics/Primes.md (one note: the Obsidian trust panel), ?conflicts=true."""
     from . import learning
-    return learning.query_claims(status, source, subject, q, min(limit, 1000))
+    return learning.query_claims(status, source, subject, q, min(limit, 1000), path, conflicts)
 
 
 @app.get("/api/v1/calibration")

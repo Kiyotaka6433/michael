@@ -36,6 +36,8 @@ where = ["backend"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["backend"]
+markers = ["eval: re-scores the labelled sets with the real verifier (run with: pytest -m eval)"]
+addopts = "-m 'not eval'"
 
 [tool.ruff]
 line-length = 120
