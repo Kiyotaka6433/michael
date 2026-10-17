@@ -72,7 +72,7 @@ def _equation_table(table) -> str | None:
 
 def protect_math(page: str) -> tuple[str, dict]:
     """Replace every formula with a placeholder word; returns (html, {token: markdown_math})."""
-    doc = lhtml.fromstring(page)
+    doc = lhtml.fromstring(re.sub(r"^\s*<\?xml[^>]*\?>", "", page))     # lxml refuses str with an XML declaration
     found = {}
     for table in doc.xpath('//table[contains(@class, "ltx_equationgroup") or contains(@class, "ltx_eqn_table")]'):
         if table.getparent() is None or table.xpath('ancestor::table[contains(@class, "ltx_eqn")]'):

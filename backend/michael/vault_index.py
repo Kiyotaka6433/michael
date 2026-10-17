@@ -50,6 +50,8 @@ def _kind(rel: str, front: str) -> str:
     parts = rel.split("/")
     if "michael: hub" in front:
         return "hub"
+    if "Archive" in parts[:-1]:          # replaced notes, kept for reference: not counted as current claims
+        return "archive"
     for folder, kind in (("Sources", "source"), ("Topics", "topic"), ("Key points", "keypoints"),
                          ("Flashcards", "flashcards"), ("Michael", "answer"), ("Maps", "map")):
         if folder in parts[:-1]:
