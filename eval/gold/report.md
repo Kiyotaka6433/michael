@@ -1,12 +1,12 @@
 # Gold-set report
 
-64 sentences from Michael's notes, labelled by: {'claude-audit': 64} (`claude-audit` = AI-audited, not human-labelled).
+164 sentences from Michael's notes, labelled by: {'claude-audit': 164} (`claude-audit` = AI-audited, not human-labelled).
 
 | Metric | Value | Meaning |
 |---|---|---|
-| Precision (strict) | **93.2%** | verified sentences that are right |
-| Precision (lenient) | 100.0% | verified sentences that are right or only imprecise |
-| Wrong sentences left in notes | 0 | errors a reader would see |
-| Catch rate | 100.0% | wrong drafts the verifier removed |
-| Over-removal | 61.5% | removed sentences that were actually true |
-| Yield | 68.8% | drafted sentences kept as verified |
+| Precision (strict) | **90.6%** | verified sentences that are right |
+| Precision (lenient) | 99.1% | verified sentences that are right or only imprecise |
+| Wrong sentences left in notes | 1 | errors a reader would see |
+| Catch rate | 83.3% | wrong drafts the verifier removed |
+| Over-removal | 84.1% | removed sentences that were actually true |
+| Yield | 64.6% | drafted sentences kept as verified |

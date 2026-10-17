@@ -176,13 +176,22 @@ def _run(job: dict):
         result, status, error = None, "error", f"{type(e).__name__}: {e}"
         traceback.print_exc()
     _cancel.discard(jid)
-    with db.connect() as con:
-        con.execute("UPDATE jobs SET status=?, finished=?, result=?, error=? WHERE id=?",
-                    (status, time.time(), json.dumps(result, default=str) if result is not None else None, error, jid))
     final = {"done": {"stage": "done", "detail": "finished", **(result if isinstance(result, dict) else {})},
              "cancelled": {"stage": "cancelled", "detail": "cancelled"},
              "error": {"stage": "error", "detail": error}}[status]
-    _publish(jid, {**final, "run_id": jid, "t": 0}, final=True)
+    event = {**final, "run_id": jid, "t": 0}
+    # status + final event + push happen under the subscriber lock, so a client connecting at this moment either
+    # sees the finished job (with the final event in its history) or receives the final event live - never neither
+    with _sub_lock:
+        with db.connect() as con:
+            con.execute("UPDATE jobs SET status=?, finished=?, result=?, error=? WHERE id=?",
+                        (status, time.time(), json.dumps(result, default=str) if result is not None else None, error, jid))
+            con.execute("INSERT INTO job_events VALUES (?,?,?,?,?)",
+                        (jid, time.time(), event["stage"], event.get("detail", ""),
+                         json.dumps({k: v for k, v in event.items() if k not in ("stage", "detail")}, default=str)))
+        for q in _subscribers.pop(jid, []):
+            q.put(event)
+            q.put(None)
 
 
 def _worker():

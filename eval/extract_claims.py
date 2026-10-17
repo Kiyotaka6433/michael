@@ -6,6 +6,7 @@ Each row: note, sentence, system ("SUPPORTED" | "PARTIAL" | "REMOVED"), quote, s
 Labels are added to eval/gold/gold.jsonl as {"id", "label": "correct" | "wrong" | "partly", "reason", "labeler"}.
 """
 import argparse
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -24,7 +25,7 @@ def note_claims(path: Path) -> list[dict]:
     body = text.split("> Verifier:", 1)[-1].split("\n## ", 1)[0]
     rows = []
     # sentences end with [^n] (optionally followed by a warning icon); highlighted ==...== means PARTIAL
-    for m in re.finditer(r"(==)?([^\[\n]+?)(==)?\[\^(\d+)\]", body):
+    for m in re.finditer(r"(==)?((?:[^\[\n]|\[(?!\^))+?)(==)?\[\^(\d+)\]", body):   # "[" allowed, "[^" ends it
         f = feet.get(m.group(4), {})
         rows.append({"note": path.name, "sentence": m.group(2).strip().lstrip("⚠✗ ").strip(), "system": f.get("verdict", "?"),
                      "quote": f.get("quote", ""), "source": f.get("source", ""), "entailment": f.get("entailment")})
@@ -44,8 +45,8 @@ def main():
     for p in sorted(Path(a.vault).rglob("*.md")):
         if any(part in ("Topics", "Key points", "Michael") for part in p.parts):
             rows += note_claims(p)
-    for i, r in enumerate(rows):
-        r["id"] = f"c{i:04d}"
+    for r in rows:      # stable id: the same sentence in the same note keeps its label across re-extractions
+        r["id"] = "g" + hashlib.sha1(f"{r['note']}|{r['sentence']}".encode("utf8")).hexdigest()[:10]
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n", encoding="utf8")
     by = {}
