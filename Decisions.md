@@ -4,6 +4,26 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-17 · 14:00-15:00
+**Done**
+- **All 26 topic overviews finished: 120/134 sentences verified, 100 flashcards.** The batch moved on to key points for 84 papers and tutorial pages (overnight).
+- **Claim-driven retrieval:** before a sentence is removed, the whole collected pool is searched with that sentence, and the sentence is kept if another passage proves it. The previously failed topic "Unsupervised learning" came out 5/5.
+- **Chrome extension live in your browser:** connects without copy-paste (git-ignored `local-token.json`), link titles cleaned ("Bloom filter", not "Bloom filter - Wikipedia"), topic vectors precomputed at start-up so the first suggestion is instant.
+- **Web app (Phase 3B):**
+  - `/library`: subjects → topics → overviews, articles, key points, reading lists.
+  - `/note`: renders a note with exact math; all 138 Transformer formulas render with 0 errors. Links between notes work, backlinks show, and an "Open in Obsidian" button is on every page.
+  - `/search`: full-text and meaning search.
+  - `/flashcards`: reviews shared with the Obsidian Spaced Repetition plugin.
+- 43 tests pass.
+
+**Choices and why**
+- **Grow the existing Next.js dashboard into the web app** instead of starting a new project: same backend, same styles, one thing to run.
+- **Flashcards write the Spaced Repetition plugin's own `<!--SR:...-->` format**: reviews count in Obsidian and in the browser, and no second schedule can go out of sync. A card edited in Obsidian is never overwritten (the file wins).
+- **Did not grade any cards while testing**: that would have changed your real review schedule. Grading is covered by unit tests on temporary decks.
+- **Display math normalised before rendering** (`$$` on its own lines): Obsidian accepts inline-style `$$...$$` but the web Markdown parser doesn't. Without it only 20 of 138 formulas rendered.
+- **Wikilink paths are URL-encoded**: note names contain spaces, which break Markdown links.
+- **Developer mode in Chrome was left to you**: it's a browser security setting.
+
 ## 2026-10-17 · 13:00-14:00
 **Done**
 - Restarted the backend and the batch after the 12:55 Windows restart, and set up this hourly decisions log.
