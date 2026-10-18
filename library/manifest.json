@@ -330,7 +330,16 @@
       "cp:geometry/segments-intersection",
       "cp:geometry/area-of-simple-polygon",
       "cp:geometry/picks-theorem",
-      "cp:geometry/nearest_points"
+      "cp:geometry/nearest_points",
+      "cp:geometry/oriented-triangle-area",
+      "cp:geometry/lines-intersection",
+      "cp:geometry/circle-line-intersection",
+      "cp:geometry/point-in-convex-polygon",
+      "wiki:Convex hull",
+      "wiki:Graham scan",
+      "wiki:Shoelace formula",
+      "wiki:Line–line intersection",
+      "wiki:Pick's theorem"
      ]
     },
     {
@@ -420,7 +429,9 @@
       "wiki:Receiver operating characteristic",
       "wiki:Confusion matrix",
       "wiki:Cross-entropy",
-      "skl:model_evaluation"
+      "skl:model_evaluation",
+      "skl:learning_curve",
+      "wiki:F-score"
      ]
     },
     {
