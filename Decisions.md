@@ -4,6 +4,25 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-18 · 16:50-17:20
+**Done**
+- **Gate with the overlap floor:**
+
+  | | Strict precision (gold / drafts) | Correct lost | Wrong accepted |
+  |---|---|---|---|
+  | Before the title retry | 91.8% / 96.7% | 33.5% | 0 |
+  | **Now** | **92.6% / 97.1%** | **26.3%** | **0** |
+
+  Both precision and recall beat yesterday's start. The gate's strict floor goes back up to 92%.
+- **Two-stage verifier** (`CascadeNLI`, off until calibrated): the small model only screens out clear non-matches and never accepts anything. It is calibrated on verifier pairs recorded from a real gate run (`eval/cascade_calibrate.py`).
+- **CI on GitHub** (lint, offline tests, plugin build) passed on its first run; badge in the README. It is checked to run with **no models available** (empty model cache, downloads blocked).
+- **`setup.ps1`, one-command install, tested end to end on a fresh vault.** The test caught a real bug: re-running the installer while the backend is up failed on the locked `michael.exe`, so the installer now stops this project's backend first.
+- **Packaging bug fixed:** `sympy`, `antlr4-python3-runtime` and `lxml` were missing from `pyproject.toml`, so a fresh install would have broken the maths checker.
+
+**Choices and why**
+- **CI enforces the critical lint set only** (syntax errors, undefined names). The 107 style findings were reviewed: none were bugs.
+- **The cascade can only reject:** a speed-up must not change what gets accepted, so precision stays the large model's.
+
 ## 2026-10-18 · 15:45-16:50 (day 2: back on the plan)
 **Done**
 - **Laptop restart at 15:08** stopped the backend, the batch and the gate run. All were restarted, and the app now keeps the laptop awake while this session is active.
