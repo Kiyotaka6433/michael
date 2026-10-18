@@ -4,6 +4,21 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-18 · 17:20-18:50 (recall result; the speed hunt)
+**Done**
+- **Recall measured on the full pipeline** (the gate now includes claim-driven retrieval, as the pipeline does): correct drafts lost **33.5% → 17.3%** (31/179), **0** wrong accepted, strict precision 95.5% (drafts) / 92.1% (gold). README results updated. Compound splitting costs 11% of verifier pairs for 2 recovered sentences; it stays on (recall first).
+- **Where a note's time goes** (profiled, `eval/profile_note.py`, Ollama's own timings logged): the writer is 60-75%, with reading a 1,730-token prompt (64 s) and generating 344 tokens (59 s) about equal; the reranker is 10-15%; the verifier is 10-25%, mostly retries on failing sentences.
+- **Speed ideas tested and rejected, all with data:**
+  - **Two-stage verifier:** at a cut that loses no accepts, the large model still judges 90% of pairs, so it would be slower.
+  - **int8 verifier:** 1.7× faster, but **492 of 498** accepted pairs flipped to rejected.
+  - **Early exit** (closest window first): 0 verdict changes but only 3% fewer pairs, because failing sentences dominate the cost.
+  - **3B drafts + 7B repairs:** more verified sentences per note (6.3 vs 4.8, precision 96.6% vs 94.0%), but **slower end to end** on 15 GB of RAM: more repair rounds, and both models in memory forced paging.
+- **Running:** 3B for both drafting and repair (7B unloaded). It becomes a "Fast" mode only if it is ≥ 2× faster with no loss of verified sentences.
+
+**Choices and why**
+- **No speed change ships without a measurement.** Every rejected idea stays in the code behind a setting that is off, with its numbers, so it isn't tried again blindly.
+- **The 3B writer is not the default** even though its verified output looked better: the user-visible metric is time per finished note, and it lost on that.
+
 ## 2026-10-18 · 16:50-17:20
 **Done**
 - **Gate with the overlap floor:**
