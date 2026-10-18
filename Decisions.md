@@ -4,6 +4,19 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-18 · 20:40-23:25
+**Done**
+- **Thin topics fixed with more sources** (11 new pages):
+  - Geometry got 4 cp-algorithms pages and 5 Wikipedia pages; ML Evaluation got scikit-learn's validation curves and Wikipedia's F-score.
+  - **Geometry 2 → 11 verified sentences, ML Evaluation 3 → 5.** No topic overview is below 4 any more (yesterday's open target is met).
+  - Range queries was kept (its rewrite verified 4 vs 6).
+- Repairs and links re-run (142 cp author links, 1,931 Wikipedia ones), hubs and graph rebuilt.
+- **Key-points batch started:** 5 of 183 done (8-20 min each while other jobs shared the CPU), all with flashcards.
+- Recall ideas for next steps ranked from today's data (two-quote evidence, a wider rescue search, quote windows for the writer, a near-verbatim relaxation, quote-anchored repair), plus an **MCP server** proposal so other AI tools can call Michael's verifier. Waiting for your go-ahead.
+
+**Choices and why**
+- **A thin overview was a sources problem, not a verifier problem:** two rewrite passes changed nothing, while 9 more sources took Geometry from 2 to 11.
+
 ## 2026-10-18 · 18:50-20:40
 **Done**
 - **3B for both drafting and repair** (7B unloaded): 271 s for a 6/6 note. Drafting is about 1.6× faster, but end to end it is no faster than 7B, because more of its sentences need retries and repair. **7B stays the default;** the 2× speed target is not met today.
