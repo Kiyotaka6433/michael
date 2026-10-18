@@ -4,6 +4,29 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-18 23:25 → 19 Oct 00:45
+**Done**
+- **The extension was slow and showed no pop-up** because the laptop was saturated: CPU 97%, 0.6 GB free RAM, paging.
+  - Causes: gate experiments plus the overnight batch at the same time; the 3B model left loaded in Ollama; and `llama-server` running at **AboveNormal** priority, ahead of Chrome and Obsidian.
+  - Fixes: experiments stopped and the 3B model unloaded; a watchdog (`scripts/keep_responsive.ps1`, started by the batch) keeps the batch and llama-server at BelowNormal; `/health` caches Ollama's model list instead of waiting on a busy Ollama.
+  - Result: classify 1.7 s → **0.10 s**, health 3.2 s → **0.06 s**.
+- **Recall ideas measured** (gate, full pipeline):
+
+  | Idea | Correct lost | Wrong accepted | Decision |
+  |---|---|---|---|
+  | (current) | 17.3% | 0 | |
+  | Near-verbatim relaxation | 17.3% | 0 | **off**, no gain |
+  | **Two closest separate quotes joined** | 13.4% | 0 | **on** |
+  | **6 rescue passages** (was 3) | 16.8% | 0 | **on** |
+  | **Both together** | **12.8%** | **0** | strict precision 95.1% / gold 92.1% |
+
+  The two-quote retry first failed in a unit test: the two closest windows usually overlap, so it now takes the best window plus the best one that doesn't overlap it.
+- **At shutdown, two quotes went back OFF:** an existing unit test showed it lets a sentence pass at 0.80 where the evidence needs its paragraph, a case that otherwise needs 0.90. It will be re-measured with the 0.90 threshold before it goes on. 6 rescue passages stay on (16.8% lost, 0 wrong). The key-points batch was at 14/183 and resumes tomorrow.
+
+**Choices and why**
+- **An idea goes on only with 0 new wrong acceptances,** and every verdict change is listed with its label (`eval/gate_compare.py`), so a bad acceptance can't hide in an average.
+- **Your apps come first:** the batch now always runs below normal priority, so the extension and Obsidian stay fast while it works.
+
 ## 2026-10-18 · 20:40-23:25
 **Done**
 - **Thin topics fixed with more sources** (11 new pages):
