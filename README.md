@@ -243,11 +243,14 @@ The verifier removed both wrong 3B sentences (2 of 2: a wrong Dijkstra running t
 | Before (17 Oct) | 33.5% (60/179) | 96.7% / 91.8% | 0 |
 | + compound sentences proven part by part | 32.4% | 96.8% | 0 |
 | + quotes judged with their source title as context, but only when the quote shares the sentence's wording (overlap ≥ 70) | 26.3% | **97.1% / 92.6%** | 0 |
-| + claim-driven retrieval: failing sentences search all source files (the full pipeline) | **17.3%** (31/179) | 95.5% / 92.1% | **0** |
+| + claim-driven retrieval: failing sentences search all source files (the full pipeline) | 17.3% (31/179) | 95.5% / 92.1% | 0 |
+| + a failing sentence judged against its two closest separate quotes, joined (facts spread over the source) | 13.4% | 95.1% | 0 |
+| + 6 passages per failing sentence in the search (was 3) | **12.8%** (23/179) | **95.1% / 92.1%** | **0** |
 
 The quote is often worded with a pronoun ("In both contexts, *it* refers to…"), so the NLI model couldn't tell what it was about. Sentences that pass only with this title context are marked as such in their footnote. Without the overlap floor, the title alone let a true sentence through on an unrelated quote; this was caught in the Obsidian trust panel and has a regression test.
 
 **Negative results, kept off:**
+- **Near-verbatim relaxation** (accept 0.5–0.7 when the sentence copies its quote): no gain on the drafts.
 - **Contradiction flags between sources:** all 3 flags raised were false alarms.
 - **Two-stage verifier** (a small NLI model screens, the large one judges): at the setting that loses no accepted sentences, the large model still judged 90% of pairs, so it would have been slower overall.
 

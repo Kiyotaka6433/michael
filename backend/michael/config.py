@@ -54,13 +54,13 @@ class Settings:
     semantic_windows: bool = _env("SEMANTIC_WINDOWS", "1") == "1"   # rank quote windows by meaning too
     partial_threshold: float = 0.40  # entailment probability for PARTIAL
     max_repair_rounds: int = 1
-    rescue_k: int = int(_env("RESCUE_K", 3))   # claim-driven retrieval: passages checked per failing sentence
+    rescue_k: int = int(_env("RESCUE_K", 6))   # claim-driven retrieval: passages per failing sentence (6: +1 correct vs 3, 0 wrong)
     cascade_cut: float = float(_env("CASCADE_CUT", 0))   # >0: small NLI screens, large judges pairs above this
     early_exit: bool = _env("EARLY_EXIT", "0") == "1"   # score the closest quote window first; full set only on failure
     near_verbatim: bool = _env("NEAR_VERBATIM", "0") == "1"      # accept PARTIAL >= min when the sentence ~= its quote
     near_verbatim_min: float = float(_env("NEAR_VERBATIM_MIN", 0.5))
     near_verbatim_overlap: int = int(_env("NEAR_VERBATIM_OVERLAP", 90))
-    two_quotes: bool = _env("TWO_QUOTES", "0") == "1"   # failing sentence: judge against its 2 closest windows joined
+    two_quotes: bool = _env("TWO_QUOTES", "0") == "1"   # 2 closest windows joined (gate: lost 17.3% -> 13.4%, 0 wrong) - OFF until it uses the 0.90 context threshold (test_sentence_that_passes_only_in_context_needs_a_high_score)
     nightly_hour: int = int(_env("NIGHTLY_HOUR", 2))   # scheduler: re-index, re-check citations, new key points
 
     # articles
