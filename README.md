@@ -238,13 +238,18 @@ The verifier removed both wrong 3B sentences (2 of 2: a wrong Dijkstra running t
 
 **Recall without losing precision** (`eval/gate.py`: the 198 baseline drafts re-verified against their note's full evidence, no LLM repair; also run as the `pytest -m eval` regression gate):
 
-| Verifier setting | Correct drafts lost | Strict precision | Wrong accepted |
+| Verifier setting | Correct drafts lost | Strict precision (drafts / gold) | Wrong accepted |
 |---|---|---|---|
-| Before | 33.5% (60/179) | 96.7% | 0 |
+| Before (17 Oct) | 33.5% (60/179) | 96.7% / 91.8% | 0 |
 | + compound sentences proven part by part | 32.4% | 96.8% | 0 |
-| + quotes judged with their source title as context | **21.2%** (38/179) | 95.3% | **0** |
+| + quotes judged with their source title as context, but only when the quote shares the sentence's wording (overlap ≥ 70) | 26.3% | **97.1% / 92.6%** | 0 |
+| + claim-driven retrieval: failing sentences search all source files (the full pipeline) | **17.3%** (31/179) | 95.5% / 92.1% | **0** |
 
-The quote is often worded with a pronoun ("In both contexts, *it* refers to…"), so the NLI model couldn't tell what it was about. Sentences that pass only with this title context are marked as such in their footnote. Contradiction flags between sources were tested and left off: the 3 flags raised were all false alarms.
+The quote is often worded with a pronoun ("In both contexts, *it* refers to…"), so the NLI model couldn't tell what it was about. Sentences that pass only with this title context are marked as such in their footnote. Without the overlap floor, the title alone let a true sentence through on an unrelated quote; this was caught in the Obsidian trust panel and has a regression test.
+
+**Negative results, kept off:**
+- **Contradiction flags between sources:** all 3 flags raised were false alarms.
+- **Two-stage verifier** (a small NLI model screens, the large one judges): at the setting that loses no accepted sentences, the large model still judged 90% of pairs, so it would have been slower overall.
 
 **Topic overviews rewritten from the new trusted sources** (`build_library.py retopics`): 20 of 23 rewrites beat the old note and replaced it, and the 3 that didn't were kept. Median verified sentences per overview went from 4 to 6, e.g. *Core data structures* 1 → 11 and *Divisibility and the GCD* 6 → 13. Old versions are kept in `<Subject>/Archive/`.
 
