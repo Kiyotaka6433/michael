@@ -4,6 +4,19 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-18 · 18:50-20:40
+**Done**
+- **3B for both drafting and repair** (7B unloaded): 271 s for a 6/6 note. Drafting is about 1.6× faster, but end to end it is no faster than 7B, because more of its sentences need retries and repair. **7B stays the default;** the 2× speed target is not met today.
+- README: a "where a note's time goes" table and the 4 speed ideas measured and not adopted.
+- **Overnight batch resumed:** the topic re-check pass is at 23 of 28.
+  - Gains: Linear models 5 → 8, Classic classifiers 6 → 9, Ensembles 5 → 9.
+  - Combinatorics and ML Foundations improved by one sentence or one source.
+  - Kept: Geometry (2), Optimisation and ML Evaluation (3) were unchanged.
+
+**Choices and why**
+- **Trimming the writer's evidence** (the remaining speed lever, since reading the prompt is about half the writer's time) is **not rushed in tonight:** it can cost recall, which is the day's priority. It is first on tomorrow's list, as an A/B test against the gate.
+- **Geometry and ML Evaluation are still thin** after both passes. The cause is the evidence (few short articles), not the verifier, so they need more sources, not more rewrites.
+
 ## 2026-10-18 · 17:20-18:50 (recall result; the speed hunt)
 **Done**
 - **Recall measured on the full pipeline** (the gate now includes claim-driven retrieval, as the pipeline does): correct drafts lost **33.5% → 17.3%** (31/179), **0** wrong accepted, strict precision 95.5% (drafts) / 92.1% (gold). README results updated. Compound splitting costs 11% of verifier pairs for 2 recovered sentences; it stays on (recall first).
