@@ -253,6 +253,20 @@ The quote is often worded with a pronoun ("In both contexts, *it* refers to…")
 
 **Topic overviews rewritten from the new trusted sources** (`build_library.py retopics`): 20 of 23 rewrites beat the old note and replaced it, and the 3 that didn't were kept. Median verified sentences per overview went from 4 to 6, e.g. *Core data structures* 1 → 11 and *Divisibility and the GCD* 6 → 13. Old versions are kept in `<Subject>/Archive/`.
 
+**Where a note's time goes** (`eval/profile_note.py`, one key-points note, CPU only, with Ollama's own timings):
+
+| Stage | Share | Notes |
+|---|---|---|
+| Writer (qwen2.5:7b) | 60–75% | half reading the evidence prompt (~1,700 tokens at 27 tok/s), half generating (~6 tok/s) |
+| Reranker | 10–15% | bge-reranker-base over 20–30 candidates |
+| Verifier | 10–25% | mostly the recall retries on sentences that fail at first |
+
+Tried and **not adopted**, each measured:
+- **Two-stage verifier:** the large model still judged 90% of pairs.
+- **int8 verifier:** 492 of 498 accepts flipped.
+- **Closest-window-first:** 3% fewer pairs.
+- **qwen2.5:3b writer:** drafts about 1.6× faster and more verified sentences, but no faster end to end (more repairs).
+
 **Speed and fidelity**
 - Key-points note for one paper: 29 min → 8.5 min (3.4×), then ~5–6 min with qwen2.5:7b and batching. Fixes: float32 instead of float16 on CPU (verifier 9.3× faster), all CPU threads for Ollama (1.7×), batched NLI, result caches.
 - Library: 184 articles saved from Wikipedia, cp-algorithms, scikit-learn, d2l.ai and arXiv; **20,335 / 20,438 formulas (99.5%) render** (arXiv papers from their LaTeX source via pandoc, others from MathJax/KaTeX/LaTeXML alt-text, every formula checked with MathJax).
