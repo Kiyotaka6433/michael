@@ -18,6 +18,9 @@ dependencies = [
     "trafilatura>=1.12",
     "pymupdf>=1.24",
     "watchfiles>=0.24",
+    "lxml>=5",
+    "sympy>=1.13",
+    "antlr4-python3-runtime==4.11.*",   # sympy's LaTeX parser (maths-aware checking)
 ]
 
 [project.optional-dependencies]
