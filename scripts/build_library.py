@@ -194,6 +194,26 @@ def _cited_sources(md: str) -> int:
     return len({m.split("#")[0] for m in re.findall(r"\[\[([^\]|]+)", part.split("\n## ", 1)[0])})
 
 
+def still_verified(md: str) -> int:
+    """How many of a note's verified sentences still pass under the CURRENT verifier, judged against the quote the
+    note itself shows. A rule fix (e.g. the title-context overlap floor) can invalidate an old verification; the
+    old note must not win a comparison on a count that no longer holds."""
+    from michael.host.archangel import VERIFIER
+    from michael.host.raguel import verify_claims
+    from michael.learning import parse_note_claims
+    from michael.models import Chunk, Claim
+    rows = [r for r in parse_note_claims(md) if r["status"] == "SUPPORTED" and r["quote"]]
+    if not rows:
+        return 0
+    evidence, claims = {}, []
+    for i, r in enumerate(rows):
+        title = r["source"].strip("[]").split("#")[0].split("](")[0]
+        evidence[f"p{i}"] = Chunk(source_id=title, kind="vault", title=title, url=title, text=r["quote"], start=0,
+                                  end=len(r["quote"]), label=f"p{i}")
+        claims.append(Claim(index=i, sentence=r["sentence"], citations=[f"p{i}"]))
+    return sum(v.label == "SUPPORTED" for v in verify_claims(claims, evidence, VERIFIER, recite=False))
+
+
 def better(new: dict, old: dict) -> bool:
     """A rewrite replaces the current note only if it proves at least as many sentences and either proves more
     or draws on more distinct sources; ties keep the current note (and its flashcard history)."""
@@ -229,7 +249,8 @@ def phase_retopics(vault, manifest, state, subject=None, limit=None, every=False
             cand = note.parent / ".candidates" / note.name
             r = pravuil.topic_note(subj["name"], topic["name"], paths, cand)
             old_md = note.read_text(encoding="utf8")
-            old = {"supported": state[key].get("supported", 0), "sources": _cited_sources(old_md)}
+            old = {"supported": min(state[key].get("supported", 0), still_verified(old_md)),
+                   "sources": _cited_sources(old_md)}
             new = {"supported": r["stats"]["supported"], "sources": _cited_sources(r["markdown"])}
             verdict = "replaced" if better(new, old) else "kept"
             if verdict == "replaced":
