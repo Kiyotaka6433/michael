@@ -104,12 +104,13 @@ def _drop_duplicates(claims, verdicts):
     return kept
 
 
-def _rescue(failed, pool, evidence, by_label, verdicts, per_claim: int = 3) -> list:
+def _rescue(failed, pool, evidence, by_label, verdicts, per_claim: int | None = None) -> list:
     """Claim-driven retrieval: a sentence that fails against the writer's passages may still be proven elsewhere
     in the collected material. Search the whole pool with the sentence itself as the query, check the best few
     passages, and keep the sentence (citing the new passage) if one proves it. Returns the claims still failing."""
     if not pool or not failed:
         return failed
+    per_claim = per_claim or settings.rescue_k
     known = {c.id for c in evidence}
     rest = [c for c in pool if c.id not in known]
     if not rest:

@@ -33,6 +33,23 @@ def sid(note, sentence):
     return "b" + hashlib.sha1(f"{note}|{sentence}".encode("utf8")).hexdigest()[:10]
 
 
+def pool_paths_by_note() -> dict:
+    """Every source file each baseline note could draw on (the pool claim-driven retrieval searches)."""
+    state = json.loads((ROOT / "library" / "state.json").read_text(encoding="utf8"))
+    manifest = json.loads((ROOT / "library" / "manifest.json").read_text(encoding="utf8"))
+    out = {}
+    for key in TOPICS:
+        subject, topic = key.split("/", 1)
+        t = next(t for s in manifest["subjects"] if s["name"] == subject for t in s["topics"] if t["name"] == topic)
+        out[f"{topic}.md"] = [state[i]["path"] for i in t["items"] if state.get(i, {}).get("status") == "saved"
+                              and not i.startswith("url:")]
+    for item in KEYPOINTS:
+        st = state.get(item, {})
+        if st.get("status") == "saved":
+            out[f"{Path(st['path']).stem} - key points.md"] = [st["path"]]
+    return out
+
+
 def evidence_by_note() -> dict:
     """The exact evidence each baseline note was drafted from (deterministic: hybrid search + reranker, no LLM)."""
     state = json.loads((ROOT / "library" / "state.json").read_text(encoding="utf8"))

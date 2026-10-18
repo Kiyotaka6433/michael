@@ -21,3 +21,10 @@
   border-left: 2px solid var(--background-modifier-border); }
 .michael-trust-meta, .michael-trust-conflict { font-size: var(--font-ui-smaller); color: var(--text-faint); }
 .michael-trust-conflict { color: var(--color-orange); margin-top: 2px; }
+
+.michael-trust-badge { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 8px;
+  font-size: var(--font-ui-smaller); background: var(--background-modifier-hover); color: var(--text-muted); }
+.michael-trust-badge.is-math { color: var(--color-blue); }
+.michael-trust-badge.is-context { color: var(--color-purple); }
+.michael-trust-badge.is-parts { color: var(--color-cyan); }
+.michael-trust-quote p, .michael-trust-sentence p { margin: 0; }

@@ -1,9 +1,18 @@
 // "Michael trust" side panel: every sentence of the open Michael note with its verdict, score, quote and source.
 // Parsed from the note itself (the file is the source of truth, so it also works with the backend off); the same
 // format learning.parse_note_claims stores in the database.
-import { ItemView, MarkdownView, TFile, WorkspaceLeaf } from "obsidian";
+import { Component, ItemView, MarkdownRenderer, MarkdownView, TFile, WorkspaceLeaf } from "obsidian";
 
 export const TRUST_VIEW = "michael-trust";
+
+// footnote details shown as small badges: [text in the footnote, badge, css class]
+const BADGES: [string, string, string][] = [
+  ["formulas proven equivalent", "∑ proven", "is-math"],
+  ["formulas and numbers checked", "∑ checked", "is-math"],
+  ["in the context of its paragraph", "¶ paragraph", "is-context"],
+  ["judged with its source title as context", "title context", "is-context"],
+  ["proven in", "proven in parts", "is-parts"],
+];
 
 export interface TrustRow {
   sentence: string;
@@ -50,6 +59,8 @@ export function parseTrust(text: string): TrustRow[] {
 }
 
 export class TrustView extends ItemView {
+  private renderScope: Component | null = null;   // owns the rendered quotes (maths, bold); replaced on each render
+
   constructor(leaf: WorkspaceLeaf) {
     super(leaf);
   }
@@ -73,6 +84,9 @@ export class TrustView extends ItemView {
     if (!file || file.extension !== "md") return;      // keep showing the last note while the panel has focus
     const text = await this.app.vault.cachedRead(file);
     const rows = parseTrust(text);
+    this.renderScope?.unload();
+    this.renderScope = new Component();
+    this.addChild(this.renderScope);
     root.empty();
     root.addClass("michael-trust");
     root.createEl("h4", { text: file.basename });
@@ -93,12 +107,14 @@ export class TrustView extends ItemView {
     const el = root.createDiv({ cls: `michael-trust-row is-${cls}${r.conflictSource ? " is-conflict" : ""}` });
     const head = el.createDiv({ cls: "michael-trust-head" });
     head.createSpan({ cls: "michael-trust-icon", text: { ok: "✓", partial: "◐", removed: "✗" }[cls] ?? "?" });
-    head.createSpan({ cls: "michael-trust-sentence", text: r.sentence });
+    this.md(head.createSpan({ cls: "michael-trust-sentence" }), r.sentence, file);
     if (r.entailment !== null) head.createSpan({ cls: "michael-trust-score", text: r.entailment.toFixed(2) });
-    if (r.quote) el.createEl("blockquote", { cls: "michael-trust-quote", text: r.quote });
+    if (r.quote) this.md(el.createEl("blockquote", { cls: "michael-trust-quote" }), r.quote, file);
     const meta = el.createDiv({ cls: "michael-trust-meta" });
     if (r.source) this.link(meta, r.source, file);
-    if (r.detail) meta.createSpan({ text: ` · ${r.detail}` });
+    for (const [needle, badge, cls] of BADGES) {
+      if (r.detail.includes(needle)) meta.createSpan({ cls: `michael-trust-badge ${cls}`, text: badge });
+    }
     if (r.conflictSource) {
       const c = el.createDiv({ cls: "michael-trust-conflict" });
       c.createSpan({ text: "⚠ " });
@@ -108,6 +124,13 @@ export class TrustView extends ItemView {
     if (r.status !== "REMOVED") el.onClickEvent((e) => {
       if ((e.target as HTMLElement).tagName !== "A") this.jumpTo(file, r.sentence);
     });
+  }
+
+  // quotes and sentences contain LaTeX and Markdown: render them as Obsidian would
+  private md(el: HTMLElement, text: string, file: TFile) {
+    MarkdownRenderer.render(this.app, text, el, file.path, this.renderScope ?? this);
+    const p = el.querySelector(":scope > p");          // one paragraph: unwrap so it flows inline
+    if (p && el.children.length === 1) el.replaceChildren(...Array.from(p.childNodes));
   }
 
   private link(parent: HTMLElement, md: string, from: TFile) {
