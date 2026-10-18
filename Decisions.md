@@ -4,6 +4,21 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-18 · 15:45-16:50 (day 2: back on the plan)
+**Done**
+- **Laptop restart at 15:08** stopped the backend, the batch and the gate run. All were restarted, and the app now keeps the laptop awake while this session is active.
+- **Trust panel used for real:** it was shown in your vault after Obsidian was pointed back at Michael Vault. On its first use it exposed a **false citation**: a true sentence about the Sieve of Eratosthenes was cited to an unrelated quote ("if n is composite, it has a divisor ≤ √n"), accepted at 0.99 only because of the source title.
+  - **Fix 1:** the title-context retry now needs a word overlap of 70 or more between the sentence and the quote (genuine cases score 82-85, this one 58). It has a regression test.
+  - **Audit** (`eval/audit_titled.py`): of 6 title-context sentences in the vault, 5 are genuinely supported and 1 was this bad one.
+  - **Fix 2:** the topic comparison now re-checks the *old* note under current rules before comparing. Primes was "kept" because the old note's 12 included the bad citation; re-checked it is 11, so the rewrite wins.
+- **Trust panel polish:** quotes and sentences render as Markdown/LaTeX, with badges (∑ checked, title context, proven in parts, ¶ paragraph).
+- **Recall:** the gate now includes claim-driven retrieval (failing sentences search *all* source files), as the pipeline does. The number of passages checked per sentence (`MICHAEL_RESCUE_K`) is now configurable for testing.
+- The batch is paused during the day so gate runs aren't slowed (each took 20-40 min while sharing the CPU); it resumes in the evening.
+
+**Choices and why**
+- **A precision bug found by using the product outranks the plan's order:** fixed first, then back to recall.
+- **A rule change must apply to old notes too:** otherwise a stale verification protects an old note from a better rewrite.
+
 ## 2026-10-18 · 00:30-00:40
 - **The second topic pass (recall fix on) has started:**
   - GCD kept (13/4 both times).
