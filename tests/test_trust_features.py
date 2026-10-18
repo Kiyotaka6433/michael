@@ -100,11 +100,24 @@ def test_quote_with_pronoun_passes_with_title_context_and_is_marked(monkeypatch)
         def scores(self, pairs):
             return [(0.9 if "Dynamic programming" in p else 0.05, 0.0) for p, h in pairs]
     monkeypatch.setattr(settings, "titled_premise", True)
-    ev = {"p1": chunk("p1", "Dynamic programming", "In both contexts, it refers to simplifying a complicated problem.")}
-    claims = [Claim(index=0, sentence="Dynamic programming simplifies a complicated problem.", citations=["p1"])]
+    ev = {"p1": chunk("p1", "Dynamic programming", "In both contexts, it refers to simplifying a complicated problem by "
+                                                   "breaking it down into simpler sub-problems in a recursive manner.")}
+    claims = [Claim(index=0, sentence="Dynamic programming simplifies a complicated problem by breaking it down into "
+                                      "simpler sub-problems in a recursive manner.", citations=["p1"])]
     v = verify_claims(claims, ev, TitleNLI(), recite=False)[0]
     assert v.label == "SUPPORTED" and v.titled
     md = gabriel.render("Q?", claims, {0: v}, list(ev.values()), [], "m",
                         {"supported": 1, "total": 1, "partial": 0, "unsupported": 0, "removed": 0})
     assert "judged with its source title as context" in md
-    assert '"In both contexts, it refers to simplifying a complicated problem."' in md   # the quote itself is unchanged
+    assert '"In both contexts, it refers to simplifying' in md          # the quote itself is unchanged
+
+
+def test_title_context_never_rescues_a_quote_about_something_else(monkeypatch):
+    class TitleNLI(FakeNLI):          # a model fooled by the title alone
+        def scores(self, pairs):
+            return [(0.99 if "Sieve" in p else 0.05, 0.0) for p, h in pairs]
+    monkeypatch.setattr(settings, "titled_premise", True)
+    ev = {"p1": chunk("p1", "Sieve of Eratosthenes", "If any integer n is composite, then n has a prime divisor at most sqrt n.")}
+    claims = [Claim(index=0, sentence="To find all primes up to n, create a list of consecutive integers from 2 through n.",
+                    citations=["p1"])]
+    assert verify_claims(claims, ev, TitleNLI(), recite=False)[0].label != "SUPPORTED"

@@ -197,6 +197,9 @@ def _prove_parts(claims, found, evidence, nli, recite):
     return proven
 
 
+TITLED_MIN_OVERLAP = 70    # token_set_ratio: correct cases 82-85, the false Sieve citation 58
+
+
 def _titled_retry(claims, found, evidence, nli, recite):
     """Quotes often refer to their subject by pronoun ("In both contexts, it refers to simplifying a complicated
     problem..."), so the NLI model can't tell that "it" is dynamic programming and scores a near-verbatim sentence
@@ -213,6 +216,11 @@ def _titled_retry(claims, found, evidence, nli, recite):
             subject = subject_of(c.title)
             head = f"{subject} - {c.heading}" if c.heading and c.heading.lower() != subject.lower() else subject
             for s, e in lexical_candidates(cl.sentence, c.text, top=2 if c in cited else 1):
+                # the title only resolves who "it" is: the quote itself must already carry the sentence's wording.
+                # Without this, "Sieve of Eratosthenes: If n is composite, it has a divisor <= sqrt(n)" was
+                # accepted (0.99) for a sentence about listing the integers 2..n - true, but not what the quote says
+                if fuzz.token_set_ratio(cl.sentence, c.text[s:e]) < TITLED_MIN_OVERLAP:
+                    continue
                 wins.append((c, s, e, f"{head}: {c.text[s:e]}"))
         jobs += [(i, w) for w in wins]
     if not jobs:
