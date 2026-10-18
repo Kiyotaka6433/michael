@@ -50,6 +50,7 @@ def baseline_rows():
 
 
 EVIDENCE_CACHE = ROOT / "eval" / "baseline" / "evidence.json"
+RESCUE = True       # include claim-driven retrieval (the pipeline's re-search of all source files); off: verifier only
 
 
 def baseline_evidence() -> dict:
@@ -72,6 +73,8 @@ def judge_baseline(rows):
     from michael.host.raguel import verify_claims
     from michael.models import Claim
     pools = baseline_evidence()
+    from baseline_drafts import pool_paths_by_note
+    pools_paths = pool_paths_by_note()
     by_note = {}
     for r in rows:
         by_note.setdefault(r["note"], []).append(r)
@@ -79,7 +82,17 @@ def judge_baseline(rows):
         evidence = {c.label: c for c in pools.get(note, [])}
         claims = [Claim(index=i, sentence=r["sentence"], citations=[l for l in r["citations"] if l in evidence])
                   for i, r in enumerate(rs)]
-        for r, c, v in zip(rs, claims, verify_claims(claims, evidence, VERIFIER, recite=True)):
+        verdicts = {c.index: v for c, v in zip(claims, verify_claims(claims, evidence, VERIFIER, recite=True))}
+        # claim-driven retrieval, as the pipeline does it: failing sentences search ALL the note's source files
+        failed = [c for c in claims if verdicts[c.index].label != "SUPPORTED"]
+        if failed and RESCUE:
+            from michael.host.archangel import _rescue
+            from michael.host.heralds.vault import file_chunks
+            pool = [ch for p in pools_paths.get(note, []) for ch in file_chunks(Path(p))]
+            ev_list = list(evidence.values())
+            _rescue(failed, pool, ev_list, evidence, verdicts)
+        for r, c in zip(rs, claims):
+            v = verdicts[c.index]
             r["verdict"], r["entailment"], r["shown"] = v.label, round(v.entailment, 3), c.sentence
             r["conflict"] = v.conflict_quote and f"{evidence[v.conflict_label].title}: {v.conflict_quote}"
     return rows

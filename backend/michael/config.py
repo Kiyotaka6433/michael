@@ -50,6 +50,7 @@ class Settings:
     semantic_windows: bool = _env("SEMANTIC_WINDOWS", "1") == "1"   # rank quote windows by meaning too
     partial_threshold: float = 0.40  # entailment probability for PARTIAL
     max_repair_rounds: int = 1
+    rescue_k: int = int(_env("RESCUE_K", 3))   # claim-driven retrieval: passages checked per failing sentence
     nightly_hour: int = int(_env("NIGHTLY_HOUR", 2))   # scheduler: re-index, re-check citations, new key points
 
     # articles
