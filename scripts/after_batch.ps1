@@ -7,5 +7,7 @@ $root = "C:\Users\aryan\OneDrive\Desktop\michael"
 Set-Location $root
 $py = "$root\.venv\Scripts\python.exe"
 $env:PYTHONIOENCODING = "utf-8"
+# keep Chrome / Obsidian / the extension responsive: the batch runs below normal priority
+Start-Process -WindowStyle Hidden powershell -ArgumentList "-NoProfile","-ExecutionPolicy","Bypass","-File","$root\scripts\keep_responsive.ps1"
 cmd /c "`"$py`" -u scripts/build_library.py retopics --all-topics >> library\build.log 2>&1"
 cmd /c "`"$py`" -u scripts/build_library.py keypoints >> library\build.log 2>&1"

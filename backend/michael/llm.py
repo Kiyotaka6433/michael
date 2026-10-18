@@ -13,13 +13,23 @@ class LLMUnavailable(RuntimeError):
     pass
 
 
+_available = {"t": 0.0, "ok": False}
+
+
 def available() -> bool:
+    """Is the writing model installed? Cached for a minute: /health is polled by the extension and the plugin, and
+    a busy Ollama (generating a note) answers /api/tags slowly - the status must not wait for it."""
+    import time
+    if time.time() - _available["t"] < 60:
+        return _available["ok"]
     try:
         r = httpx.get(f"{settings.ollama_url}/api/tags", timeout=3)
         names = [m["name"] for m in r.json().get("models", [])]
-        return any(n == settings.llm_model or n.startswith(settings.llm_model + ":") for n in names)
+        ok = any(n == settings.llm_model or n.startswith(settings.llm_model + ":") for n in names)
     except Exception:
-        return False
+        ok = _available["ok"] and time.time() - _available["t"] < 600     # one slow answer isn't "offline"
+    _available.update(t=time.time(), ok=ok)
+    return ok
 
 
 def _options(temperature: float) -> dict:

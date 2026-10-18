@@ -282,6 +282,35 @@ def _titled_retry(claims, found, evidence, nli, recite):
     return set(best)
 
 
+def _two_quote_retry(claims, found, evidence, nli) -> dict:
+    """A sentence that joins two facts from neighbouring source sentences ("Dijkstra runs n iterations, selecting
+    the unmarked vertex with the smallest d[v]") has no single quote that proves it. Still-failing sentences are
+    judged once more against their two closest windows of the cited passage, joined in source order. Returns
+    {claim index: (chunk, (s1, e1), (s2, e2))} for the ones that pass; their quote shows both windows."""
+    jobs = []
+    for i, (cl, f) in enumerate(zip(claims, found)):
+        if f is not None and f[1][0] >= settings.support_threshold:
+            continue
+        for c in [evidence[l] for l in cl.citations if l in evidence][:2]:
+            cands = lexical_candidates(cl.sentence, c.text, top=8)
+            if not cands:
+                continue
+            best = cands[0]                                           # closest window, then the closest one
+            other = next((w for w in cands[1:] if w[1] <= best[0] or w[0] >= best[1]), None)   # NOT overlapping it
+            if other:
+                (s1, e1), (s2, e2) = sorted([best, other])            # in source order
+                jobs.append((i, c, (s1, e1), (s2, e2), f"{c.text[s1:e1]} … {c.text[s2:e2]}"))
+    if not jobs:
+        return {}
+    passed = {}
+    for (i, c, w1, w2, premise), (ent, con) in zip(jobs, nli.scores([(j[4], claims[j[0]].sentence) for j in jobs])):
+        if ent >= settings.support_threshold and i not in passed:
+            found[i] = ((c, w1[0], w2[1], w1[0], w2[1]), (ent, con))
+            claims[i].citations = [c.label]
+            passed[i] = (c, w1, w2)
+    return passed
+
+
 def verify_claims(claims: list[Claim], evidence: dict[str, Chunk], nli: NLI, recite: bool = True) -> list[Verdict]:
     """Check every claim against quote windows of the passages it cites.
     If those fail but another passage proves the sentence, the citation is corrected to that passage
@@ -334,6 +363,7 @@ def verify_claims(claims: list[Claim], evidence: dict[str, Chunk], nli: NLI, rec
                 found[i] = alt
                 claims[i].citations = [alt[0][0].label]
     titled = _titled_retry(claims, found, evidence, nli, recite) if settings.titled_premise else set()
+    two = _two_quote_retry(claims, found, evidence, nli) if settings.two_quotes else {}
     proven = _prove_parts(claims, found, evidence, nli, recite) if settings.decompose else {}
     verdicts = []
     for i, (cl, f) in enumerate(zip(claims, found)):
@@ -343,6 +373,12 @@ def verify_claims(claims: list[Claim], evidence: dict[str, Chunk], nli: NLI, rec
         (chunk, s, e, js, je), (ent, con) = f
         in_context = (js, je) != (s, e)
         label, math = label_for(ent), ""
+        near = False
+        if (settings.near_verbatim and label == "PARTIAL" and ent >= settings.near_verbatim_min
+                and fuzz.token_set_ratio(cl.sentence, chunk.text[s:e]) >= settings.near_verbatim_overlap):
+            # the sentence restates its quote almost word for word; the NLI model's 0.5-0.7 is wording noise, not
+            # missing content (shown in the footnote as "near-verbatim")
+            label, near = "SUPPORTED", True
         if settings.math_check and label != "UNSUPPORTED":
             # the NLI model reads formulas and numbers as text: check them against the evidence paragraph
             from .ophaniel import check
@@ -361,12 +397,16 @@ def verify_claims(claims: list[Claim], evidence: dict[str, Chunk], nli: NLI, rec
         if in_context and je - js <= 700:            # judged in context: show the reader that whole paragraph
             s, e = js, je
         quote = chunk.text[s:e]
+        if i in two:                                 # the two windows only, not the text between them
+            c2, (a1, b1), (a2, b2) = two[i]
+            quote = f"{c2.text[a1:b1]} … {c2.text[a2:b2]}"
         if i in proven:                              # every part's own quote, in order
             quote = " … ".join(c.text[a:b] for c, a, b, _, _ in proven[i])
         verdicts.append(Verdict(claim_index=cl.index, label=label, chunk_id=chunk.id,
                                 evidence_label=chunk.label, quote=quote, quote_start=s, quote_end=e,
                                 entailment=ent, contradiction=con, in_context=in_context, math=math,
-                                parts=len(proven.get(i, [])), titled=i in titled and i not in proven))
+                                parts=len(proven.get(i, [])), titled=i in titled and i not in proven,
+                                near_verbatim=near))
     if settings.conflict_check:
         flag_conflicts(claims, verdicts, evidence, nli)
     return verdicts

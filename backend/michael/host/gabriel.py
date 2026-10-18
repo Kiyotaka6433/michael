@@ -38,6 +38,8 @@ def render(question: str, claims: list[Claim], verdicts: dict[int, Verdict], evi
                 ctx += f" · proven in {v.parts} parts"
             if getattr(v, "titled", False):
                 ctx += " · judged with its source title as context"
+            if getattr(v, "near_verbatim", False):
+                ctx += " · near-verbatim"
             note = f'[^{n}]: "{quote}" - {chunk.link} · {v.label.lower()}{ctx} (entailment {v.entailment:.2f})'
             other = by_label.get(getattr(v, "conflict_label", ""))
             if other is not None:            # shown, never resolved silently: the reader sees both quotes

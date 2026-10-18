@@ -121,3 +121,21 @@ def test_title_context_never_rescues_a_quote_about_something_else(monkeypatch):
     claims = [Claim(index=0, sentence="To find all primes up to n, create a list of consecutive integers from 2 through n.",
                     citations=["p1"])]
     assert verify_claims(claims, ev, TitleNLI(), recite=False)[0].label != "SUPPORTED"
+
+
+def test_fact_spanning_two_source_sentences_passes_with_two_quotes(monkeypatch):
+    class JoinNLI(FakeNLI):           # entailed only when both facts are in the premise
+        def scores(self, pairs):
+            # 0.85: enough for a quote, below the 0.90 a whole paragraph needs - so only the two-quote path passes
+            return [(0.85 if ("iterations" in p and "smallest" in p) else 0.05, 0.0) for p, h in pairs]
+    monkeypatch.setattr(settings, "two_quotes", True)
+    monkeypatch.setattr(settings, "titled_premise", False)
+    monkeypatch.setattr(settings, "decompose", False)
+    text = ("The algorithm runs for n iterations over the vertices. Unrelated filler about graphs here. "
+            "More filler about trees. Even more filler about heaps. Still more filler about paths. "
+            "Each iteration selects the unmarked vertex with the smallest distance.")
+    ev = {"p1": chunk("p1", "Dijkstra", text)}
+    claims = [Claim(index=0, sentence="The algorithm runs for n iterations, selecting the unmarked vertex with the "
+                                      "smallest distance.", citations=["p1"])]
+    v = verify_claims(claims, ev, JoinNLI(), recite=False)[0]
+    assert v.label == "SUPPORTED" and " … " in v.quote and "Unrelated filler" not in v.quote
