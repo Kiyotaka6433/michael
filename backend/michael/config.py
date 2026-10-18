@@ -51,6 +51,7 @@ class Settings:
     partial_threshold: float = 0.40  # entailment probability for PARTIAL
     max_repair_rounds: int = 1
     rescue_k: int = int(_env("RESCUE_K", 3))   # claim-driven retrieval: passages checked per failing sentence
+    cascade_cut: float = float(_env("CASCADE_CUT", 0))   # >0: small NLI screens, large judges pairs above this
     nightly_hour: int = int(_env("NIGHTLY_HOUR", 2))   # scheduler: re-index, re-check citations, new key points
 
     # articles

@@ -9,7 +9,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "eval"))
 
-STRICT_FLOOR, LENIENT_FLOOR = 90.5, 99.0   # 18 Oct: title-context retry on (gold 91.1% / 99.5%), user-approved trade: +30 correct, +5 imprecise, 0 wrong
+STRICT_FLOOR, LENIENT_FLOOR = 92.0, 99.0   # 18 Oct with the overlap floor: gold 92.6% / 99.5%, drafts 97.1% / 100%
 
 
 @pytest.mark.eval

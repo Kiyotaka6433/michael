@@ -4,6 +4,8 @@ Speed on CPU: the model is forced to float32 (newer transformers load the stored
 ~7x slower on CPUs), pairs are length-sorted to minimise padding, all sentences of a round are scored in one
 batch, and only short quote windows (1-3 sentences) are scored, never whole passages.
 """
+import json
+import os
 import re
 
 from rapidfuzz import fuzz
@@ -46,7 +48,13 @@ class NLI:
             except Exception:
                 pass
             cached.update(new)
-        return [tuple(cached[k]) for k in keys]
+        out = [tuple(cached[k]) for k in keys]
+        record = os.getenv("MICHAEL_RECORD_NLI")          # calibration data for the verifier cascade
+        if record:
+            with open(record, "a", encoding="utf8") as f:
+                for (p, h), (ent, con) in zip(pairs, out):
+                    f.write(json.dumps({"p": p, "h": h, "ent": ent, "con": con}, ensure_ascii=False) + "\n")
+        return out
 
     def _scores(self, pairs: list[tuple[str, str]]) -> list[tuple[float, float]]:
         import torch
@@ -62,6 +70,44 @@ class NLI:
             for i, p in zip(idx, probs):
                 out[i] = (float(p[self._ent]), float(p[self._con]))
         return out
+
+
+class CascadeNLI(NLI):
+    """Two-stage verifier: a small NLI model (~6x faster) screens every uncached pair; only pairs it does not
+    clearly reject go to the large model. The small model never ACCEPTS anything - a pair it rejects keeps its
+    (low) small-model score, everything that could pass is judged by the large model, so precision is the large
+    model's. `cut` is calibrated so that (almost) no pair the large model would accept is screened out."""
+
+    def __init__(self, cut: float, small: str = "tasksource/deberta-small-long-nli", model_name: str | None = None):
+        super().__init__(model_name)
+        self.cut, self.small = cut, NLI(small)
+        self.stats = {"pairs": 0, "large": 0}
+
+    def scores(self, pairs: list[tuple[str, str]]) -> list[tuple[float, float]]:
+        from .. import db
+        keys = [sha(f"{self.model_name}|{p}|{h}") for p, h in pairs]
+        try:
+            cached = db.cache_get("nli", list(set(keys)))
+        except Exception:
+            cached = {}
+        todo = [i for i, k in enumerate(keys) if k not in cached]
+        out = [tuple(cached[k]) if k in cached else None for k in keys]
+        if todo:
+            screen = self.small.scores([pairs[i] for i in todo])          # cached under the small model's name
+            keep = [i for i, (ent, _) in zip(todo, screen) if ent >= self.cut]
+            for i, s in zip(todo, screen):
+                out[i] = tuple(s)
+            if keep:
+                big = NLI.scores(self, [pairs[i] for i in keep])         # large model, with its own cache
+                for i, s in zip(keep, big):
+                    out[i] = tuple(s)
+            self.stats["pairs"] += len(todo)
+            self.stats["large"] += len(keep)
+        return out
+
+
+def make_verifier() -> NLI:
+    return CascadeNLI(settings.cascade_cut) if settings.cascade_cut > 0 else NLI()
 
 
 def label_for(entailment: float) -> str:

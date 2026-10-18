@@ -13,10 +13,10 @@ from .zadkiel import Reranker
 from .heralds import pdf as pdf_src
 from .heralds import web as web_src
 from .heralds.vault import vault_chunks
-from .raguel import NLI, verify_claim, verify_claims
+from .raguel import NLI, make_verifier, verify_claim, verify_claims
 
 # heavy models are loaded once per process and shared between runs
-EMBEDDER, RERANKER, VERIFIER = Embedder(), Reranker(), NLI()
+EMBEDDER, RERANKER, VERIFIER = Embedder(), Reranker(), make_verifier()   # MICHAEL_CASCADE_CUT > 0: two-stage
 
 
 def warm_up():
