@@ -73,6 +73,7 @@ class Verdict:
     conflict_score: float = 0.0
     parts: int = 0            # >0: a compound sentence proven part by part (each part has its own quote)
     titled: bool = False      # passed only with the source title + section in front of the quote (shown in the note)
+    near_verbatim: bool = False   # PARTIAL score but the sentence restates the quote almost word for word
 
     def to_dict(self):
         return asdict(self)

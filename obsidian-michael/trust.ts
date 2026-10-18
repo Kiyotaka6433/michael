@@ -12,6 +12,7 @@ const BADGES: [string, string, string][] = [
   ["in the context of its paragraph", "¶ paragraph", "is-context"],
   ["judged with its source title as context", "title context", "is-context"],
   ["proven in", "proven in parts", "is-parts"],
+  ["near-verbatim", "near-verbatim", "is-context"],
 ];
 
 export interface TrustRow {

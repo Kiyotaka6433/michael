@@ -57,6 +57,10 @@ class Settings:
     rescue_k: int = int(_env("RESCUE_K", 3))   # claim-driven retrieval: passages checked per failing sentence
     cascade_cut: float = float(_env("CASCADE_CUT", 0))   # >0: small NLI screens, large judges pairs above this
     early_exit: bool = _env("EARLY_EXIT", "0") == "1"   # score the closest quote window first; full set only on failure
+    near_verbatim: bool = _env("NEAR_VERBATIM", "0") == "1"      # accept PARTIAL >= min when the sentence ~= its quote
+    near_verbatim_min: float = float(_env("NEAR_VERBATIM_MIN", 0.5))
+    near_verbatim_overlap: int = int(_env("NEAR_VERBATIM_OVERLAP", 90))
+    two_quotes: bool = _env("TWO_QUOTES", "0") == "1"   # failing sentence: judge against its 2 closest windows joined
     nightly_hour: int = int(_env("NIGHTLY_HOUR", 2))   # scheduler: re-index, re-check citations, new key points
 
     # articles
