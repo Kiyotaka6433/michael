@@ -1,5 +1,7 @@
 # Michael - evidence-locked research agent for Obsidian
 
+[![ci](https://github.com/Kiyotaka6433/michael/actions/workflows/ci.yml/badge.svg)](https://github.com/Kiyotaka6433/michael/actions/workflows/ci.yml)
+
 Ask a question; Michael gathers free sources (Wikipedia, arXiv, OpenAlex, your own Obsidian vault, any URL or PDF), writes a short note in which **every sentence cites an exact quote**, and has an **independent NLI model** (not the writing LLM) check each sentence against its quote. Unsupported sentences are rewritten or removed, and the note shows a trust panel ("14/16 sentences verified").
 
 Everything runs locally and costs nothing.
@@ -43,6 +45,14 @@ Michael is an archangel, so each stage in `backend/michael/host/` is named after
 | `zachriel.py` | Zachriel | angel of memory | flashcards from verified sentences |
 
 ## Setup (Windows, CPU only)
+
+**One command** (installs what's missing after asking, builds the plugin, sets up the vault, runs the tests; safe to re-run):
+
+```bash
+powershell -ExecutionPolicy Bypass -File setup.ps1
+```
+
+Or step by step:
 
 1. Install Ollama and pull the writing model:
 
