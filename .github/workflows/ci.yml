@@ -1,0 +1,36 @@
+# Offline checks on every push: lint (syntax errors, undefined names), the offline test suite (fake verifier, no
+# models downloaded) and the Obsidian plugin build. The eval gate (pytest -m eval) needs the local NLI model and
+# its score cache, so it runs on the developer's machine, not here.
+name: ci
+on: [push, pull_request]
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install (CPU-only torch keeps the download small)
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -e ".[dev]"
+      - name: Lint
+        run: ruff check backend tests scripts eval --select E9,F63,F7,F82
+      - name: Offline tests
+        run: pytest -q
+  plugin:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: obsidian-michael
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: obsidian-michael/package-lock.json
+      - run: npm ci
+      - run: npm run build

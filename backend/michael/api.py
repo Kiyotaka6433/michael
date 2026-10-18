@@ -20,6 +20,7 @@ import re
 import json
 import queue
 import threading
+from pathlib import Path
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Header, HTTPException, Request
