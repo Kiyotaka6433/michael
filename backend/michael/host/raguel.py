@@ -287,7 +287,17 @@ def verify_claims(claims: list[Claim], evidence: dict[str, Chunk], nli: NLI, rec
     If those fail but another passage proves the sentence, the citation is corrected to that passage
     (small LLMs often cite the neighbour of the right passage)."""
     groups = [_windows(cl, [evidence[l] for l in cl.citations if l in evidence]) for cl in claims]
-    found = _score_groups(groups, claims, nli)
+    if settings.early_exit:
+        # most true sentences pass on their closest quote window: score only that one first (one NLI pass for all
+        # claims), and run the full window set only for those that don't pass - same verdicts, far fewer pairs
+        first = _score_groups([g[:1] for g in groups], claims, nli)
+        rest = [i for i, f in enumerate(first) if f is None or f[1][0] < settings.support_threshold]
+        found = list(first)
+        if rest:
+            for i, f in zip(rest, _score_groups([groups[i] for i in rest], [claims[i] for i in rest], nli)):
+                found[i] = f
+    else:
+        found = _score_groups(groups, claims, nli)
     if settings.decontextualise:
         # a failing sentence that starts with "It ..." is tried again with the cited source's subject in its place
         alts = []

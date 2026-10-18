@@ -55,9 +55,13 @@ def repair_latex(value):
     return value
 
 
-def chat_json(system: str, user: str, temperature: float = 0.1, retries: int = 2, schema: dict | None = None) -> dict:
+LAST_STATS: dict = {}       # timings of the last uncached call (tokens and nanoseconds, from Ollama)
+
+
+def chat_json(system: str, user: str, temperature: float = 0.1, retries: int = 2, schema: dict | None = None,
+              model: str | None = None) -> dict:
     """`schema` (a JSON Schema) makes Ollama constrain decoding to exactly that shape."""
-    payload = {"model": settings.llm_model, "stream": False, "format": schema or "json", "keep_alive": "30m",
+    payload = {"model": model or settings.llm_model, "stream": False, "format": schema or "json", "keep_alive": "30m",
                "options": _options(temperature),
                "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
     key = sha(json.dumps([payload["model"], payload["format"], payload["options"]["temperature"],
@@ -69,7 +73,11 @@ def chat_json(system: str, user: str, temperature: float = 0.1, retries: int = 2
         try:
             r = httpx.post(f"{settings.ollama_url}/api/chat", json=payload, timeout=1200)
             r.raise_for_status()
-            data = repair_latex(json.loads(r.json()["message"]["content"]))
+            body = r.json()
+            # where the time goes on CPU: reading the prompt vs generating the answer (Ollama reports both)
+            LAST_STATS.update({k: body.get(k, 0) for k in ("prompt_eval_count", "prompt_eval_duration",
+                                                            "eval_count", "eval_duration", "total_duration")})
+            data = repair_latex(json.loads(body["message"]["content"]))
             db.cache_put("llm", {key: data})
             return data
         except httpx.ConnectError as e:

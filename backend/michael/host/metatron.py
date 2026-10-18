@@ -1,6 +1,7 @@
 """Draft an answer in which every sentence cites evidence labels such as p1, p3."""
 import re
 
+from ..config import settings
 from ..llm import chat_json
 from ..models import Chunk, Claim
 from .scrolls import split_sentences
@@ -83,5 +84,6 @@ def write(question: str, evidence: list[Chunk], max_sentences: int = 8) -> list[
     if max_sentences != 8:
         system = SYSTEM.replace("Write 4 to 10 sentences.", f"Write 6 to {max_sentences} sentences.", 1)
         schema = {**SCHEMA, "properties": {"sentences": {**SCHEMA["properties"]["sentences"], "maxItems": max_sentences}}}
-    data = chat_json(system, f"Question: {question}\n\nEvidence passages:\n\n{evidence_block(evidence)}", schema=schema)
+    data = chat_json(system, f"Question: {question}\n\nEvidence passages:\n\n{evidence_block(evidence)}", schema=schema,
+                     model=settings.writer_model or settings.llm_model)
     return parse_sentences(data, {c.label for c in evidence})
