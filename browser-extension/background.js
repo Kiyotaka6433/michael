@@ -29,6 +29,7 @@ async function settings() {
 async function api(path, body) {
   const s = await settings();
   const res = await fetch(`${s.backendUrl}${path}`, {
+    signal: AbortSignal.timeout(15000),               // a stuck backend must not hold the card forever
     method: body ? "POST" : "GET",
     headers: { "content-type": "application/json", "X-Michael-Token": s.token },
     body: body ? JSON.stringify(body) : undefined,
@@ -107,4 +108,12 @@ chrome.commands.onCommand.addListener(async (command) => {
   if (command !== "add-page") return;
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (tab?.id != null) chrome.tabs.sendMessage(tab.id, { type: "now" }).catch(() => {});
+});
+
+// 0.2.2: pages were marked "seen" before Michael answered, so lookups that failed while the backend was busy silenced
+// those pages for good. Forget every remembered page once on update; from now on only answered lookups are kept.
+chrome.runtime.onInstalled.addListener(async () => {
+  const all = await chrome.storage.local.get(null);
+  const stale = Object.keys(all).filter((k) => k.startsWith("michael:seen:"));
+  if (stale.length) await chrome.storage.local.remove(stale);
 });
