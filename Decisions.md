@@ -4,6 +4,9 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-21 · 22:15
+- Nothing ran between the shutdown (19 Oct 01:00) and now. Resuming from the saved plan: backend and batch restarted, then the two-quote retry gets the 0.90 context threshold and is re-measured.
+
 ## 2026-10-18 23:25 → 19 Oct 00:45
 **Done**
 - **The extension was slow and showed no pop-up** because the laptop was saturated: CPU 97%, 0.6 GB free RAM, paging.
