@@ -232,6 +232,11 @@ def _prove_parts(claims, found, evidence, nli, recite):
     if not jobs:
         return {}
     results = _score_groups([w for _, _, w in jobs], [p for _, p, _ in jobs], nli)
+    if settings.titled_premise:
+        # a part's quote often names its subject only by pronoun ("This algorithm has been simultaneously published
+        # ... in 1962"): give failing parts the same title-context retry (and overlap floor) as whole sentences
+        parts = [p for _, p, _ in jobs]
+        _titled_retry(parts, results, evidence, nli, recite)
     by_claim = {}
     for (i, _, _), r in zip(jobs, results):
         by_claim.setdefault(i, []).append(r)

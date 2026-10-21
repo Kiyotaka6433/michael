@@ -4,6 +4,16 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-21 · 22:40-23:30
+**Done**
+- **Extension pop-up fixed (0.2.2)**, my bug: pages were marked "asked" before Michael answered, so every lookup that failed during the overload silenced that page permanently. Now a page is remembered only after a real answer; a busy backend is retried twice; there is a 15 s timeout; and articles of 350+ words qualify (was 600). The update clears the wrongly silenced pages. The backend checks out: relevant CS pages classify in 1-4 s under load.
+- **Recall:** the parts of split compound sentences now also get the title-context retry, recovering Kruskal and Floyd-Warshall. Correct lost **15.1% → 14.0%**, 0 wrong, strict 95.1%.
+- **Speed:** removing code and tables from the writer's prompt would cut only 4.4% of it, so it was dropped. An A/B test of 6 vs 4 evidence passages is running.
+
+**Choices and why**
+- **Remember a page only after a successful answer:** a missing pop-up is worse than asking again on the next visit.
+- **The remaining lost sentences are mostly abstract summaries,** which the gate can't credit because it skips repair. The next recall measurement should include repair, with the rewritten sentences labelled.
+
 ## 2026-10-21 · 22:40
 - **Two-quote retry back on, at the 0.90 paragraph bar:** gate 16.8% → **15.1%** correct lost (+3 correct, +1 partly), **0 wrong**, strict 95.0% / gold 92.1%. It recovers less than at 0.70 (12.8%) but without the loophole the unit test found. **Choice:** the safety rule over the extra recall.
 
