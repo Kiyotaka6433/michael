@@ -4,6 +4,10 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-22 · 01:55
+- **Correction:** the duplicate key-points run was not the 02:00 nightly job (it was 01:4x). It was a **leftover queued nightly job from an earlier night**, resumed by the persistent job queue when the backend restarted (only queued jobs pass `--vault`). The per-phase lock (`fd93739`) blocks it either way.
+- Still running: the extractive-drafting recall experiment; the batch is re-checking the 28 topics, then key points (161 left; the first took 3837 s while 3 jobs shared the CPU).
+
 ## 2026-10-22 · 00:20-02:00 (MCP server; recall experiment in the background)
 **Done**
 - **MCP server `michael-mcp`** (`backend/michael/mcp_server.py`, MCP SDK 2.3, stdio, registered in `.mcp.json`):
