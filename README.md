@@ -245,7 +245,8 @@ The verifier removed both wrong 3B sentences (2 of 2: a wrong Dijkstra running t
 | + quotes judged with their source title as context, but only when the quote shares the sentence's wording (overlap ≥ 70) | 26.3% | **97.1% / 92.6%** | 0 |
 | + claim-driven retrieval: failing sentences search all source files (the full pipeline) | 17.3% (31/179) | 95.5% / 92.1% | 0 |
 | + 6 passages per failing sentence in the search (was 3) | 16.8% | 95.5% / 92.1% | 0 |
-| + a failing sentence judged against its two closest separate quotes joined, at the paragraph bar (0.90) | **15.1%** (27/179) | **95.0% / 92.1%** | **0** |
+| + a failing sentence judged against its two closest separate quotes joined, at the paragraph bar (0.90) | 15.1% (27/179) | 95.0% / 92.1% | 0 |
+| + the parts of a split compound sentence also get the title-context retry | **14.0%** (25/179) | **95.1% / 92.1%** | **0** |
 
 (At 0.70 the two-quote retry reached 12.8%, but it let sentences through on context the single-quote rule only accepts at 0.90; an existing unit test caught it, so it uses 0.90.)
 
