@@ -244,8 +244,10 @@ The verifier removed both wrong 3B sentences (2 of 2: a wrong Dijkstra running t
 | + compound sentences proven part by part | 32.4% | 96.8% | 0 |
 | + quotes judged with their source title as context, but only when the quote shares the sentence's wording (overlap ≥ 70) | 26.3% | **97.1% / 92.6%** | 0 |
 | + claim-driven retrieval: failing sentences search all source files (the full pipeline) | 17.3% (31/179) | 95.5% / 92.1% | 0 |
-| + a failing sentence judged against its two closest separate quotes, joined (facts spread over the source) | 13.4% | 95.1% | 0 |
-| + 6 passages per failing sentence in the search (was 3) | **12.8%** (23/179) | **95.1% / 92.1%** | **0** |
+| + 6 passages per failing sentence in the search (was 3) | 16.8% | 95.5% / 92.1% | 0 |
+| + a failing sentence judged against its two closest separate quotes joined, at the paragraph bar (0.90) | **15.1%** (27/179) | **95.0% / 92.1%** | **0** |
+
+(At 0.70 the two-quote retry reached 12.8%, but it let sentences through on context the single-quote rule only accepts at 0.90; an existing unit test caught it, so it uses 0.90.)
 
 The quote is often worded with a pronoun ("In both contexts, *it* refers to…"), so the NLI model couldn't tell what it was about. Sentences that pass only with this title context are marked as such in their footnote. Without the overlap floor, the title alone let a true sentence through on an unrelated quote; this was caught in the Obsidian trust panel and has a regression test.
 

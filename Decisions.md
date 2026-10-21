@@ -4,6 +4,9 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-21 · 22:40
+- **Two-quote retry back on, at the 0.90 paragraph bar:** gate 16.8% → **15.1%** correct lost (+3 correct, +1 partly), **0 wrong**, strict 95.0% / gold 92.1%. It recovers less than at 0.70 (12.8%) but without the loophole the unit test found. **Choice:** the safety rule over the extra recall.
+
 ## 2026-10-21 · 22:17
 - Still running: the gate is measuring the two-quote retry at the 0.90 bar (all 70 tests pass with it on), and the topic re-check pass of the batch has resumed. The backend is healthy.
 
