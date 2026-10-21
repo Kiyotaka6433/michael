@@ -8,7 +8,7 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 **Done**
 - **Extension pop-up fixed (0.2.2)**, my bug: pages were marked "asked" before Michael answered, so every lookup that failed during the overload silenced that page permanently. Now a page is remembered only after a real answer; a busy backend is retried twice; there is a 15 s timeout; and articles of 350+ words qualify (was 600). The update clears the wrongly silenced pages. The backend checks out: relevant CS pages classify in 1-4 s under load.
 - **Recall:** the parts of split compound sentences now also get the title-context retry, recovering Kruskal and Floyd-Warshall. Correct lost **15.1% → 14.0%**, 0 wrong, strict 95.1%.
-- **Speed:** removing code and tables from the writer's prompt would cut only 4.4% of it, so it was dropped. An A/B test of 6 vs 4 evidence passages is running.
+- **Speed:** removing code and tables from the writer's prompt would cut only 4.4% of it, so it was dropped. **6 vs 4 evidence passages:** 4 is 12-18% faster but lost 2 of 7 verified sentences on Undirected Graphs (equal on Linear Classification), so 6 stays: recall comes first.
 
 **Choices and why**
 - **Remember a page only after a successful answer:** a missing pop-up is worse than asking again on the next visit.
