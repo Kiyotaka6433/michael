@@ -304,7 +304,8 @@ def _two_quote_retry(claims, found, evidence, nli) -> dict:
         return {}
     passed = {}
     for (i, c, w1, w2, premise), (ent, con) in zip(jobs, nli.scores([(j[4], claims[j[0]].sentence) for j in jobs])):
-        if ent >= settings.support_threshold and i not in passed:
+        # joined windows give context the way a paragraph does, so they need the paragraph's bar (0.90), not 0.70
+        if ent >= settings.context_threshold and i not in passed:
             found[i] = ((c, w1[0], w2[1], w1[0], w2[1]), (ent, con))
             claims[i].citations = [c.label]
             passed[i] = (c, w1, w2)
