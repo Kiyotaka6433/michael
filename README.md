@@ -272,6 +272,8 @@ Tried and **not adopted**, each measured:
 - **int8 verifier:** 492 of 498 accepts flipped.
 - **Closest-window-first:** 3% fewer pairs.
 - **qwen2.5:3b writer:** drafts about 1.6× faster and more verified sentences, but no faster end to end (more repairs).
+- **4 evidence passages instead of 6:** 12–18% faster, but up to 2 fewer verified sentences per note.
+- **Stripping code and tables from the writer's prompt:** only 4.4% of the evidence text.
 
 **Speed and fidelity**
 - Key-points note for one paper: 29 min → 8.5 min (3.4×), then ~5–6 min with qwen2.5:7b and batching. Fixes: float32 instead of float16 on CPU (verifier 9.3× faster), all CPU threads for Ollama (1.7×), batched NLI, result caches.
