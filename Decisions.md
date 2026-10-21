@@ -4,6 +4,18 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-21 23:30 → 22 Oct 00:15
+**Done**
+- **Speed: 4 vs 6 evidence passages** measured and rejected: 12-18% faster, but it lost 2 of 7 verified sentences on one note.
+- **Recall including repair** (`eval/gate_repair.py`, the real pipeline: verify → search all sources → LLM repair → re-verify, per writer; 7 rewrites labelled `claude-audit`: 5 correct, 2 partly, 0 wrong):
+  - **14.0% of correct drafts lost**, the same as verification alone, with **0 wrong shown** (strict 93.8%).
+  - 6 drafts that looked lost were duplicates dropped because the same writer's twin sentence is shown; they are not counted as lost.
+- **Finding:** repair recovers a few sentences but adds no net recall here. The remaining 25 are mostly drafts that summarise or reorder what the source says ("the algorithm maintains invariants...", "applies to directed and undirected graphs"). No verifier rule proves those safely.
+
+**Choices and why**
+- **Two measurement artifacts were caught and removed** (writers mixed in one note; duplicate drops) before drawing conclusions, so the number reported is the real one.
+- **Next recall work moves to the writer:** draft from quote windows instead of whole passages, and quote-anchored repair (rewrite a failing sentence against its exact quote). Each is measured with the same two gates.
+
 ## 2026-10-21 · 22:40-23:30
 **Done**
 - **Extension pop-up fixed (0.2.2)**, my bug: pages were marked "asked" before Michael answered, so every lookup that failed during the overload silenced that page permanently. Now a page is remembered only after a real answer; a busy backend is retried twice; there is a 15 s timeout; and articles of 350+ words qualify (was 600). The update clears the wrongly silenced pages. The backend checks out: relevant CS pages classify in 1-4 s under load.

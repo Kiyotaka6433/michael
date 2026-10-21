@@ -247,6 +247,7 @@ The verifier removed both wrong 3B sentences (2 of 2: a wrong Dijkstra running t
 | + 6 passages per failing sentence in the search (was 3) | 16.8% | 95.5% / 92.1% | 0 |
 | + a failing sentence judged against its two closest separate quotes joined, at the paragraph bar (0.90) | 15.1% (27/179) | 95.0% / 92.1% | 0 |
 | + the parts of a split compound sentence also get the title-context retry | **14.0%** (25/179) | **95.1% / 92.1%** | **0** |
+| Full pipeline **with LLM repair** (`eval/gate_repair.py`; rewrites labelled separately) | 14.0% | 93.8% | 0 |
 
 (At 0.70 the two-quote retry reached 12.8%, but it let sentences through on context the single-quote rule only accepts at 0.90; an existing unit test caught it, so it uses 0.90.)
 
