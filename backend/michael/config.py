@@ -60,7 +60,7 @@ class Settings:
     near_verbatim: bool = _env("NEAR_VERBATIM", "0") == "1"      # accept PARTIAL >= min when the sentence ~= its quote
     near_verbatim_min: float = float(_env("NEAR_VERBATIM_MIN", 0.5))
     near_verbatim_overlap: int = int(_env("NEAR_VERBATIM_OVERLAP", 90))
-    two_quotes: bool = _env("TWO_QUOTES", "0") == "1"   # 2 closest windows joined (gate: lost 17.3% -> 13.4%, 0 wrong) - OFF until it uses the 0.90 context threshold (test_sentence_that_passes_only_in_context_needs_a_high_score)
+    two_quotes: bool = _env("TWO_QUOTES", "1") == "1"   # 2 closest separate windows joined, needs the 0.90 context bar (gate: lost 16.8% -> 15.1%, 0 wrong)
     nightly_hour: int = int(_env("NIGHTLY_HOUR", 2))   # scheduler: re-index, re-check citations, new key points
 
     # articles
