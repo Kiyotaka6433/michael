@@ -20,6 +20,7 @@ Vault layout:
 """
 import argparse
 import json
+import os
 import re
 import sys
 import time
@@ -521,6 +522,24 @@ def phase_canvas(vault, manifest, state):
     print(f"canvas: {len(manifest['subjects'])} subject maps + Library map in Maps/", flush=True)
 
 
+def single_run(phase: str):
+    """An exclusive lock per phase: a second run of the same phase (e.g. the backend's nightly key-points job while
+    the evening batch is already doing them) exits at once instead of doing the same notes twice. The OS releases
+    the lock when the process ends, even if it crashes, so it can't get stuck."""
+    lock = open(STATE.with_name(f".build_{phase}.lock"), "a+")
+    try:
+        if os.name == "nt":
+            import msvcrt
+            msvcrt.locking(lock.fileno(), msvcrt.LK_NBLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        print(f"{phase}: another build_library.py {phase} run is already working - exiting", flush=True)
+        sys.exit(0)
+    return lock                                      # keep a reference: the lock lives as long as the file is open
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("phase", choices=["fetch", "hubs", "topics", "retopics", "keypoints", "cards", "all"])
@@ -532,6 +551,7 @@ def main():
     a = ap.parse_args()
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
+    _lock = single_run(a.phase)                      # noqa: F841
     manifest = json.loads(MANIFEST.read_text(encoding="utf8"))
     state = load_state()
     if a.phase in ("fetch", "all"):
