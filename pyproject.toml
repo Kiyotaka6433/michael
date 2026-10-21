@@ -21,6 +21,7 @@ dependencies = [
     "lxml>=5",
     "sympy>=1.13",
     "antlr4-python3-runtime==4.11.*",   # sympy's LaTeX parser (maths-aware checking)
+    "mcp>=2.0",                         # MCP server (michael-mcp)
 ]
 
 [project.optional-dependencies]
@@ -28,6 +29,7 @@ dev = ["pytest>=8", "ruff>=0.6"]
 
 [project.scripts]
 michael = "michael.cli:main"
+michael-mcp = "michael.mcp_server:main"
 
 [build-system]
 requires = ["setuptools>=68"]

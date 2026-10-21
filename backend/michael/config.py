@@ -20,6 +20,7 @@ class Settings:
     # (6.3 vs 4.8 per note, 96.6% vs 94.0% correct), but 3b drafts + 7b repairs was SLOWER end to end on a 15 GB
     # laptop (more repair rounds, both models in memory). See Decisions 18 Oct.
     writer_model: str = _env("WRITER", "")
+    writer_style: str = _env("WRITER_STYLE", "")      # "extractive": one passage sentence per draft sentence (experiment)
     llm_threads: int = int(_env("LLM_THREADS", os.cpu_count() or 4))
     llm_ctx: int = int(_env("LLM_CTX", 6144))
     embed_model: str = _env("EMBED_MODEL", "BAAI/bge-small-en-v1.5")

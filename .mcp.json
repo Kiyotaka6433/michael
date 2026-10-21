@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "michael": {
+      "type": "stdio",
+      "command": ".venv/Scripts/python.exe",
+      "args": ["-m", "michael.mcp_server"],
+      "env": {"MICHAEL_URL": "http://127.0.0.1:8765"}
+    }
+  }
+}

@@ -4,6 +4,23 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-22 · 00:20-02:00 (MCP server; recall experiment in the background)
+**Done**
+- **MCP server `michael-mcp`** (`backend/michael/mcp_server.py`, MCP SDK 2.3, stdio, registered in `.mcp.json`):
+  - Tools: `check_facts`, `search_library`, `read_note`, `verified_facts`, `research_start`, `research_result`. It is a thin client of the backend, so models load once.
+  - New backend endpoint `/api/v1/check` (`archangel.check_text`): splits any text into sentences, searches only **source** notes (never Michael's own, so it can't cite itself), and verifies all sentences in one batch.
+  - Tested end to end as a real MCP client (`eval/mcp_smoke.py`): 6 tools listed; a true Fenwick-tree sentence SUPPORTED, a false "Newton 1687" sentence UNSUPPORTED; 16 s warm for 2 sentences.
+- **Library checks need a higher bar (0.90).** Testing showed a worked example (Fermat, 0.88) and an indirect remark (Bellman-Ford's "unlike Dijkstra", 0.73) accepted for general claims at 0.70. One acceptance I first called wrong ("Dijkstra works with negative weights") is in fact stated by Princeton for the re-enqueuing version; the quote shows the reader the caveat.
+- **Fixed on the way:**
+  - A failed `pip install -e .` (the running backend locks its exe) had left the package unregistered, which took the backend down. Cleaned up and reinstalled.
+  - An auto-started backend died with the MCP session (Windows job object), so it is now started via Win32_Process.Create and survives.
+  - 73 tests pass (3 new).
+- **Background:** extractive-drafting recall experiment (each draft sentence restates one source sentence) is running on the 14 baseline notes. While wiring it in, a bug was fixed: the overview sentence-count rule rebuilt the prompt from scratch and would have dropped the extractive rule.
+
+**Choices and why**
+- **Thin MCP client instead of loading models in the MCP process:** one copy of the models in memory (15 GB laptop), and Obsidian, the extension and AI tools share one verifier and cache.
+- **Unsupported sentences return no quote:** the closest passage to a false sentence would read like support.
+
 ## 2026-10-21 23:30 → 22 Oct 00:15
 **Done**
 - **Speed: 4 vs 6 evidence passages** measured and rejected: 12-18% faster, but it lost 2 of 7 verified sentences on one note.
