@@ -39,7 +39,7 @@ class Settings:
     results_per_source: int = 3
     chunk_chars: int = 900
     candidates: int = 30            # hybrid search → reranker
-    keep: int = 6                   # reranker → writer (fewer passages = faster LLM prompt)
+    keep: int = int(_env("KEEP", 6))   # reranker → writer (fewer passages = faster LLM prompt)
     source_cache_days: int = 7
 
     # verification

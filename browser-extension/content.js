@@ -28,7 +28,7 @@
   function looksLikeArticle(text) {
     const og = document.querySelector('meta[property="og:type"]')?.content || "";
     const words = text.split(/\s+/).length;
-    return (document.querySelector("article") || og === "article") ? words > 250 : words > 600;
+    return (document.querySelector("article") || og === "article") ? words > 250 : words > 350;
   }
 
   // state for the page being read; single-page sites change the URL without reloading, so it is reset per URL
@@ -51,16 +51,24 @@
       send({ type: "classify", url: location.href, title: document.title, text: text.slice(0, 3000) });
   }
 
-  async function ask(force = false) {
-    if (page.fired && !force) return;
+  async function ask(force = false, attempt = 1) {
+    if (page.fired && !force && attempt === 1) return;
     const text = force ? articleText() : pageText();
     if (!force && !page.article) return;
     page.fired = true;
-    const key = `michael:seen:${page.url}`;
-    await chrome.storage.local.set({ [key]: Date.now() });
+    const url = page.url;
     const r = await send({ type: "classify", url: location.href, title: document.title, text: text.slice(0, 3000) || document.title });
-    if (r.ok) showToast(r, force);
-    else if (force) showToast({ offline: true }, true);
+    if (url !== page.url) return;                       // navigated away meanwhile (single-page sites)
+    if (r.ok) {
+      // remembered only once Michael actually answered: a failed lookup (backend busy or offline) must not
+      // silence the page for good - the next visit asks again
+      await chrome.storage.local.set({ [`michael:seen:${url}`]: Date.now() });
+      showToast(r, force);
+    } else if (force) {
+      showToast({ offline: true }, true);
+    } else if (attempt < 3) {
+      setTimeout(() => ask(false, attempt + 1), 10000);  // busy backend: try again in 10 s, at most twice
+    }
   }
 
   async function watch() {
