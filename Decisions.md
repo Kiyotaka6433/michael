@@ -4,6 +4,9 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-21 · 22:17
+- Still running: the gate is measuring the two-quote retry at the 0.90 bar (all 70 tests pass with it on), and the topic re-check pass of the batch has resumed. The backend is healthy.
+
 ## 2026-10-21 · 22:15
 - Nothing ran between the shutdown (19 Oct 01:00) and now. Resuming from the saved plan: backend and batch restarted, then the two-quote retry gets the 0.90 context threshold and is re-measured.
 

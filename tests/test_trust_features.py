@@ -126,8 +126,9 @@ def test_title_context_never_rescues_a_quote_about_something_else(monkeypatch):
 def test_fact_spanning_two_source_sentences_passes_with_two_quotes(monkeypatch):
     class JoinNLI(FakeNLI):           # entailed only when both facts are in the premise
         def scores(self, pairs):
-            # 0.85: enough for a quote, below the 0.90 a whole paragraph needs - so only the two-quote path passes
-            return [(0.85 if ("iterations" in p and "smallest" in p) else 0.05, 0.0) for p, h in pairs]
+            # joined quotes need the paragraph bar (0.90): 0.95 passes
+            return [(0.95 if ("iterations" in p and "smallest" in p and "filler" not in p) else 0.05, 0.0)
+                    for p, h in pairs]
     monkeypatch.setattr(settings, "two_quotes", True)
     monkeypatch.setattr(settings, "titled_premise", False)
     monkeypatch.setattr(settings, "decompose", False)
