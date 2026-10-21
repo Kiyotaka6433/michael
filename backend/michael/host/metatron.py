@@ -81,8 +81,15 @@ def parse_sentences(data: dict, valid_labels: set) -> list[Claim]:
 def write(question: str, evidence: list[Chunk], max_sentences: int = 8) -> list[Claim]:
     """max_sentences > 8 for overviews built from many articles (one or two facts per passage)."""
     system, schema = SYSTEM, SCHEMA
+    if settings.writer_style == "extractive":
+        # recall experiment: drafts that summarise or reorder the source are what the verifier can't prove;
+        # ask for sentences that each restate ONE passage sentence, shortened, in its own words and order
+        system = system.replace("- Stay close to the passage wording.",
+                                "- Each sentence restates ONE sentence of a passage: shorten it, but keep its words and "
+                                "word order, and name the subject instead of 'it' or 'this algorithm'.\n"
+                                "- Stay close to the passage wording.", 1)
     if max_sentences != 8:
-        system = SYSTEM.replace("Write 4 to 10 sentences.", f"Write 6 to {max_sentences} sentences.", 1)
+        system = system.replace("Write 4 to 10 sentences.", f"Write 6 to {max_sentences} sentences.", 1)
         schema = {**SCHEMA, "properties": {"sentences": {**SCHEMA["properties"]["sentences"], "maxItems": max_sentences}}}
     data = chat_json(system, f"Question: {question}\n\nEvidence passages:\n\n{evidence_block(evidence)}", schema=schema,
                      model=settings.writer_model or settings.llm_model)

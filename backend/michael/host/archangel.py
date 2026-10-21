@@ -233,6 +233,69 @@ def run_research(question: str, kinds=None, urls=(), pdfs=(), use_vault=True, re
         raise
 
 
+LIBRARY_BAR = 0.90   # checking arbitrary text against the library: a 0.73 "unlike Dijkstra" and a 0.88 worked example were accepted at 0.70
+
+
+def check_text(text: str, evidence_text: str | None = None, k: int = 6, subject: str | None = None) -> dict:
+    """Fact-check any text (e.g. another AI's answer) sentence by sentence, with the same verifier as Michael's notes.
+
+    With evidence_text: every sentence is judged against that text. Without: against the library - each sentence
+    searches the vault's SOURCE notes (never Michael's own generated notes, so it can't cite itself) for its k best
+    passages, and the passages of all sentences are verified in one batch (any of them may prove any sentence).
+    Returns {"sentences": [{sentence, verdict, entailment, quote, source, url, how}], "summary": {...}}."""
+    from .scrolls import split_sentences
+    sentences = [s.strip() for s in split_sentences(text) if len(s.split()) >= 4][:40]
+    evidence, cites = {}, []
+    if evidence_text:
+        evidence["p1"] = Chunk(source_id="given", kind="manual", title="given evidence", url="", text=evidence_text,
+                               start=0, end=len(evidence_text), label="p1")
+        cites = [["p1"]] * len(sentences)
+    else:
+        from .. import vault_index
+        by_id = {}
+        for s in sentences:
+            own = []
+            for r in vault_index.search(s, k=k, subject=subject, include_generated=False, kinds=("source",)):
+                if r["id"] not in by_id:
+                    label = f"p{len(by_id) + 1}"
+                    by_id[r["id"]] = label
+                    evidence[label] = Chunk(source_id=r["path"], kind="vault", title=r["title"], url=r["path"],
+                                            text=r["text"], start=r["start"], end=r["end_"], heading=r["heading"] or "",
+                                            label=label)
+                own.append(by_id[r["id"]])
+            cites.append(own)
+    claims = [Claim(index=i, sentence=s, citations=c) for i, (s, c) in enumerate(zip(sentences, cites))]
+    verdicts = verify_claims(claims, evidence, VERIFIER, recite=not evidence_text) if claims else []
+    out = []
+    for s, c, v in zip(sentences, claims, verdicts):
+        chunk = evidence.get(v.evidence_label)
+        if not evidence_text and v.label == "SUPPORTED" and v.entailment < LIBRARY_BAR:
+            # library mode: the passages were found by search, not chosen for the sentence, so a worked example or an
+            # indirect remark ("unlike Dijkstra, ...") can score 0.7-0.9 for a general claim: report it as partial
+            v.label = "PARTIAL"
+        how = [h for h, on in (("formulas checked", v.math in ("match", "proven")), ("with source title as context", v.titled),
+                               ("proven in parts", bool(v.parts)), ("in the context of its paragraph", v.in_context)) if on]
+        out.append({"sentence": s, "verdict": v.label, "entailment": round(v.entailment, 3),
+                    "quote": " ".join(v.quote.split()), "source": chunk.link if chunk else "",
+                    "url": _source_url(chunk) if chunk else "", "how": how})
+    count = lambda lab: sum(o["verdict"] == lab for o in out)
+    return {"sentences": out, "summary": {"sentences": len(out), "supported": count("SUPPORTED"),
+                                          "partial": count("PARTIAL"), "unsupported": count("UNSUPPORTED")}}
+
+
+def _source_url(chunk: Chunk) -> str:
+    """The original web address of a vault source note (from its frontmatter), else its vault path."""
+    if chunk.kind != "vault":
+        return chunk.url
+    try:
+        head = Path(chunk.url).read_text(encoding="utf8", errors="ignore")[:800]
+        import re
+        m = re.search(r'(?m)^url: "?([^"\n]+)"?$', head)
+        return m.group(1) if m else chunk.url
+    except OSError:
+        return chunk.url
+
+
 def verify_text(sentence: str, evidence_text: str) -> dict:
     """Stand-alone check: does this evidence text support this sentence?"""
     chunk = Chunk(source_id="manual", kind="manual", title="pasted text", url="", text=evidence_text,

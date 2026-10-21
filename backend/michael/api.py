@@ -487,6 +487,22 @@ def run(run_id: str):
     return r
 
 
+class CheckRequest(BaseModel):
+    text: str                              # any text, e.g. another AI's answer
+    evidence: str | None = None            # judge against this text; omitted: against the library's sources
+    k: int = 6                             # passages searched per sentence (library mode)
+    subject: str | None = None
+
+
+@app.post("/api/v1/check")
+def check(req: CheckRequest):
+    """Fact-check a text sentence by sentence with Michael's verifier: verdict, exact quote and source per sentence."""
+    if not req.text.strip():
+        raise HTTPException(400, "text is empty")
+    from .host.archangel import check_text
+    return check_text(req.text, req.evidence, min(max(req.k, 1), 12), req.subject)
+
+
 @app.post("/verify")
 def verify(req: VerifyRequest):
     from .host.archangel import verify_text

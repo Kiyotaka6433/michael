@@ -325,6 +325,22 @@ Run **Michael: Copy the 'Send page to Michael' browser bookmarklet** in Obsidian
 
 Other commands: **Re-index the vault**, **Check that every citation still matches its source** (writes `Michael/Citation check.md`). The backend also runs these every night at 02:00 (`MICHAEL_NIGHTLY_HOUR`), plus key points for newly added articles.
 
+### MCP server: let any AI fact-check against your library
+
+`michael-mcp` exposes Michael to AI assistants over the Model Context Protocol (stdio). The repo's `.mcp.json` registers it for Claude Code; it starts the backend by itself if needed, detached, so it keeps serving Obsidian and the extension after the session ends.
+
+| Tool | What it does |
+|---|---|
+| `check_facts(text, evidence?, subject?)` | Splits any text (e.g. an AI's answer) into sentences and checks each one, against your library's **source** articles or against given evidence. Returns SUPPORTED / PARTIAL / UNSUPPORTED, the exact quote, the source note and its original URL |
+| `search_library(query, k, subject?)` | Passages from your saved articles |
+| `read_note(path)` | One note's Markdown, frontmatter and backlinks |
+| `verified_facts(query?, source?, subject?)` | Facts already verified in Michael's notes, with quotes |
+| `research_start(question)` / `research_result(run_id)` | A full evidence-locked research note |
+
+When checking against the library, the passages are found by search rather than chosen for each sentence, so the bar for SUPPORTED is **0.90** instead of 0.70. In testing, a worked example (0.88) and an indirect remark ("unlike Dijkstra…", 0.73) were otherwise accepted for general claims.
+
+For another client, e.g. Claude Desktop, add: `{"command": "<repo>/.venv/Scripts/michael-mcp.exe"}`.
+
 ### Chrome / Edge extension: file what you read
 
 `browser-extension/` suggests the right library topic for the article you are reading and adds its **link** (name + URL) to that topic with one click.
