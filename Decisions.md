@@ -4,6 +4,9 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-22 · 10:10-12:10
+- Michael was **paused at your request** (backend, batch and the extractive recall experiment stopped, model unloaded) while the FSD Practical 10 was done. Nothing changed in Michael; everything resumes this evening (the extractive experiment saves per note now).
+
 ## 2026-10-22 · 02:00-10:10
 - **The laptop slept at 03:16** and nothing Michael-related survived: backend, batch (topic re-check at 13/28; only Modular arithmetic improved, 11 → 13) and the extractive recall experiment (no output saved). No code changes in this window. Everything restarted at 10:10; the experiment now saves per note so a sleep can't lose finished notes. The durable fix is on your side: `powercfg /change standby-timeout-ac 0`.
 
