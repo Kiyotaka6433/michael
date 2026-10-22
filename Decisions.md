@@ -4,6 +4,9 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-22 · 12:37-14:37
+- Still paused at your request; nothing ran. Resuming this evening: backend, batch (topic re-check, then key points) and the extractive-drafting recall experiment.
+
 ## 2026-10-22 · 10:40-12:37
 - Michael is still **paused at your request** (FSD practical work in progress); nothing changed and nothing is running. It resumes this evening.
 
