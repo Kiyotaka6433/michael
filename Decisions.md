@@ -4,7 +4,7 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
-## 2026-10-22 · 10:10-12:10
+## 2026-10-22 · 10:10-10:40
 - Michael was **paused at your request** (backend, batch and the extractive recall experiment stopped, model unloaded) while the FSD Practical 10 was done. Nothing changed in Michael; everything resumes this evening (the extractive experiment saves per note now).
 
 ## 2026-10-22 · 02:00-10:10
