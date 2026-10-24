@@ -1,6 +1,28 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "michael-web", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "--prefix", "dashboard"], "port": 3000 }
+    {
+      "name": "michael-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "dashboard"
+      ],
+      "port": 3000
+    },
+    {
+      "name": "ext-harness",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8799",
+        "--directory",
+        "C:/Users/aryan/AppData/Local/Temp/claude/C--Users-aryan-OneDrive-Desktop-daa-project/1651c5f0-867b-4999-8198-6a43a05186d7/scratchpad/exttest"
+      ],
+      "port": 8799
+    }
   ]
 }

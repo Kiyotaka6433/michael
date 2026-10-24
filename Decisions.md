@@ -4,6 +4,24 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-24 · 14:10-14:46 (big build session)
+**Done**
+- **Extension 0.3.0/0.3.1: a card is guaranteed on every readable page.**
+  - At the reading time (20 s) the card always appears: the topic if Michael has answered, otherwise "Matching…" that fills in.
+  - At most 5 s later it is final: the topic, or "busy/offline" with Retry / Save for later. Saved pages are queued and filed when Michael is back.
+  - A fast failure gets one quick retry; each request is capped at 15 s; unrelated pages get an Inbox offer; a page is remembered only when you act on its card.
+  - Tested with the real content script in a harness (fast / 60 s-slow / offline / no-token backends): card at 2.1 s, final at 2.4 / **7.1 (= 2 + 5)** / 2.3 / 2.3 s.
+- **Fact-check anywhere:** Obsidian "Fact-check this note (or selection) against my library" (command, ribbon, editor menu; side panel with verdicts, quotes and sources, click to jump), and an extension right-click "Fact-check with Michael" on any web page. Both use `/api/v1/check`. The automatic card can no longer replace a fact-check you asked for.
+- **Study mode (`/quiz` in the web app, `/api/v1/quiz`):** multiple choice from verified facts with no LLM. A key term is blanked as a whole word; distractors are the same kind of term, from the same note first; the proving quote is shown after each answer. Tested in the browser.
+- **Bugs found and fixed while building:**
+  - A **nightly key-points job left pending ran at 14:20 at full priority** when the backend restarted, which took the whole CPU (web app and backend timed out). Nightly library jobs now skip outside 02:00-08:00 and always run below normal priority with the responsiveness watchdog.
+  - **181 draft sentences** from the topic-rewrite drafts (hidden `.candidates` folder) had been indexed as verified facts. Hidden folders are never indexed now, and the rows were purged.
+- 75 tests pass.
+
+**Choices and why**
+- **The card shows at the reading time even before the answer:** your guarantee is about seeing Michael within 20-25 s, so the wait for the backend happens inside the card, never before it.
+- **The quiz uses no LLM:** every question is a verified sentence, so studying can't teach something the sources don't say.
+
 ## 2026-10-22 · 12:37-14:37
 - Still paused at your request; nothing ran. Resuming this evening: backend, batch (topic re-check, then key points) and the extractive-drafting recall experiment.
 
