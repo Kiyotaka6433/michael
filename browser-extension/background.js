@@ -143,6 +143,13 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           return reply({ ok: true, ...(await res.json()) });
         }
+        case "facts": {                                  // instant: facts already verified in your notes (no model run)
+          const r = await api(`/api/v1/facts?k=3&q=${encodeURIComponent(msg.q)}`);
+          // off-topic pages score <= 0.65 (measured): keep >= 0.75, or >= 0.66 when the fact names the page's subject
+          const q = msg.q.toLowerCase();
+          return reply({ ok: true, facts: (r.facts || []).filter((f) =>
+            f.score >= 0.75 || (f.score >= 0.66 && f.fact.toLowerCase().includes(q))) });
+        }
         case "queue":
           await queuePage(msg.url, msg.title, msg.text);
           return reply({ ok: true });
