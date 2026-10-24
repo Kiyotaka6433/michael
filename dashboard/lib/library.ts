@@ -28,3 +28,6 @@ export const library = () => get<Subject[]>("/api/v1/library");
 export const note = (path: string) => get<Note>(`/api/v1/note?path=${encodeURIComponent(path)}`);
 export const search = (q: string, subject?: string) =>
   get<{ results: SearchHit[] }>(`/api/v1/search?q=${encodeURIComponent(q)}&k=15${subject ? `&subject=${encodeURIComponent(subject)}` : ""}`);
+
+export type Fact = { fact: string; quote: string; source: string; note: string; score: number };
+export const facts = (q: string) => get<{ facts: Fact[] }>(`/api/v1/facts?q=${encodeURIComponent(q)}&k=5`);

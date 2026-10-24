@@ -115,7 +115,10 @@ def read_note(path: str) -> dict:
 def verified_facts(query: str | None = None, source: str | None = None, subject: str | None = None,
                    limit: int = 20) -> list[dict]:
     """Facts Michael has already verified in its notes (each with the exact supporting quote and source).
-    Filter by words in the fact (`query`), by source note title (`source`) or by `subject`."""
+    With `query`: the facts closest in MEANING to it (instant answers, no model run). Otherwise filter by source
+    note title (`source`) and/or `subject`."""
+    if query and not source:
+        return _get("/api/v1/facts", q=query, k=min(limit, 30), subject=subject)["facts"]
     r = _get("/api/v1/claims", status="supported", q=query, source=source, subject=subject, limit=min(limit, 100))
     return [{"fact": c["sentence"], "quote": c["quote"], "source": c["source"], "note": c.get("rel") or c["path"]}
             for c in r["claims"]]
