@@ -2,6 +2,7 @@ import { App, Editor, MarkdownView, FileSystemAdapter, Modal, Notice, Plugin, Pl
 import { ChildProcess, spawn } from "child_process";
 import { TRUST_VIEW, TrustView } from "./trust";
 import { CHECK_VIEW, CheckView, CheckResult, proseOf } from "./check";
+import { QuizModal, QuizQuestion } from "./quiz";
 
 interface MichaelSettings {
   backendUrl: string;
@@ -116,6 +117,13 @@ export default class MichaelPlugin extends Plugin {
         menu.addItem((i) => i.setTitle("Fact-check with Michael").setIcon("badge-check").onClick(() => this.factCheck()));
     }));
 
+    // study mode: questions about the open note, from facts Michael has verified
+    this.addCommand({ id: "quiz-note", name: "Quiz me on this note", callback: () => this.quizNote() });
+    this.registerEvent(this.app.workspace.on("file-menu", (menu, file) => {
+      if (file instanceof TFile && file.extension === "md")
+        menu.addItem((i) => i.setTitle("Quiz me on this note").setIcon("graduation-cap").onClick(() => this.quizNote(file)));
+    }));
+
     // side panel: verdict, score, quote and source of every sentence in the open Michael note
     this.registerView(TRUST_VIEW, (leaf) => new TrustView(leaf));
     this.addRibbonIcon("shield-check", "Michael: trust panel", () => this.openTrust());
@@ -152,6 +160,18 @@ export default class MichaelPlugin extends Plugin {
     } catch (e) {
       panel.show(file, `Check failed: ${(e as Error).message}`);
     }
+  }
+
+  async quizNote(file?: TFile) {
+    file = file ?? this.app.workspace.getActiveFile() ?? undefined;
+    if (!file) return new Notice("Open a note first.");
+    if (!(await this.ensureBackend(false))) return new Notice("Michael backend not reachable.");
+    const r = await requestUrl({ url: `${this.settings.backendUrl}/api/v1/quiz?n=10&note=${encodeURIComponent(file.path)}`,
+                                 throw: false });
+    const questions = (r.status === 200 ? r.json.questions : []) as QuizQuestion[];
+    if (!questions.length)
+      return new Notice("No verified facts about this note yet - quiz needs key points or a topic note citing it.");
+    new QuizModal(this.app, file.basename, questions).open();
   }
 
   async openTrust() {

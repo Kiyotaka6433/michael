@@ -413,10 +413,11 @@ def coverage_map():
 
 
 @app.get("/api/v1/quiz")
-def quiz(subject: str | None = None, n: int = 10, seed: int | None = None):
-    """Study mode: multiple-choice questions from verified facts (key term blanked; answer proven by a quote)."""
+def quiz(subject: str | None = None, n: int = 10, seed: int | None = None, note: str | None = None):
+    """Study mode: multiple-choice questions from verified facts (key term blanked; answer proven by a quote).
+    ?note=<vault path>: only about that note (a Michael note, or a source article via the facts that cite it)."""
     from .quiz import make_quiz
-    return {"questions": make_quiz(subject or None, min(max(n, 1), 30), seed)}
+    return {"questions": make_quiz(subject or None, min(max(n, 1), 30), seed, note or None)}
 
 
 @app.get("/api/v1/calibration")

@@ -29,3 +29,10 @@ def test_name_is_never_the_tail_of_a_longer_name():
     from michael.quiz import _terms
     names = [t for k, t in _terms("Sparse Table can only be used on immutable arrays, unlike the Fenwick Tree.") if k == "name"]
     assert "Table" not in names and "Fenwick Tree" in names
+
+
+def test_numbers_are_whole_and_never_inside_code():
+    from michael.quiz import _terms
+    nums = lambda s: [t for k, t in _terms(s) if k == "number"]
+    assert nums("A prize of 100,000 dollars was awarded in 2009.") == ["100,000", "2009"]
+    assert nums("Two updates are made: add(l, x) and add(r+1, -x).") == []
