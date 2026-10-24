@@ -1,23 +1,27 @@
-// Runs on every page but stays silent unless the page is an article you have actually been reading.
-// Then it asks Michael (locally) which library topic the page belongs to and offers to add its link there.
+// Runs on every page. On a page with readable text it guarantees a Michael card: at the reading time (20 s by
+// default) the card always appears - with the matching topic if Michael has answered, otherwise as "Matching…"
+// that fills in when the answer arrives - and by DEADLINE it is final: if Michael still hasn't answered (busy or
+// offline) it says so and offers Retry / Save for later instead of silently showing nothing.
 (() => {
   if (window.top !== window || window.__michaelLoaded) return;
   window.__michaelLoaded = true;
 
   // never on mail, banking, social media, search, shopping, video or local pages
   const NEVER = /(^|\.)(mail\.google|outlook\.|google\.[a-z.]+$|bing\.com|duckduckgo\.com|facebook\.com|instagram\.com|x\.com|twitter\.com|linkedin\.com|reddit\.com|youtube\.com|netflix\.com|amazon\.|flipkart\.com|whatsapp\.com|web\.telegram|paypal\.com|bank|localhost$|127\.0\.0\.1$)/i;
+  const MIN_WORDS = 120;          // below this the page has no readable text to match (an app, a login page...)
+  const GRACE_MS = 5000;          // card shown at the reading time; final (answer, or "busy") at most 5 s later
 
   const send = (msg) => new Promise((resolve) => chrome.runtime.sendMessage(msg, (r) => resolve(r || { ok: false })));
 
   // textContent, not innerText: innerText forces a layout of the whole page, which is slow on long articles.
-  // Stops once there is enough text to decide and classify (the backend reads 3,000 characters).
+  // Stops once there is enough text to classify (the backend reads 3,000 characters).
   function articleText() {
     const root = document.querySelector("article, main, [role=main]") || document.body;
     const out = [];
     let words = 0;
-    for (const p of root.querySelectorAll("p, li")) {
+    for (const p of root.querySelectorAll("p, li, td, pre, h1, h2, h3")) {
       const t = p.textContent.replace(/\s+/g, " ").trim();
-      if (t.length <= 40) continue;
+      if (t.length <= 25) continue;
       out.push(t);
       words += t.split(" ").length;
       if (words > 1200) break;
@@ -25,90 +29,78 @@
     return out.join("\n");
   }
 
-  function looksLikeArticle(text) {
-    const og = document.querySelector('meta[property="og:type"]')?.content || "";
-    const words = text.split(/\s+/).length;
-    return (document.querySelector("article") || og === "article") ? words > 250 : words > 350;
-  }
+  // one lookup per page, shared by the early prefetch, the timed card and the scroll trigger
+  let page = { url: "", shown: false, timer: 0, lookup: null, result: null, text: "" };
 
-  // state for the page being read; single-page sites change the URL without reloading, so it is reset per URL
-  let page = { url: "", fired: false, since: 0, timer: 0, prefetch: 0, text: null, article: null };
-
-  // read the page once per URL (the scroll handler would otherwise re-read it on every scroll event)
-  function pageText() {
-    if (page.text === null) {
-      page.text = articleText();
-      page.article = looksLikeArticle(page.text);
+  function lookup() {
+    if (!page.lookup) {
+      const url = page.url;
+      page.lookup = send({ type: "classify", url: location.href, title: document.title, text: page.text.slice(0, 3000) })
+        .then((r) => { if (url === page.url) page.result = r; return r; });
     }
-    return page.text;
+    return page.lookup;
   }
 
-  // classify in the background a few seconds after load: by the time the reading time is up the answer is
-  // already cached in the extension, so the card appears instantly instead of after a backend round trip
-  function prefetch() {
-    const text = pageText();
-    if (!page.fired && page.article)
-      send({ type: "classify", url: location.href, title: document.title, text: text.slice(0, 3000) });
-  }
-
-  async function ask(force = false, attempt = 1) {
-    if (page.fired && !force && attempt === 1) return;
-    const text = force ? articleText() : pageText();
-    if (!force && !page.article) return;
-    page.fired = true;
+  async function showWhenReady(force = false) {
+    if (page.shown && !force) return;
+    page.shown = true;
+    if (force) { page.text = articleText() || document.title; page.lookup = null; page.result = null; }
     const url = page.url;
-    const r = await send({ type: "classify", url: location.href, title: document.title, text: text.slice(0, 3000) || document.title });
-    if (url !== page.url) return;                       // navigated away meanwhile (single-page sites)
-    if (r.ok) {
-      // remembered only once Michael actually answered: a failed lookup (backend busy or offline) must not
-      // silence the page for good - the next visit asks again
-      await chrome.storage.local.set({ [`michael:seen:${url}`]: Date.now() });
-      showToast(r, force);
-    } else if (force) {
-      showToast({ offline: true }, true);
-    } else if (attempt < 3) {
-      setTimeout(() => ask(false, attempt + 1), 10000);  // busy backend: try again in 10 s, at most twice
-    }
+    const card = makeCard();
+    if (page.result?.ok) return fill(card, page.result, force);
+    card.pending();                                   // the card is up now - the answer fills it in
+    const r = await Promise.race([lookup(), new Promise((res) => setTimeout(() => res(null), GRACE_MS))]);
+    if (url !== page.url || !card.alive()) return;
+    if (r && r.ok) fill(card, r, force);
+    else card.busy(r && r.error === "token" ? "token" : "busy");
   }
 
   async function watch() {
     const url = location.href.split("#")[0];
     if (url === page.url) return;
     clearTimeout(page.timer);
-    clearTimeout(page.prefetch);
-    page = { url, fired: false, since: performance.now(), timer: 0, prefetch: 0, text: null, article: null };
-    const host = location.hostname;
-    if (NEVER.test(host)) return;
+    document.getElementById("michael-card")?.remove();
+    page = { url, shown: false, timer: 0, lookup: null, result: null, text: "" };
+    if (NEVER.test(location.hostname)) return;
     const res = await send({ type: "settings" });
     if (!res.ok) return;
     const s = res.settings;
-    if (s.paused || !s.token || (s.blocked || []).includes(host)) return;
-    if ((await chrome.storage.local.get(`michael:seen:${url}`))[`michael:seen:${url}`]) {   // asked before:
-      page.fired = true;                                                                   // stay quiet, but
-      send({ type: "classify", url: location.href, title: document.title, text: "" });     // keep the ✓ badge right
+    if (s.paused || (s.blocked || []).includes(location.hostname)) return;
+    if ((await chrome.storage.local.get(`michael:seen:${url}`))[`michael:seen:${url}`]) {   // you acted on it before:
+      page.shown = true;                                                                   // stay quiet, but keep
+      send({ type: "classify", url: location.href, title: document.title, text: "" });     // the ✓ badge right
       return;
     }
-    page.prefetch = setTimeout(prefetch, 3000);
-    page.timer = setTimeout(() => ask(), (s.minSeconds || 20) * 1000);
+    setTimeout(() => {                                // let the page render its text, then start matching early
+      if (url !== page.url) return;
+      page.text = articleText();
+      if (page.text.split(/\s+/).length < MIN_WORDS) { page.shown = true; return; }   // nothing readable to match
+      lookup();
+    }, 2000);
+    page.timer = setTimeout(() => {
+      if (url !== page.url || page.shown) return;
+      if (!page.text) page.text = articleText();      // a short reading time can come before the early read
+      if (page.text.split(/\s+/).length >= MIN_WORDS) showWhenReady();
+    }, (s.minSeconds || 20) * 1000);
   }
 
   function main() {
     watch();
     setInterval(watch, 1500);                       // URL changes on single-page sites (cheap string compare)
-    addEventListener("scroll", () => {
-      if (page.fired || page.article === false) return;
+    addEventListener("scroll", () => {               // clearly reading (30% down, 8 s in): no need to wait 20 s
+      if (page.shown || !page.text) return;
       const seen = (scrollY + innerHeight) / Math.max(document.body.scrollHeight, 1);
-      if (seen > 0.3 && performance.now() - page.since > 8000) ask();
+      if (seen > 0.3 && page.result?.ok) showWhenReady();
     }, { passive: true });
     chrome.runtime.onMessage.addListener((msg) => {   // Alt+Shift+M from the background worker
-      if (msg.type === "now") ask(true);
+      if (msg.type === "now") showWhenReady(true);
     });
   }
 
-  // ------------------------------------------------------------------ the pop-up (shadow DOM: page CSS can't touch it)
-  function showToast(r, force = false) {
-    // unrelated page: no card at all - unless you asked for it with the shortcut
-    if (!force && !r.already_saved && (!r.relevant || !(r.suggestions || [])[0])) return;
+  const remember = () => chrome.storage.local.set({ [`michael:seen:${page.url}`]: Date.now() });
+
+  // ------------------------------------------------------------------ the card (shadow DOM: page CSS can't touch it)
+  function makeCard() {
     document.getElementById("michael-card")?.remove();
     const host = document.createElement("div");
     host.id = "michael-card";
@@ -125,29 +117,50 @@
         button{font:inherit;border-radius:8px;border:1px solid #4a4a6a;background:#2a2a40;color:#e6e6f0;padding:5px 10px;cursor:pointer}
         button.primary{background:#7c5cff;border-color:#7c5cff;color:white}
         select{font:inherit;width:100%;margin-top:8px;background:#2a2a40;color:#e6e6f0;border:1px solid #4a4a6a;border-radius:8px;padding:4px}
+        .dots::after{content:"";animation:d 1.2s steps(4) infinite} @keyframes d{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}
       </style>
       <div class="card"><div class="t"><span>Michael</span><span class="x" title="Close">✕</span></div><div class="body"></div></div>`;
     document.documentElement.appendChild(host);
     const body = root.querySelector(".body");
-    const close = () => host.remove();
-    root.querySelector(".x").onclick = close;
-    let timer = setTimeout(close, 15000);
+    let timer = 0;
+    const close = () => { clearTimeout(timer); host.remove(); };
+    const autoHide = (ms) => { clearTimeout(timer); timer = setTimeout(close, ms); };
+    root.querySelector(".x").onclick = () => { remember(); close(); };
     host.addEventListener("mouseenter", () => clearTimeout(timer));
+    return {
+      host, body, close, autoHide,
+      alive: () => host.isConnected,
+      pending() { body.innerHTML = `<span class="dots">Matching this page to your library</span>`; },
+      busy(kind) {
+        body.innerHTML = kind === "token"
+          ? `<span class="muted">The extension isn't connected: open its Settings and paste the token from Obsidian ("Michael: Copy extension token").</span>`
+          : `<div>Michael didn't answer in time (busy or offline).</div>
+             <div class="row"><button class="primary retry">Retry</button><button class="later">Save for later</button></div>`;
+        body.querySelector(".retry")?.addEventListener("click", () => { close(); page.shown = false; page.lookup = null; showWhenReady(); });
+        body.querySelector(".later")?.addEventListener("click", async () => {
+          await send({ type: "queue", url: location.href, title: document.title, text: page.text.slice(0, 3000) });
+          remember();
+          body.innerHTML = `<span class="muted">Saved - Michael files it into the right topic as soon as it's back.</span>`;
+          autoHide(4000);
+        });
+        autoHide(20000);
+      },
+    };
+  }
 
-    if (r.offline) {
-      body.innerHTML = `<span class="muted">Michael is offline - open Obsidian (the plugin starts it).</span>`;
-      return;
-    }
+  function fill(card, r, force) {
+    const { body, close, autoHide } = card;
+    autoHide(15000);
     if (r.already_saved) {
-      body.innerHTML = `Already in your library: <span class="topic"></span>`;
+      body.innerHTML = `✓ Already in your library: <span class="topic"></span>`;
       body.querySelector(".topic").textContent = `${r.already_saved.subject} › ${r.already_saved.title}`;
+      remember();
       return;
     }
     const best = (r.suggestions || [])[0];
-    if (!best) { host.remove(); return; }
-    const low = r.inbox || !r.relevant;        // shortcut on an unrelated page: offer the Inbox
-    let choice = best ? { subject: best.subject, topic: low ? "Inbox" : best.topic } : null;
-    if (!choice) { close(); return; }
+    if (!best) { card.busy("busy"); return; }
+    const low = r.inbox || !r.relevant;              // no clear topic: offer the subject's Inbox
+    let choice = { subject: best.subject, topic: low ? "Inbox" : best.topic };
 
     body.innerHTML = `
       <div>Add this page to <span class="topic"></span>?</div>
@@ -160,17 +173,17 @@
     const label = () => (body.querySelector(".topic").textContent = `${choice.subject} › ${choice.topic}`);
     label();
     body.querySelector(".conf").textContent = low
-      ? "Not a clear match for any topic, so it goes to the Inbox."
-      : `${Math.round(best.match * 100)}% match` +
-        ((r.suggestions || [])[1] ? ` · next: ${r.suggestions[1].topic}` : "");
+      ? "Not a clear match for any of your topics, so it would go to the Inbox."
+      : `${Math.round(best.match * 100)}% match` + ((r.suggestions || [])[1] ? ` · next: ${r.suggestions[1].topic}` : "");
 
     body.querySelector(".add").onclick = async () => {
       const a = await send({ type: "add", url: location.href, title: document.title, ...choice });
+      remember();
       body.innerHTML = a.ok ? `Added to <span class="topic"></span>.` : `<span class="muted">Michael is offline - start it from Obsidian.</span>`;
       if (a.ok) label();
-      clearTimeout(timer); timer = setTimeout(close, 4000);
+      autoHide(4000);
     };
-    body.querySelector(".later").onclick = close;
+    body.querySelector(".later").onclick = () => { remember(); close(); };
     body.querySelector(".never").onclick = async () => { await send({ type: "block", host: location.hostname }); close(); };
     body.querySelector(".other").onclick = async () => {
       const sel = body.querySelector("select");

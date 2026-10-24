@@ -50,11 +50,56 @@ async function classify(url, title, text) {
   if (hit) return hit;
   if (!text && !inFlight.has(key)) return api("/api/v1/classify", { url, title, text });   // badge check only
   if (!inFlight.has(key)) {
-    inFlight.set(key, api("/api/v1/classify", { url, title, text })
-      .then(async (r) => { await chrome.storage.session.set({ [key]: r }); return r; })
+    inFlight.set(key, classifyWithRetry(url, title, text)
+      .then(async (r) => { await chrome.storage.session.set({ [key]: r }); flushQueue(); return r; })
       .finally(() => inFlight.delete(key)));
   }
   return inFlight.get(key);
+}
+
+// one quick retry: a lookup that fails fast (backend restarting, connection refused) gets a second chance well
+// inside the card's 20-25 s window; a lookup that times out (15 s) is not retried - the card reports "busy"
+async function classifyWithRetry(url, title, text) {
+  const started = Date.now();
+  try {
+    return await api("/api/v1/classify", { url, title, text });
+  } catch (e) {
+    if (e.message === "token" || Date.now() - started > 5000) throw e;
+    await new Promise((r) => setTimeout(r, 2000));
+    return api("/api/v1/classify", { url, title, text });
+  }
+}
+
+// "Save for later" while Michael is busy or offline: kept here and filed (best topic, or the subject's Inbox) as soon
+// as Michael answers any lookup again
+async function queuePage(url, title, text) {
+  const q = (await chrome.storage.local.get("michael:queue"))["michael:queue"] || [];
+  if (!q.some((p) => p.url === url)) q.push({ url, title, text, at: Date.now() });
+  await chrome.storage.local.set({ "michael:queue": q });
+}
+
+let flushing = false;
+async function flushQueue() {
+  if (flushing) return;
+  flushing = true;
+  try {
+    const q = (await chrome.storage.local.get("michael:queue"))["michael:queue"] || [];
+    const left = [];
+    for (const p of q) {
+      try {
+        const r = await api("/api/v1/classify", { url: p.url, title: p.title, text: p.text });
+        const best = (r.suggestions || [])[0];
+        if (!r.already_saved && best)
+          await api("/api/v1/links", { url: p.url, title: p.title, subject: best.subject,
+                                       topic: r.relevant && !r.inbox ? best.topic : "Inbox" });
+      } catch (e) {
+        left.push(p);                                   // still unreachable: keep it for next time
+      }
+    }
+    await chrome.storage.local.set({ "michael:queue": left });
+  } finally {
+    flushing = false;
+  }
 }
 
 async function markSaved(tabId, saved) {
@@ -88,6 +133,9 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
           return reply({ ok: true, links: await api("/api/v1/links?limit=5") });
         case "health":
           return reply({ ok: true, ...(await (await fetch(`${s.backendUrl}/health`)).json()) });
+        case "queue":
+          await queuePage(msg.url, msg.title, msg.text);
+          return reply({ ok: true });
         case "block": {
           const blocked = Array.from(new Set([...(s.blocked || []), msg.host]));
           await chrome.storage.sync.set({ blocked });

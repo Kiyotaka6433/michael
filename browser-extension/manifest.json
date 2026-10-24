@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Michael - file what you read",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Suggests the right topic in your Michael library for the article you are reading, and adds its link to your Obsidian vault with one click. Everything stays on your computer.",
   "permissions": [
     "storage",
