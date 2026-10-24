@@ -398,6 +398,13 @@ def claims(status: str | None = None, source: str | None = None, subject: str | 
     return learning.query_claims(status, source, subject, q, min(limit, 1000), path, conflicts)
 
 
+@app.get("/api/v1/coverage")
+def coverage_map():
+    """Per topic: which source articles back verified facts, which have key points, and the gaps."""
+    from .coverage import coverage
+    return coverage()
+
+
 @app.get("/api/v1/quiz")
 def quiz(subject: str | None = None, n: int = 10, seed: int | None = None):
     """Study mode: multiple-choice questions from verified facts (key term blanked; answer proven by a quote)."""

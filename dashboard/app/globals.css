@@ -82,3 +82,12 @@ select { padding: 8px; border: 1px solid var(--line); border-radius: 6px; backgr
 .quiz-options button { text-align: left; }
 .quiz-options button.wrong { background: #5b2330; border-color: #a33a4f; }
 .quiz-options button p { margin: 0; }
+
+/* coverage */
+table.coverage { width: 100%; border-collapse: collapse; }
+table.coverage td, table.coverage th { padding: 6px 8px; border-bottom: 1px solid var(--line, #3334); text-align: left; }
+table.coverage tr.clickable { cursor: pointer; }
+table.coverage td.warn { color: #e0a33a; }
+.bar { height: 8px; width: 160px; border-radius: 4px; background: #8884; overflow: hidden; }
+.bar span { display: block; height: 100%; background: #7c5cff; }
+ul.sources { margin: 4px 0 8px; }
