@@ -1,6 +1,7 @@
 """Rewrite unsupported sentences so they say only what the evidence supports, or drop them.
 All failed sentences of a round go to the LLM in ONE call, with only the passages they relate to."""
 from ..config import settings
+from .. import llm
 from ..llm import chat_json
 from ..models import Chunk, Claim
 from .metatron import evidence_block
@@ -44,9 +45,20 @@ def repair_many(claims: list[Claim], evidence: list[Chunk], related: dict[int, s
             label, quote = quotes[c.index]
             lines.append(f'   closest quote [{label}]: "{" ".join(quote.split())[:600]}"')
     listing = "\n".join(lines)
+    system = SYSTEM + (QUOTE_RULE if anchored else "")
+    conv = None
+    if settings.repair_in_conversation and (settings.writer_model or settings.llm_model) == settings.llm_model:
+        conv = llm.conversation_for({(c.label, c.text) for c in evidence}, settings.llm_model)
     try:
-        data = chat_json(SYSTEM + (QUOTE_RULE if anchored else ""),
-                         f"Sentences:\n{listing}\n\nPassages:\n\n{evidence_block(shown)}", schema=SCHEMA)
+        if conv:
+            # continue the writer's conversation: its passages are already in Ollama's prompt cache, so only the
+            # instructions, the sentences and any passages found later (claim-driven retrieval) are read
+            seen = {label for label, _ in conv["passages"]}
+            extra = [c for c in shown if c.label not in seen]
+            more = f"\n\nMore passages:\n\n{evidence_block(extra)}" if extra else ""
+            data = chat_json("", f"{system}\n\nSentences:\n{listing}{more}", schema=SCHEMA, history=conv["messages"])
+        else:
+            data = chat_json(system, f"Sentences:\n{listing}\n\nPassages:\n\n{evidence_block(shown)}", schema=SCHEMA)
     except Exception:
         return {c.index: None for c in claims}
     valid = {c.label for c in evidence}

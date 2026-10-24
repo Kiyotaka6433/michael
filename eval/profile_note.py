@@ -21,6 +21,8 @@ def main():
     a = ap.parse_args()
     from michael.host import pravuil
     from michael.host.archangel import VERIFIER, warm_up
+    from michael.config import settings
+    settings.extra["trace"] = []
     warm_up()                                     # model loading is not part of a note's cost
     marks = [("start", time.time(), "")]
     emit = lambda stage, detail="", **_: marks.append((stage, time.time(), detail))
@@ -31,6 +33,9 @@ def main():
     print(f"{src.stem}: {total:.0f}s, {r['stats']['supported']}/{r['stats']['total']} verified")
     for (s, t, d), (_, t2, _) in zip(marks, marks[1:]):
         print(f"  {s:8s} {t2 - t:6.1f}s  {100 * (t2 - t) / total:4.0f}%  {d[:70]}")
+    for i, c in enumerate(settings.extra["trace"]):
+        print(f"  LLM call {i + 1}: read {c['prompt_eval_count']} tokens in {c['prompt_eval_duration'] / 1e9:.0f}s, "
+              f"wrote {c['eval_count']} in {c['eval_duration'] / 1e9:.0f}s")
 
 
 if __name__ == "__main__":

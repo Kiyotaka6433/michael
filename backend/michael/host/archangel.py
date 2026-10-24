@@ -192,6 +192,7 @@ def verify_and_repair(question, claims, evidence, emit=_noop, repair_enabled=Tru
 def run_research(question: str, kinds=None, urls=(), pdfs=(), use_vault=True, repair_enabled=True,
                  on_event=None, run_id: str | None = None, vault_path: str | None = None) -> dict:
     run_id = run_id or uuid.uuid4().hex[:12]
+    metatron.prefill()                    # the writer's instructions are read while the sources are fetched
     t0 = time.time()
     timings = {}
 

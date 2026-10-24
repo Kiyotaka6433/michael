@@ -1,7 +1,9 @@
 """Draft an answer in which every sentence cites evidence labels such as p1, p3."""
+import json
 import re
 
 from ..config import settings
+from .. import llm
 from ..llm import chat_json
 from ..models import Chunk, Claim
 from .scrolls import split_sentences
@@ -78,8 +80,14 @@ def parse_sentences(data: dict, valid_labels: set) -> list[Claim]:
     return claims
 
 
-def write(question: str, evidence: list[Chunk], max_sentences: int = 8) -> list[Claim]:
-    """max_sentences > 8 for overviews built from many articles (one or two facts per passage)."""
+def prefill(max_sentences: int = 8):
+    """Read the writer's fixed instructions into Ollama's prompt cache NOW, in the background, while the run is still
+    searching and reranking: the draft then only reads the question and the evidence (speed)."""
+    if settings.prefill and not settings.compact_writer:
+        llm.prefill(_prompt(max_sentences)[0], settings.writer_model or settings.llm_model)
+
+
+def _prompt(max_sentences: int) -> tuple[str, dict]:
     system, schema = SYSTEM, SCHEMA
     if settings.writer_style == "extractive":
         # recall experiment: drafts that summarise or reorder the source are what the verifier can't prove;
@@ -91,6 +99,51 @@ def write(question: str, evidence: list[Chunk], max_sentences: int = 8) -> list[
     if max_sentences != 8:
         system = system.replace("Write 4 to 10 sentences.", f"Write 6 to {max_sentences} sentences.", 1)
         schema = {**SCHEMA, "properties": {"sentences": {**SCHEMA["properties"]["sentences"], "maxItems": max_sentences}}}
-    data = chat_json(system, f"Question: {question}\n\nEvidence passages:\n\n{evidence_block(evidence)}", schema=schema,
-                     model=settings.writer_model or settings.llm_model)
+    return system, schema
+
+
+def write(question: str, evidence: list[Chunk], max_sentences: int = 8) -> list[Claim]:
+    """max_sentences > 8 for overviews built from many articles (one or two facts per passage)."""
+    system, schema = _prompt(max_sentences)
+    model = settings.writer_model or settings.llm_model
+    user = f"Question: {question}\n\nEvidence passages:\n\n{evidence_block(evidence)}"
+    passages = {(c.label, c.text) for c in evidence}
+    if settings.compact_writer:
+        # "p3 | sentence" lines: about a third fewer tokens to generate than the JSON objects, and no constrained
+        # decoding. Falls back to JSON if the answer can't be read.
+        text = llm.chat_text(compact(system), user, model=model)
+        items = parse_lines(text)["sentences"][:max_sentences]          # the JSON schema's maxItems
+        claims = parse_sentences({"sentences": items}, {c.label for c in evidence})
+        if len(claims) >= 2:
+            llm.remember_conversation(passages, model, [{"role": "system", "content": compact(system)},
+                                                        {"role": "user", "content": user}], text)
+            return claims
+    data = chat_json(system, user, schema=schema, model=model)
+    llm.remember_conversation(passages, model, [{"role": "system", "content": system}, {"role": "user", "content": user}],
+                              llm.LAST_REPLY["text"] or json.dumps(data, ensure_ascii=False))   # exact text: cache hit
     return parse_sentences(data, {c.label for c in evidence})
+
+
+LINE = re.compile(r"^\s*(?:[-*]|\d+[.)])?\s*\[?((?:p\d+\]?\s*,?\s*\[?)+)\]?\s*[|:]?\s*(.+?)\s*$")
+
+
+def compact(system: str) -> str:
+    """The writer's instructions with the JSON example and format rewritten as one "pN | sentence" line each."""
+    return system.split("Example", 1)[0] + """Example
+Question: How do cats and dogs differ in sleep?
+[p1] Cats sleep 12 to 16 hours a day. [p2] Dogs sleep about 12 hours a day. Puppies sleep up to 20 hours.
+Answer:
+p1 | Cats sleep 12 to 16 hours a day.
+p2 | Dogs sleep about 12 hours a day.
+p2 | Puppies can sleep up to 20 hours a day.
+
+Answer with one line per sentence: the passage label(s), a | and the sentence. Nothing else."""
+
+
+def parse_lines(text: str) -> dict:
+    """'p1, p3 | sentence' lines -> the writer's JSON shape."""
+    out = []
+    for line in text.splitlines():
+        if m := LINE.match(line):
+            out.append({"text": m.group(2), "citations": re.findall(r"p\d+", m.group(1))})
+    return {"sentences": out}
