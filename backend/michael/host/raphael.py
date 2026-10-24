@@ -1,5 +1,6 @@
 """Rewrite unsupported sentences so they say only what the evidence supports, or drop them.
 All failed sentences of a round go to the LLM in ONE call, with only the passages they relate to."""
+from ..config import settings
 from ..llm import chat_json
 from ..models import Chunk, Claim
 from .metatron import evidence_block
@@ -21,16 +22,31 @@ SCHEMA = {
 }
 
 
-def repair_many(claims: list[Claim], evidence: list[Chunk], related: dict[int, set] | None = None) -> dict[int, Claim | None]:
+QUOTE_RULE = """
+Under each sentence is the CLOSEST QUOTE found for it. Prefer rewriting the sentence so it says what that quote
+says - shorten the quote if needed but keep its words and their order, and name the subject instead of "it" -
+and cite that quote's passage label."""
+
+
+def repair_many(claims: list[Claim], evidence: list[Chunk], related: dict[int, set] | None = None,
+                quotes: dict[int, tuple[str, str]] | None = None) -> dict[int, Claim | None]:
     """{claim.index: rewritten Claim, or None to drop}. `related` maps claim.index -> evidence labels worth showing
     (cited + best-matching passage); defaults to all evidence."""
     if not claims:
         return {}
     labels = set().union(*(related.get(c.index, set()) for c in claims)) if related else {c.label for c in evidence}
     shown = [c for c in evidence if c.label in labels] or evidence
-    listing = "\n".join(f'{i}. "{c.sentence}"' for i, c in enumerate(claims))
+    anchored = bool(settings.quote_repair and quotes)
+    lines = []
+    for i, c in enumerate(claims):
+        lines.append(f'{i}. "{c.sentence}"')
+        if anchored and c.index in quotes:           # recall experiment: repair against the exact closest quote
+            label, quote = quotes[c.index]
+            lines.append(f'   closest quote [{label}]: "{" ".join(quote.split())[:600]}"')
+    listing = "\n".join(lines)
     try:
-        data = chat_json(SYSTEM, f"Sentences:\n{listing}\n\nPassages:\n\n{evidence_block(shown)}", schema=SCHEMA)
+        data = chat_json(SYSTEM + (QUOTE_RULE if anchored else ""),
+                         f"Sentences:\n{listing}\n\nPassages:\n\n{evidence_block(shown)}", schema=SCHEMA)
     except Exception:
         return {c.index: None for c in claims}
     valid = {c.label for c in evidence}
