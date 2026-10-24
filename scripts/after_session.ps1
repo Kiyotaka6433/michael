@@ -8,6 +8,5 @@ Set-Location $root
 $py = "$root\.venv\Scripts\python.exe"
 $env:PYTHONIOENCODING = "utf-8"
 Start-Process -WindowStyle Hidden powershell -ArgumentList "-NoProfile","-ExecutionPolicy","Bypass","-File","$root\scripts\keep_responsive.ps1"
-cmd /c "set MICHAEL_QUOTE_REPAIR=1&& set GATE_TAG=quote&& `"$py`" -u eval\gate_repair.py >> eval\reports\after_session.log 2>&1"
 cmd /c "set MICHAEL_WRITER_STYLE=extractive&& `"$py`" -u eval\extractive_drafts.py >> eval\reports\after_session.log 2>&1"
 & "$root\scripts\after_batch.ps1"
