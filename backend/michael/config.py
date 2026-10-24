@@ -20,7 +20,9 @@ class Settings:
     # (6.3 vs 4.8 per note, 96.6% vs 94.0% correct), but 3b drafts + 7b repairs was SLOWER end to end on a 15 GB
     # laptop (more repair rounds, both models in memory). See Decisions 18 Oct.
     writer_model: str = _env("WRITER", "")
-    writer_style: str = _env("WRITER_STYLE", "")      # "extractive": one passage sentence per draft sentence (experiment)
+    # "extractive": one passage sentence per draft sentence. Measured 24 Oct: 6.07 vs 5.14 correct verified sentences per
+    # note, but 1 wrong vs 0 -> off (zero wrong comes first)
+    writer_style: str = _env("WRITER_STYLE", "")
     quote_repair: bool = _env("QUOTE_REPAIR", "1") == "1"   # repair against the closest quote (gate: lost 17.3% -> 16.2%, strict 93.8 -> 94.4%, 0 wrong)
     # drafts as "p3 | sentence" lines instead of JSON: measured 24 Oct, no saving per sentence (35 vs 36 tokens), and
     # without the schema's minimum the 7B wrote 4 sentences instead of 8 -> off
