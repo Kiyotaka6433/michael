@@ -1,12 +1,13 @@
 {
   "manifest_version": 3,
   "name": "Michael - file what you read",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Suggests the right topic in your Michael library for the article you are reading, and adds its link to your Obsidian vault with one click. Everything stays on your computer.",
   "permissions": [
     "storage",
     "activeTab",
-    "scripting"
+    "scripting",
+    "contextMenus"
   ],
   "host_permissions": [
     "http://127.0.0.1/*",
