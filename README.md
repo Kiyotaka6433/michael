@@ -341,6 +341,15 @@ When checking against the library, the passages are found by search rather than 
 
 For another client, e.g. Claude Desktop, add: `{"command": "<repo>/.venv/Scripts/michael-mcp.exe"}`.
 
+### Fact-check, instant answers, study mode, coverage
+
+| Feature | Where | What it does |
+|---|---|---|
+| **Fact-check** | Obsidian: command, ribbon, right-click a selection · Chrome: right-click a selection · MCP: `check_facts` | Checks every sentence of *your* text against the library's source articles: ✓ supported (with the exact quote), ◐ partial, ✗ not found. Click a sentence to jump to it |
+| **Instant answers** | Web search page ("Already verified") · Obsidian research (shown while the note is written) · MCP `verified_facts` · `/api/v1/facts` | The verified facts closest in meaning to a question, in about 0.06 s, with no model run: each was already proven by a quote |
+| **Study mode** | Web app → **Quiz** · `/api/v1/quiz` | Multiple choice from verified facts with no LLM: one key term (formula, name, number, technical word) is blanked out, the distractors are the same kind of term from the same note, and the proving quote is shown after each answer |
+| **Coverage map** | Web app → **Coverage** · `/api/v1/coverage` | Per topic: which saved articles back verified facts and which are unused (150 of 339 today). The key-points batch does unused articles first |
+
 ### Chrome / Edge extension: file what you read
 
 `browser-extension/` suggests the right library topic for the article you are reading and adds its **link** (name + URL) to that topic with one click.
@@ -349,6 +358,8 @@ For another client, e.g. Claude Desktop, add: `{"command": "<repo>/.venv/Scripts
 2. Nothing to paste: the backend writes `browser-extension/local-token.json` (git-ignored) and the extension picks it up. (Fallback: **Michael: Copy extension token** in Obsidian, then paste it in the extension's Settings.)
 3. Read an article for ~20 s (or scroll a third of it): a small card asks *"Add this page to Number Theory › Modular arithmetic?"* with **Add / Other topic / Not now / Never on this site**.
 
-It never appears on mail, search, social, shopping, banking or video sites, or on pages that are not articles. **Alt+Shift+M** asks about any page right away; a green ✓ on the toolbar icon means the page is already in your library. Single-page sites (Medium, docs) are followed as you navigate, and each page is classified once per browser session. A page that is already in the vault says so instead. **Add** writes `<Subject>/Links/<Title>.md` (`michael: link`, never used as evidence) and lists it under the topic's *Reading list* in the hub; links get a lighter shade of their subject colour in the graph.
+**A card is guaranteed** on every page with readable text. At the reading time it appears even if Michael hasn't answered yet ("Matching…"), and at most 5 s later it is final: the topic, or *busy/offline* with **Retry** / **Save for later** (saved pages are filed into the right topic as soon as Michael is back). Pages with no clear topic get an *Inbox* offer. **Right-click any selected text → Fact-check with Michael** checks each sentence against your library and shows the verdicts and quotes in the card.
+
+It never appears on mail, search, social, shopping, banking or video sites. **Alt+Shift+M** asks about any page right away; a green ✓ on the toolbar icon means the page is already in your library. Single-page sites (Medium, docs) are followed as you navigate, and each page is classified once per browser session. A page that is already in the vault says so instead. **Add** writes `<Subject>/Links/<Title>.md` (`michael: link`, never used as evidence) and lists it under the topic's *Reading list* in the hub; links get a lighter shade of their subject colour in the graph.
 
 How it picks the topic (`host/raziel.py`): the page's title and opening text are embedded (bge-small) and compared with each topic's centroid, the mean embedding of its saved articles. Confidence is a softmax over those similarities; below 0.35 the link goes to the subject's *Inbox*. No LLM, about 100 ms. Page text only goes to the local backend (`127.0.0.1`), which requires the token for every request.
