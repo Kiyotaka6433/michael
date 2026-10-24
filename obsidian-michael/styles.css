@@ -28,3 +28,13 @@
 .michael-trust-badge.is-context { color: var(--color-purple); }
 .michael-trust-badge.is-parts { color: var(--color-cyan); }
 .michael-trust-quote p, .michael-trust-sentence p { margin: 0; }
+
+/* quiz */
+.michael-quiz-progress { color: var(--text-muted); font-size: var(--font-ui-small); }
+.michael-quiz-question { font-size: 1.1em; }
+.michael-quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.michael-quiz-options button { height: auto; min-height: 36px; white-space: normal; }
+.michael-quiz-options button.is-right { background: rgba(var(--color-green-rgb), .25); border-color: var(--color-green); }
+.michael-quiz-options button.is-wrong { background: rgba(var(--color-red-rgb), .25); border-color: var(--color-red); }
+.michael-quiz-fact { font-weight: 600; }
+.michael-quiz-source { color: var(--text-muted); font-size: var(--font-ui-small); margin-top: 4px; }

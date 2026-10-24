@@ -11,7 +11,7 @@ import re
 from . import learning
 
 MATH = re.compile(r"\$[^$]{1,60}\$")
-NUMBER = re.compile(r"(?<![\w.$])\d+(?:\.\d+)?(?![\w.])")
+NUMBER = re.compile(r"(?<![\w.$,+\-*/^=(\[])\d+(?:[.,]\d+)*(?![\w+\-*/^)\]]|[.,]\d)")   # not inside code/formulas
 NAME = re.compile(r"(?<=\s)([A-Z][a-z]{2,}(?:[\s-][A-Z][a-z]+)*)")         # capitalised, not the first word
 WORD = re.compile(r"(?<![A-Za-z-])([a-z][a-z-]{6,})(?![A-Za-z-])")             # whole lower-case words only
 STOP = set("""about above across after again against algorithm algorithms another because before between called
@@ -38,11 +38,25 @@ def _blank(sentence: str, term: str) -> str | None:
     return out if n else None
 
 
-def make_quiz(subject: str | None = None, n: int = 10, seed: int | None = None) -> list[dict]:
+def _note_facts(note: str) -> list[dict]:
+    """Facts of one vault note: the sentences of a Michael note, or - for a saved source article - every verified
+    fact that cites it."""
+    rows = learning.query_claims("SUPPORTED", path=note, limit=1000)["claims"]
+    if not rows:
+        stem = note.replace("\\", "/").rsplit("/", 1)[-1].removesuffix(".md")
+        rows = learning.query_claims("SUPPORTED", source=stem, limit=1000)["claims"]
+    return [c for c in rows if c.get("quote")]
+
+
+def make_quiz(subject: str | None = None, n: int = 10, seed: int | None = None, note: str | None = None) -> list[dict]:
+    """`note`: questions only about that vault note (distractors still come from the whole library)."""
     rng = random.Random(seed)
     facts = [c for c in learning.query_claims("SUPPORTED", subject=subject, limit=1000)["claims"] if c.get("quote")]
+    pool = facts
+    if note:
+        facts = _note_facts(note)
     by_note, by_subject = {}, {}                  # kind -> terms, per note and per subject (distractor pools)
-    for c in facts:
+    for c in pool + (facts if note else []):
         for kind, term in _terms(c["sentence"]):
             by_note.setdefault((c["path"], kind), set()).add(term)
             by_subject.setdefault(kind, set()).add(term)
