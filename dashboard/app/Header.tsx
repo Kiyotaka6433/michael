@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 const LINKS = [
   ["/library", "Library"], ["/search", "Search"], ["/flashcards", "Flashcards"], ["/quiz", "Quiz"],
-  ["/coverage", "Coverage"], ["/graph", "Graph"], ["/claims", "Claims"], ["/", "Research runs"],
+  ["/coverage", "Coverage"], ["/graph", "Graph"], ["/claims", "Claims"], ["/runs", "Research"],
 ];
 
 export function Leaf({ size = 22 }: { size?: number }) {
@@ -21,12 +21,12 @@ export default function Header() {
   const path = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [theme, setTheme] = useState<"day" | "dusk">("day");
+  const [theme, setTheme] = useState<"day" | "dusk">("dusk");
 
   useEffect(() => {
     let saved: string | null = null;
     try { saved = localStorage.getItem("michael-theme"); } catch {}
-    const t = saved === "dusk" || (!saved && matchMedia("(prefers-color-scheme: dark)").matches) ? "dusk" : "day";
+    const t = saved === "day" ? "day" : "dusk";            // dark by default
     setTheme(t);
     document.documentElement.dataset.theme = t;
   }, []);
@@ -53,20 +53,19 @@ export default function Header() {
     document.documentElement.dataset.theme = t;
     try { localStorage.setItem("michael-theme", t); } catch {}
   };
-  const active = (href: string) => (href === "/" ? path === "/" || path.startsWith("/runs") : path.startsWith(href));
+  const active = (href: string) => path.startsWith(href);
 
   return (
     <header className="top">
-      <a href="/library" className="brand"><Leaf />Michael</a>
+      <a href="/" className="brand"><Leaf />Michael</a>
       <nav className={`nav${open ? " open" : ""}`}>
         {LINKS.map(([href, label]) => (
           <a key={href} href={href} className={active(href) ? "active" : ""}>{label}</a>
         ))}
       </nav>
-      <span className="tagline grow-right">every sentence rooted in a quote</span>
-      <button className="icon-btn" onClick={toggle} title={theme === "day" ? "Dusk mode" : "Day mode"}
-              aria-label="Toggle colour theme" style={{ marginLeft: "auto" }}>
-        {theme === "day" ? "☾" : "☀"}
+      <button className={`theme-switch ${theme}`} onClick={toggle} role="switch" aria-checked={theme === "dusk"}
+              aria-label="Dark mode" title={theme === "day" ? "Switch to dark" : "Switch to light"}>
+        <span className="knob">{theme === "day" ? "☀" : "☾"}</span>
       </button>
       <button className="icon-btn menu-btn" onClick={() => setOpen(!open)} aria-label="Menu" aria-expanded={open}>☰</button>
     </header>
