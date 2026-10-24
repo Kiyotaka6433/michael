@@ -92,8 +92,9 @@
       const seen = (scrollY + innerHeight) / Math.max(document.body.scrollHeight, 1);
       if (seen > 0.3 && page.result?.ok) showWhenReady();
     }, { passive: true });
-    chrome.runtime.onMessage.addListener((msg) => {   // Alt+Shift+M from the background worker
+    chrome.runtime.onMessage.addListener((msg) => {   // Alt+Shift+M / the right-click menu, via the background worker
       if (msg.type === "now") showWhenReady(true);
+      if (msg.type === "check") factCheck(msg.text);
     });
   }
 
@@ -195,6 +196,37 @@
       sel.style.display = "block";
       sel.onchange = () => { const [subject, topic] = sel.value.split("|||"); choice = { subject, topic }; label(); };
     };
+  }
+
+  // ------------------------------------------------------------------ fact-check a selection against the library
+  async function factCheck(text) {
+    page.shown = true;                                // the automatic topic card must not replace a check you asked for
+    const card = makeCard();
+    card.body.innerHTML = `<span class="dots">Checking each sentence against your library</span>`;
+    const r = await send({ type: "check", text });
+    if (!card.alive()) return;
+    if (!r.ok) { card.busy(r.error === "token" ? "token" : "busy"); return; }
+    const icon = { SUPPORTED: "✓", PARTIAL: "◐", UNSUPPORTED: "✗" };
+    const colour = { SUPPORTED: "#7ee2a8", PARTIAL: "#f5d36b", UNSUPPORTED: "#ff8a8a" };
+    const s = r.summary;
+    card.body.innerHTML = `<div class="muted">✓ ${s.supported} supported · ◐ ${s.partial} partial · ✗ ${s.unsupported} not found in your library</div>
+      <div class="list" style="max-height:340px;overflow:auto;margin-top:6px"></div>`;
+    const list = card.body.querySelector(".list");
+    for (const c of r.sentences) {
+      const row = document.createElement("div");
+      row.style.cssText = `border-left:3px solid ${colour[c.verdict]};padding:4px 8px;margin:6px 0`;
+      const head = document.createElement("div");
+      head.textContent = `${icon[c.verdict]} ${c.sentence}`;
+      row.append(head);
+      if (c.verdict !== "UNSUPPORTED" && c.quote) {
+        const q = document.createElement("div");
+        q.className = "muted";
+        q.textContent = `“${c.quote.slice(0, 260)}${c.quote.length > 260 ? "…" : ""}” — ${c.source.replace(/^\[\[|\]\]$/g, "")}`;
+        row.append(q);
+      }
+      list.append(row);
+    }
+    card.autoHide(60000);
   }
 
   main();

@@ -133,6 +133,16 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
           return reply({ ok: true, links: await api("/api/v1/links?limit=5") });
         case "health":
           return reply({ ok: true, ...(await (await fetch(`${s.backendUrl}/health`)).json()) });
+        case "check": {                                  // fact-checking can take a minute: no 15 s cap here
+          const s2 = await settings();
+          const res = await fetch(`${s2.backendUrl}/api/v1/check`, {
+            method: "POST", signal: AbortSignal.timeout(180000),
+            headers: { "content-type": "application/json", "X-Michael-Token": s2.token },
+            body: JSON.stringify({ text: msg.text }),
+          });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return reply({ ok: true, ...(await res.json()) });
+        }
         case "queue":
           await queuePage(msg.url, msg.title, msg.text);
           return reply({ ok: true });
@@ -164,4 +174,14 @@ chrome.runtime.onInstalled.addListener(async () => {
   const all = await chrome.storage.local.get(null);
   const stale = Object.keys(all).filter((k) => k.startsWith("michael:seen:"));
   if (stale.length) await chrome.storage.local.remove(stale);
+});
+
+// Right-click a selection -> "Fact-check with Michael": every sentence of the selected text is checked against your
+// library's source articles (the same verifier as Michael's notes); the card in the page shows each verdict.
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.contextMenus.create({ id: "michael-check", title: "Fact-check with Michael", contexts: ["selection"] });
+});
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === "michael-check" && tab?.id != null)
+    chrome.tabs.sendMessage(tab.id, { type: "check", text: info.selectionText || "" }).catch(() => {});
 });

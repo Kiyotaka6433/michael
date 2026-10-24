@@ -1,6 +1,7 @@
-import { App, Editor, FileSystemAdapter, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, normalizePath, requestUrl } from "obsidian";
+import { App, Editor, MarkdownView, FileSystemAdapter, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, normalizePath, requestUrl } from "obsidian";
 import { ChildProcess, spawn } from "child_process";
 import { TRUST_VIEW, TrustView } from "./trust";
+import { CHECK_VIEW, CheckView, CheckResult, proseOf } from "./check";
 
 interface MichaelSettings {
   backendUrl: string;
@@ -105,6 +106,16 @@ export default class MichaelPlugin extends Plugin {
       if (p.q) this.startRun(decodeURIComponent(p.q));
     });
 
+    // fact-check YOUR writing (a note, or the selection) against the library's source articles
+    this.registerView(CHECK_VIEW, (leaf) => new CheckView(leaf));
+    this.addRibbonIcon("badge-check", "Michael: fact-check this note", () => this.factCheck());
+    this.addCommand({ id: "fact-check-note", name: "Fact-check this note (or the selection) against my library",
+                      callback: () => this.factCheck() });
+    this.registerEvent(this.app.workspace.on("editor-menu", (menu, editor) => {
+      if (editor.getSelection().trim())
+        menu.addItem((i) => i.setTitle("Fact-check with Michael").setIcon("badge-check").onClick(() => this.factCheck()));
+    }));
+
     // side panel: verdict, score, quote and source of every sentence in the open Michael note
     this.registerView(TRUST_VIEW, (leaf) => new TrustView(leaf));
     this.addRibbonIcon("shield-check", "Michael: trust panel", () => this.openTrust());
@@ -113,6 +124,34 @@ export default class MichaelPlugin extends Plugin {
 
     this.addSettingTab(new MichaelSettingTab(this.app, this));
     this.app.workspace.onLayoutReady(() => this.ensureBackend(false));
+  }
+
+  async factCheck() {
+    const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+    const file = view?.file ?? this.app.workspace.getActiveFile();
+    if (!file) return new Notice("Open a note first.");
+    const selection = view?.editor.getSelection().trim() ?? "";
+    const text = proseOf(selection || (await this.app.vault.cachedRead(file))).trim();
+    if (text.split(/\s+/).length < 4) return new Notice("Nothing to check in this note.");
+    let leaf = this.app.workspace.getLeavesOfType(CHECK_VIEW)[0];
+    if (!leaf) {
+      leaf = this.app.workspace.getRightLeaf(false)!;
+      await leaf.setViewState({ type: CHECK_VIEW, active: true });
+    }
+    this.app.workspace.revealLeaf(leaf);
+    const panel = leaf.view as CheckView;
+    panel.show(file, "Checking every sentence against your library… (can take a minute)");
+    if (!(await this.ensureBackend(false))) return panel.show(file, "Michael backend not reachable.");
+    try {
+      const r = await requestUrl({ url: `${this.settings.backendUrl}/api/v1/check`, method: "POST",
+                                   contentType: "application/json", body: JSON.stringify({ text }), throw: false });
+      if (r.status !== 200) return panel.show(file, `Check failed (HTTP ${r.status}).`);
+      const res = r.json as CheckResult;
+      panel.show(file, selection ? "Checked the selection." : "Checked the whole note.", res);
+      new Notice(`Michael: ${res.summary.supported}/${res.summary.sentences} sentences supported by your library.`);
+    } catch (e) {
+      panel.show(file, `Check failed: ${(e as Error).message}`);
+    }
   }
 
   async openTrust() {
