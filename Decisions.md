@@ -4,6 +4,11 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-24 · extractive-drafting result (recall experiment)
+- **Measured** (`eval/extractive_score.py`, 14 baseline notes, full pipeline with quote repair, 89 shown sentences hand-labelled, claude-audit): extractive drafts give **6.07 correct verified sentences per note vs 5.14** for the current writer (+18%), with 3 partly-correct vs 6, but **1 wrong** vs 0: "Dirichlet's theorem on arithmetic progressions states that the number of feasible progressions modulo d is given by Euler's totient function" (the totient count is not what Dirichlet's theorem states; the verifier accepted it from a quote that only mentions the count).
+- **Not adopted as the default:** the project's bar has always been zero wrong sentences, and recall never outranks it. It stays available as `MICHAEL_WRITER_STYLE=extractive`.
+- Worth trying next: extractive drafts plus a stricter check on sentences that NAME a theorem or person (the wrong one added a name the quote doesn't contain).
+
 ## 2026-10-24 · 16:37-18:37
 - Done: `eval/extractive_score.py` (scores the extractive drafts through the full pipeline against the original 7B drafts) and the speed work (writer instructions pre-read during search, on; two other ideas measured and left off: see the 17:45-18:35 entry).
 - Running: the extractive-drafting experiment (3 of 14 notes drafted; restarted 18:35 after being paused for clean timings), then the library batch (topic rewrites resume at 14/28, then key points). Backend job queue empty.
