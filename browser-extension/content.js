@@ -156,6 +156,7 @@
       body.innerHTML = `✓ Already in your library: <span class="topic"></span>`;
       body.querySelector(".topic").textContent = `${r.already_saved.subject} › ${r.already_saved.title}`;
       remember();
+      knownFacts(card);
       return;
     }
     const best = (r.suggestions || [])[0];
@@ -196,6 +197,30 @@
       sel.style.display = "block";
       sel.onchange = () => { const [subject, topic] = sel.value.split("|||"); choice = { subject, topic }; label(); };
     };
+    knownFacts(card);
+  }
+
+  // Facts Michael has already verified on this page's subject, appended once the card is up (never delays it).
+  async function knownFacts(card) {
+    const q = document.title.replace(/\s[-|–—:]\s(?!.*\s[-|–—:]\s).*$/, "").trim();   // "Euclidean algorithm - Wikipedia"
+    if (!q) return;
+    const r = await Promise.race([send({ type: "facts", q }), new Promise((ok) => setTimeout(() => ok(null), 4000))]);
+    if (!r?.ok || !r.facts.length || !card.alive()) return;
+    const box = document.createElement("details");
+    box.style.cssText = "margin-top:10px;border-top:1px solid #3b3b55;padding-top:6px";
+    box.innerHTML = `<summary class="muted" style="cursor:pointer"></summary>`;
+    box.querySelector("summary").textContent = `You already have ${r.facts.length} verified fact${r.facts.length > 1 ? "s" : ""} on this`;
+    for (const f of r.facts) {
+      const row = document.createElement("div");
+      row.style.cssText = "border-left:3px solid #7ee2a8;padding:3px 8px;margin:6px 0";
+      row.textContent = `✓ ${f.fact}`;
+      const src = document.createElement("div");
+      src.className = "muted";
+      src.textContent = (f.source || "").replace(/^\[\[|\]\]$/g, "");
+      row.append(src);
+      box.append(row);
+    }
+    card.body.append(box);
   }
 
   // ------------------------------------------------------------------ fact-check a selection against the library
