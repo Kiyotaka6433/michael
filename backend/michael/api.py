@@ -398,6 +398,13 @@ def claims(status: str | None = None, source: str | None = None, subject: str | 
     return learning.query_claims(status, source, subject, q, min(limit, 1000), path, conflicts)
 
 
+@app.get("/api/v1/quiz")
+def quiz(subject: str | None = None, n: int = 10, seed: int | None = None):
+    """Study mode: multiple-choice questions from verified facts (key term blanked; answer proven by a quote)."""
+    from .quiz import make_quiz
+    return {"questions": make_quiz(subject or None, min(max(n, 1), 30), seed)}
+
+
 @app.get("/api/v1/calibration")
 def calibration(target: float = 0.95, strict: bool = True):
     """Recommended support threshold from the gold labels (eval/gold, imported into the database)."""

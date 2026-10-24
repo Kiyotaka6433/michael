@@ -83,7 +83,9 @@ def index_vault(vault: str | Path, embed: bool = True, on_progress=None) -> dict
         known = {r["path"]: (r["mtime"], r["hash"]) for r in
                  con.execute("SELECT path, mtime, hash FROM vault_notes WHERE vault=?", (str(vault),))}
     seen, changed, new_chunks = set(), 0, []
-    files = [p for p in vault.rglob("*.md") if not any(part in SKIP_DIRS for part in p.relative_to(vault).parts)]
+    # any hidden folder is skipped: .obsidian, .trash, .git - and .candidates, where topic rewrites are drafted
+    # before they are compared (a draft must never count as a verified note)
+    files = [p for p in vault.rglob("*.md") if not any(part.startswith(".") for part in p.relative_to(vault).parts)]
     for i, path in enumerate(files):
         key = str(path)
         seen.add(key)
