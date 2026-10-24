@@ -21,7 +21,7 @@ class Settings:
     # laptop (more repair rounds, both models in memory). See Decisions 18 Oct.
     writer_model: str = _env("WRITER", "")
     writer_style: str = _env("WRITER_STYLE", "")      # "extractive": one passage sentence per draft sentence (experiment)
-    quote_repair: bool = _env("QUOTE_REPAIR", "0") == "1"   # repair a failing sentence against its closest quote (experiment)
+    quote_repair: bool = _env("QUOTE_REPAIR", "1") == "1"   # repair against the closest quote (gate: lost 17.3% -> 16.2%, strict 93.8 -> 94.4%, 0 wrong)
     llm_threads: int = int(_env("LLM_THREADS", os.cpu_count() or 4))
     llm_ctx: int = int(_env("LLM_CTX", 6144))
     embed_model: str = _env("EMBED_MODEL", "BAAI/bge-small-en-v1.5")

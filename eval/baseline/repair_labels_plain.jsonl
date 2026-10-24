@@ -1,0 +1,7 @@
+{"id": "b61b14c06cc", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b0ae69344d2", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b575845c30a", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b8502053b57", "label": "partly", "reason": "the invariants ensure the correct coefficients, not the GCD", "labeler": "claude-audit"}
+{"id": "be471d3367d", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b8b34049597", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bbd0575c462", "label": "partly", "reason": "the paper says plain dot-product attention equals theirs except the scaling; 'the algorithm' is unclear", "labeler": "claude-audit"}

@@ -4,6 +4,14 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-24 · 15:13-15:45 (recall: quote-anchored repair is on)
+- **Measured on the 198 labelled baseline drafts, both runs with today's code** (rewrites labelled per run, claude-audit: quote run 7 correct / 1 partly, plain run 5 / 2, none wrong):
+  - plain repair: 17.3% of correct drafts lost, strict 93.8%, 0 wrong;
+  - quote-anchored repair: **16.2%** lost, strict **94.4%**, 0 wrong. It recovers 3 correct drafts the plain run lost and loses 1, and it drops 3 partly-correct sentences that plain repair showed.
+- **Turned on by default** (`MICHAEL_QUOTE_REPAIR=0` turns it off): it meets the bar of more correct drafts kept with 0 wrong. The gain is small (2 drafts) and LLM output varies between runs, so it will be re-checked on the next gate run.
+- **README correction:** the repair-gate row said 14.0% lost; the measured figure, both in the old report and today, is 17.3%. The 14.0% belongs to the verify-only gate.
+- `after_session.ps1` now runs only the extractive-drafting experiment, then the library batch.
+
 ## 2026-10-24 · 13:13-15:13 (two-hour summary)
 **Done** (details in the two entries below; 17 commits, 79 tests pass)
 - Extension 0.3.0-0.3.2: a card is guaranteed within the reading time + 5 s, and it lists facts you have already verified.

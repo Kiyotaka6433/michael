@@ -1,7 +1,7 @@
 # Slow work queued after an interactive session (writer-model heavy), in order, below normal priority:
-#   1. recall experiment: quote-anchored repair, measured on the 14 baseline notes (eval/gate_repair.py, GATE_TAG=quote)
-#   2. recall experiment: extractive drafting of the 14 baseline notes (eval/extractive_drafts.py; resumable)
-#   3. the library batch: topic rewrites (compare-and-replace), then key points (unused articles first)
+#   (quote-anchored repair was measured on 24 Oct and is on by default)
+#   1. recall experiment: extractive drafting of the 14 baseline notes (eval/extractive_drafts.py; resumable)
+#   2. the library batch: topic rewrites (compare-and-replace), then key points (unused articles first)
 # Each step is resumable; output goes through cmd so logs stay UTF-8.
 $root = "C:\Users\aryan\OneDrive\Desktop\michael"
 Set-Location $root
