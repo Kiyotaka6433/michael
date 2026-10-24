@@ -139,7 +139,7 @@ export default class MichaelPlugin extends Plugin {
       await leaf.setViewState({ type: CHECK_VIEW, active: true });
     }
     this.app.workspace.revealLeaf(leaf);
-    const panel = leaf.view as CheckView;
+    const panel = leaf.view as unknown as CheckView;
     panel.show(file, "Checking every sentence against your library… (can take a minute)");
     if (!(await this.ensureBackend(false))) return panel.show(file, "Michael backend not reachable.");
     try {
@@ -251,6 +251,29 @@ export default class MichaelPlugin extends Plugin {
     }
     new Notice(`Michael is researching: ${question}`);
     this.follow(runId, () => this.saveNote(runId, question));
+    this.showKnownFacts(question);              // instant: what Michael already verified, while the run works
+  }
+
+  /** Facts already proven by a quote in Michael's notes, closest in meaning to the question (no model run). */
+  async showKnownFacts(question: string) {
+    try {
+      const r = await requestUrl({ url: `${this.settings.backendUrl}/api/v1/facts?q=${encodeURIComponent(question)}&k=6`,
+                                   throw: false });
+      const facts = (r.json?.facts ?? []) as { fact: string; quote: string; source: string; score: number }[];
+      if (!facts.length) return;
+      let leaf = this.app.workspace.getLeavesOfType(CHECK_VIEW)[0];
+      if (!leaf) {
+        leaf = this.app.workspace.getRightLeaf(false)!;
+        await leaf.setViewState({ type: CHECK_VIEW, active: true });
+      }
+      this.app.workspace.revealLeaf(leaf);
+      const n = facts.length;
+      (leaf.view as unknown as CheckView).show(null, `Already verified (instant) - the full research note is on its way: ${question}`,
+        { sentences: facts.map((f) => ({ sentence: f.fact, verdict: "SUPPORTED", entailment: f.score, quote: f.quote, source: f.source })),
+          summary: { sentences: n, supported: n, partial: 0, unsupported: 0 } });
+    } catch {
+      /* instant facts are a bonus: the research run doesn't depend on them */
+    }
   }
 
   /** Show a run's progress in the status bar; call onDone when it finishes. */
