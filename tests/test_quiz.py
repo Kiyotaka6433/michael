@@ -23,3 +23,9 @@ def test_quiz_questions_are_well_formed(monkeypatch):
 
 def test_blank_never_cuts_a_word():
     assert quiz._blank("Underfitting and fitting.", "fitting") == "Underfitting and _____."
+
+
+def test_name_is_never_the_tail_of_a_longer_name():
+    from michael.quiz import _terms
+    names = [t for k, t in _terms("Sparse Table can only be used on immutable arrays, unlike the Fenwick Tree.") if k == "name"]
+    assert "Table" not in names and "Fenwick Tree" in names

@@ -125,6 +125,25 @@ def verified_facts(query: str | None = None, source: str | None = None, subject:
 
 
 @server.tool()
+def quiz(subject: str | None = None, n: int = 5) -> list[dict]:
+    """Study questions made from the user's verified facts (no model invents them): each blanks one key term and
+    offers four options; `answer` and the proving `quote` are included, so hide them until the user has answered."""
+    return _get("/api/v1/quiz", subject=subject, n=min(n, 30))["questions"]
+
+
+@server.tool()
+def library_gaps() -> dict:
+    """Where the user's library is thin: topics whose overview has few verified facts, and per topic the saved
+    sources that no verified fact cites yet (good candidates to read or to run research on)."""
+    r = _get("/api/v1/coverage")
+    gaps = [{"subject": su["subject"], "topic": t["topic"], "overview_verified": t["overview_verified"],
+             "covered_pct": t["covered_pct"],
+             "unused_sources": [s["title"] for s in t["sources"] if s["verified_facts"] == 0][:8]}
+            for su in r["subjects"] for t in su["topics"] if t["thin"] or t["unused_sources"]]
+    return {"summary": r["summary"], "topics": sorted(gaps, key=lambda g: g["covered_pct"])}
+
+
+@server.tool()
 def research_start(question: str) -> dict:
     """Start an evidence-locked research note on a question (searches the library and free sources, writes a note
     in which every sentence cites a verified quote). Takes several minutes; poll research_result with the run_id."""

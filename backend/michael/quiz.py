@@ -23,7 +23,8 @@ KINDS = ("math", "name", "number", "word")       # preferred blank, best first
 def _terms(sentence: str) -> list[tuple[str, str]]:
     out = [("math", m.group(0)) for m in MATH.finditer(sentence)]
     plain = MATH.sub(" ", sentence)
-    out += [("name", m.group(1)) for m in NAME.finditer(plain)]
+    out += [("name", m.group(1)) for m in NAME.finditer(plain)    # not the tail of a longer name ("Sparse Table")
+            if not plain[:m.start()].split()[-1:] or not plain[:m.start()].split()[-1][:1].isupper()]
     out += [("number", m.group(0)) for m in NUMBER.finditer(plain)]
     words = sorted({m.group(1) for m in WORD.finditer(plain) if m.group(1) not in STOP}, key=len, reverse=True)
     out += [("word", w) for w in words[:2]]
