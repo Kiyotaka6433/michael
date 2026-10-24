@@ -4,6 +4,12 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-24 · 17:45-18:35 (speed)
+- **Writer instructions pre-read during search** (`MICHAEL_PREFILL`, on): Ollama caches the fixed ~330-token instructions while sources are fetched and reranked, so the draft reads only the question and evidence: writer reading 104 -> 87 s on Dijkstra (same prompt, cache flushed before each run). Output is unchanged, so recall is unaffected.
+- **Measured and left off:** compact "p3 | sentence" drafts (35 vs 36 tokens per sentence, and only 4 sentences instead of 8 without the schema's minimum); repair continuing the writer's conversation (39 -> 25 s on one note, no change on another, recall unmeasured).
+- **The 2x target is not reachable on this CPU without losing recall:** generation (~5 tokens/s, memory-bound) and the large verifier dominate. The options left are a GPU or a smaller writer, and the 3B writer was already measured as no faster end to end.
+- Prac 9 (FSD) got JWT auth with a Postman collection (outside Michael). The extractive experiment and library batch were paused for clean timings and restarted at 18:35.
+
 ## 2026-10-24 · 14:37-16:37
 - Everything in this window is logged in the four entries below (last commit 15:43: quote-anchored repair on by default). Since 15:45 nothing has changed and nothing is running: no batch (`library/build.log` still at retopics 13/28 from 22 Oct), empty backend job queue. The backend is up with the new defaults; `scripts/after_session.ps1` (extractive experiment, then the library batch) waits for this evening, as you asked.
 

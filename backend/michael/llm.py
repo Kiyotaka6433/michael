@@ -68,15 +68,60 @@ def repair_latex(value):
 LAST_STATS: dict = {}       # timings of the last uncached call (tokens and nanoseconds, from Ollama)
 
 
+# The writer's last conversations, so a repair can CONTINUE one: Ollama keeps the conversation's tokens in its prompt
+# cache, so the repair reads only its new instructions instead of the whole evidence again (speed).
+CONVERSATIONS: list[dict] = []
+LAST_REPLY: dict = {"text": None}    # the raw text of the last generated answer (None when it came from the cache)
+
+
+def remember_conversation(passages: set, model: str, messages: list[dict], reply: str):
+    CONVERSATIONS.append({"passages": passages, "model": model,
+                          "messages": messages + [{"role": "assistant", "content": reply}]})
+    del CONVERSATIONS[:-4]
+
+
+def conversation_for(passages: set, model: str) -> dict | None:
+    """The newest writer conversation that showed only passages from `passages` (same label, same text)."""
+    return next((c for c in reversed(CONVERSATIONS) if c["model"] == model and c["passages"] <= passages), None)
+
+
+def prefill(system: str, model: str):
+    """Fire-and-forget: Ollama reads `system` into its prompt cache (one token generated), so the next call that
+    starts with the same system prompt skips reading it. Never blocks the caller; errors are ignored."""
+    import threading
+
+    def go():
+        try:
+            httpx.post(f"{settings.ollama_url}/api/chat", timeout=300, json={
+                "model": model, "stream": False, "keep_alive": "30m", "options": {**_options(0.1), "num_predict": 1},
+                "messages": [{"role": "system", "content": system}, {"role": "user", "content": ""}]})
+        except Exception:
+            pass
+    threading.Thread(target=go, daemon=True).start()
+
+
+def chat_text(system: str, user: str, temperature: float = 0.1, model: str | None = None,
+              history: list[dict] | None = None) -> str:
+    """Free-text answer (no JSON, no constrained decoding: fewer tokens to generate)."""
+    return _chat(system, user, temperature, None, model, history)["text"]
+
+
 def chat_json(system: str, user: str, temperature: float = 0.1, retries: int = 2, schema: dict | None = None,
-              model: str | None = None) -> dict:
-    """`schema` (a JSON Schema) makes Ollama constrain decoding to exactly that shape."""
-    payload = {"model": model or settings.llm_model, "stream": False, "format": schema or "json", "keep_alive": "30m",
-               "options": _options(temperature),
-               "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
-    key = sha(json.dumps([payload["model"], payload["format"], payload["options"]["temperature"],
-                          payload["messages"]], sort_keys=True))
-    if cached := db.cache_get("llm", [key]).get(key):     # identical prompt -> identical answer, instantly
+              model: str | None = None, history: list[dict] | None = None) -> dict:
+    """`schema` (a JSON Schema) makes Ollama constrain decoding to exactly that shape. `history`: earlier messages
+    of the conversation (then `system` is not sent again)."""
+    return _chat(system, user, temperature, schema or "json", model, history, retries)
+
+
+def _chat(system, user, temperature, fmt, model, history, retries=2):
+    messages = (history or [{"role": "system", "content": system}]) + [{"role": "user", "content": user}]
+    payload = {"model": model or settings.llm_model, "stream": False, "keep_alive": "30m",
+               "options": _options(temperature), "messages": messages}
+    if fmt:
+        payload["format"] = fmt
+    key = sha(json.dumps([payload["model"], fmt, payload["options"]["temperature"], messages], sort_keys=True))
+    LAST_REPLY["text"] = None
+    if settings.llm_cache and (cached := db.cache_get("llm", [key]).get(key)):   # same prompt -> same answer, instantly
         return cached
     last = None
     for _ in range(retries + 1):
@@ -87,7 +132,12 @@ def chat_json(system: str, user: str, temperature: float = 0.1, retries: int = 2
             # where the time goes on CPU: reading the prompt vs generating the answer (Ollama reports both)
             LAST_STATS.update({k: body.get(k, 0) for k in ("prompt_eval_count", "prompt_eval_duration",
                                                             "eval_count", "eval_duration", "total_duration")})
-            data = repair_latex(json.loads(body["message"]["content"]))
+            if settings.extra.get("trace") is not None:          # eval/profile_note.py: per-call token counts
+                settings.extra["trace"].append({k: body.get(k, 0) for k in ("prompt_eval_count", "prompt_eval_duration",
+                                                                            "eval_count", "eval_duration")})
+            content = body["message"]["content"]
+            LAST_REPLY["text"] = content
+            data = repair_latex(json.loads(content)) if fmt else {"text": content}
             db.cache_put("llm", {key: data})
             return data
         except httpx.ConnectError as e:

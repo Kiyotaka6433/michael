@@ -161,6 +161,7 @@ def verified_note(question: str, queries: list[str], chunks: list, note_path: Pa
                   emit=lambda *a, **k: None, run_id=None, keep: int | None = None, max_sentences: int = 8) -> dict:
     """Write -> verify -> repair over the given chunks and save an Obsidian note. Returns the note, its stats and
     the verified facts [(sentence, link to the supporting quote)] for flashcards."""
+    metatron.prefill(max_sentences)
     evidence = select_evidence(question, queries, chunks, emit, keep)
     claims = metatron.write(question, evidence, max_sentences)
     emit("write", f"{len(claims)} sentences drafted")

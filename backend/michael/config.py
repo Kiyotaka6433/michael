@@ -22,6 +22,13 @@ class Settings:
     writer_model: str = _env("WRITER", "")
     writer_style: str = _env("WRITER_STYLE", "")      # "extractive": one passage sentence per draft sentence (experiment)
     quote_repair: bool = _env("QUOTE_REPAIR", "1") == "1"   # repair against the closest quote (gate: lost 17.3% -> 16.2%, strict 93.8 -> 94.4%, 0 wrong)
+    # drafts as "p3 | sentence" lines instead of JSON: measured 24 Oct, no saving per sentence (35 vs 36 tokens), and
+    # without the schema's minimum the 7B wrote 4 sentences instead of 8 -> off
+    compact_writer: bool = _env("COMPACT_WRITER", "0") == "1"
+    # repair continues the writer conversation (cached prefix): 39 -> 25 s on one note, 38 -> 38 s on another; off
+    repair_in_conversation: bool = _env("REPAIR_IN_CONVERSATION", "0") == "1"
+    prefill: bool = _env("PREFILL", "1") == "1"     # writer instructions pre-read during search: 104 -> 87 s reading
+    llm_cache: bool = _env("LLM_CACHE", "1") == "1"          # off only for timing runs
     llm_threads: int = int(_env("LLM_THREADS", os.cpu_count() or 4))
     llm_ctx: int = int(_env("LLM_CTX", 6144))
     embed_model: str = _env("EMBED_MODEL", "BAAI/bge-small-en-v1.5")
