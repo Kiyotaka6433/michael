@@ -15,6 +15,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <a href="/search">Search</a>
             <a href="/flashcards">Flashcards</a>
             <a href="/quiz">Quiz</a>
+            <a href="/coverage">Coverage</a>
             <a href="/graph">Graph</a>
             <a href="/claims">Claims</a>
             <a href="/">Research runs</a>

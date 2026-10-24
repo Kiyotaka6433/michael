@@ -281,7 +281,13 @@ def phase_keypoints(vault, manifest, state, subject=None, limit=None, all_kinds=
     todo = [(s, t, i) for s, t, i in items(manifest, subject)
             if state.get(i, {}).get("status") == "saved" and not state[i].get("keypoints")
             and (all_kinds or not i.startswith("wiki:"))]
-    todo.sort(key=lambda x: KEYPOINT_ORDER[x[2].split(":")[0]])
+    # articles that no verified fact cites yet come first (see /coverage): each night adds the most coverage
+    try:
+        from michael.coverage import coverage
+        used = {s["note"] for su in coverage()["subjects"] for t in su["topics"] for s in t["sources"] if s["verified_facts"]}
+    except Exception:
+        used = set()
+    todo.sort(key=lambda x: (Path(state[x[2]]["path"]).stem in used, KEYPOINT_ORDER[x[2].split(":")[0]]))
     print(f"keypoints: {len(todo)} articles to summarise", flush=True)
     for n, (subj, topic, item) in enumerate(todo[:limit] if limit else todo, 1):
         st = state[item]
