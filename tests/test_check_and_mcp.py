@@ -39,4 +39,5 @@ def test_library_check_needs_the_higher_bar(monkeypatch):
 def test_mcp_server_exposes_the_tools():
     from michael.mcp_server import server
     names = {t.name for t in asyncio.run(server.list_tools())}
-    assert names == {"check_facts", "search_library", "read_note", "verified_facts", "research_start", "research_result"}
+    assert names == {"check_facts", "search_library", "read_note", "verified_facts", "quiz", "library_gaps",
+                     "research_start", "research_result"}
