@@ -4,6 +4,9 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-24 · 14:37-16:37
+- Everything in this window is logged in the four entries below (last commit 15:43: quote-anchored repair on by default). Since 15:45 nothing has changed and nothing is running: no batch (`library/build.log` still at retopics 13/28 from 22 Oct), empty backend job queue. The backend is up with the new defaults; `scripts/after_session.ps1` (extractive experiment, then the library batch) waits for this evening, as you asked.
+
 ## 2026-10-24 · 15:13-15:45 (recall: quote-anchored repair is on)
 - **Measured on the 198 labelled baseline drafts, both runs with today's code** (rewrites labelled per run, claude-audit: quote run 7 correct / 1 partly, plain run 5 / 2, none wrong):
   - plain repair: 17.3% of correct drafts lost, strict 93.8%, 0 wrong;
