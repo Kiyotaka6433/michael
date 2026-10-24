@@ -4,6 +4,11 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-24 · 16:37-18:37
+- Done: `eval/extractive_score.py` (scores the extractive drafts through the full pipeline against the original 7B drafts) and the speed work (writer instructions pre-read during search, on; two other ideas measured and left off: see the 17:45-18:35 entry).
+- Running: the extractive-drafting experiment (3 of 14 notes drafted; restarted 18:35 after being paused for clean timings), then the library batch (topic rewrites resume at 14/28, then key points). Backend job queue empty.
+- Next: score and label the extractive drafts, then decide whether that style becomes the default.
+
 ## 2026-10-24 · 17:45-18:35 (speed)
 - **Writer instructions pre-read during search** (`MICHAEL_PREFILL`, on): Ollama caches the fixed ~330-token instructions while sources are fetched and reranked, so the draft reads only the question and evidence: writer reading 104 -> 87 s on Dijkstra (same prompt, cache flushed before each run). Output is unchanged, so recall is unaffected.
 - **Measured and left off:** compact "p3 | sentence" drafts (35 vs 36 tokens per sentence, and only 4 sentences instead of 8 without the schema's minimum); repair continuing the writer's conversation (39 -> 25 s on one note, no change on another, recall unmeasured).
