@@ -7,10 +7,10 @@ import { noteHref } from "../../lib/library";
 type G = { nodes: { id: string; label: string; subject: string; kind: string }[]; edges: { source: string; target: string }[] };
 
 const SUBJECT: Record<string, string> = {
-  "Number Theory": "#4c9aff", "DSA and Competitive Programming": "#36b37e", "Machine Learning": "#ff8b00",
+  "Number Theory": "#c49a6c", "DSA and Competitive Programming": "#7fb069", "Machine Learning": "#e0c068",
 };
 const color = (n: G["nodes"][number]) =>
-  n.kind === "hub" ? "#ffd700" : n.kind === "topic" ? "#e040fb" : n.kind === "keypoints" ? "#8993a4" : SUBJECT[n.subject] ?? "#9aa0a6";
+  n.kind === "hub" ? "#f2e8c9" : n.kind === "topic" ? "#4f9d69" : n.kind === "keypoints" ? "#8a8f78" : SUBJECT[n.subject] ?? "#9aa0a6";
 
 export default function GraphPage() {
   const box = useRef<HTMLDivElement>(null);
@@ -32,9 +32,9 @@ export default function GraphPage() {
         ],
         style: [
           { selector: "node", style: { "background-color": "data(color)", width: "data(size)", height: "data(size)",
-              label: "data(label)", "font-size": 6, color: "#cfcfd8", "text-valign": "bottom", "text-margin-y": 2,
+              label: "data(label)", "font-size": 6, color: "#d9d4bf", "text-valign": "bottom", "text-margin-y": 2,
               "min-zoomed-font-size": 9 } },
-          { selector: "edge", style: { width: 0.4, "line-color": "#4a4a5a", opacity: 0.55 } },
+          { selector: "edge", style: { width: 0.4, "line-color": "#5b6b4a", opacity: 0.55 } },
           { selector: ".faded", style: { opacity: 0.12 } },
         ],
         layout: { name: "cose", animate: false, nodeRepulsion: () => 9000, idealEdgeLength: () => 60, numIter: 1500 },
@@ -59,9 +59,9 @@ export default function GraphPage() {
         <span className="muted small">{info}</span>
       </div>
       <div className="legend muted small">
-        <span style={{ color: "#ffd700" }}>● hubs</span> <span style={{ color: "#e040fb" }}>● topic overviews</span>{" "}
-        <span style={{ color: "#4c9aff" }}>● Number Theory</span> <span style={{ color: "#36b37e" }}>● DSA</span>{" "}
-        <span style={{ color: "#ff8b00" }}>● Machine Learning</span> <span style={{ color: "#8993a4" }}>● key points</span>
+        <span style={{ color: "#c9b98a" }}>● hubs</span> <span style={{ color: "#4f9d69" }}>● topic overviews</span>{" "}
+        <span style={{ color: "#a77a4c" }}>● Number Theory</span> <span style={{ color: "#6b8f47" }}>● DSA</span>{" "}
+        <span style={{ color: "#b8913f" }}>● Machine Learning</span> <span style={{ color: "#8a8f78" }}>● key points</span>
       </div>
       <div ref={box} className="graph-box" />
     </>

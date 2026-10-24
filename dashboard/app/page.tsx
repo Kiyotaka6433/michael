@@ -65,9 +65,9 @@ export default function Home() {
               <BarChart data={chart}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="run" /><YAxis allowDecimals={false} /><Tooltip /><Legend />
-                <Bar dataKey="verified" stackId="a" fill="#2f6b3a" />
-                <Bar dataKey="partial" stackId="a" fill="#b08d57" />
-                <Bar dataKey="removed" stackId="a" fill="#a23b2a" />
+                <Bar dataKey="verified" stackId="a" fill="#3f7d3a" />
+                <Bar dataKey="partial" stackId="a" fill="#c9a66b" />
+                <Bar dataKey="removed" stackId="a" fill="#a5462e" />
               </BarChart>
             </ResponsiveContainer>
           </div>
