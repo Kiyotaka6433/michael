@@ -29,6 +29,11 @@ def warm_up():
         pass
     RERANKER.model
     VERIFIER.scores([("warm up", "warm up")])
+    try:                                     # instant answers: build the verified-fact index now, not on first query
+        from ..learning import semantic_facts
+        semantic_facts("warm up", 1)
+    except Exception:
+        pass
     llm.warm_up()
 
 

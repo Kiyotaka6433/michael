@@ -1,4 +1,5 @@
-import { noteHref, search, type SearchHit } from "../../lib/library";
+import { facts, noteHref, search, type Fact, type SearchHit } from "../../lib/library";
+import Markdown from "../Markdown";
 
 export const dynamic = "force-dynamic";
 
@@ -7,10 +8,11 @@ const KIND: Record<string, string> = { source: "article", topic: "topic overview
 export default async function SearchPage({ searchParams }: { searchParams: { q?: string } }) {
   const q = (searchParams.q ?? "").trim();
   let hits: SearchHit[] = [];
+  let known: Fact[] = [];
   let error = "";
   if (q) {
     try {
-      hits = (await search(q)).results;
+      [hits, known] = await Promise.all([search(q).then((r) => r.results), facts(q).then((r) => r.facts).catch(() => [])]);
     } catch {
       error = "Michael's backend is not running.";
     }
@@ -22,6 +24,16 @@ export default async function SearchPage({ searchParams }: { searchParams: { q?:
         <button>Search</button>
       </form>
       {error && <div className="card error">{error}</div>}
+      {known.length > 0 && (
+        <div className="card">
+          <b>Already verified</b> <span className="muted small">· facts Michael has proven with a quote, closest in meaning</span>
+          <ul>
+            {known.map((f) => (
+              <li key={f.fact}><Markdown text={f.fact} /> <span className="muted small">— {f.source.replace(/^\[\[|\]\]$/g, "")}</span></li>
+            ))}
+          </ul>
+        </div>
+      )}
       {q && !error && <p className="muted">{hits.length} passages · full-text and meaning search over the whole vault</p>}
       {hits.map((h) => (
         <a key={h.id} href={noteHref(h.rel, h.heading)} className="card hit">

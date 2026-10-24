@@ -398,6 +398,13 @@ def claims(status: str | None = None, source: str | None = None, subject: str | 
     return learning.query_claims(status, source, subject, q, min(limit, 1000), path, conflicts)
 
 
+@app.get("/api/v1/facts")
+def facts(q: str, k: int = 8, subject: str | None = None):
+    """Instant answers: verified facts (each already proven by a quote) closest in meaning to the query."""
+    from . import learning
+    return {"query": q, "facts": learning.semantic_facts(q, min(max(k, 1), 30), subject or None)}
+
+
 @app.get("/api/v1/coverage")
 def coverage_map():
     """Per topic: which source articles back verified facts, which have key points, and the gaps."""

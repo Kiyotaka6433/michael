@@ -77,6 +77,52 @@ def index_note_claims(path: str, text: str):
     return len(rows)
 
 
+_fact_index = {"key": None, "rows": [], "matrix": None}
+
+
+def semantic_facts(query: str, k: int = 8, subject: str | None = None, min_score: float = 0.55) -> list[dict]:
+    """Instant answers: the verified facts (sentences already proven by a quote in Michael's notes) closest in
+    meaning to the query - no writer model, no new verification. Fact embeddings are cached by content hash and
+    the in-memory index is rebuilt only when the claims table changes."""
+    import numpy as np
+    from .host.archangel import EMBEDDER
+    from .models import Chunk
+    init()
+    with db.connect() as con:
+        key = con.execute("SELECT COUNT(*), COALESCE(SUM(LENGTH(sentence)), 0) FROM note_claims "
+                          "WHERE status = 'SUPPORTED'").fetchone()
+        key = tuple(key)
+        if _fact_index["key"] != key:
+            rows = [dict(r) for r in con.execute(
+                "SELECT c.sentence, c.quote, c.source, c.path, n.rel, n.subject FROM note_claims c "
+                "LEFT JOIN vault_notes n ON n.path = c.path WHERE c.status = 'SUPPORTED' AND c.quote != ''")]
+        else:
+            rows = None
+    if rows is not None:
+        seen, uniq = set(), []
+        for r in rows:                                # the same fact can appear in a topic and a key-points note
+            if r["sentence"] not in seen:
+                seen.add(r["sentence"])
+                uniq.append(r)
+        chunks = [Chunk(source_id="fact", kind="fact", title="", url="", text=r["sentence"], start=0,
+                        end=len(r["sentence"])) for r in uniq]
+        _fact_index.update(key=key, rows=uniq, matrix=EMBEDDER.chunks(chunks) if chunks else None)
+    rows, matrix = _fact_index["rows"], _fact_index["matrix"]
+    if matrix is None or not len(rows):
+        return []
+    sims = matrix @ EMBEDDER.query(query)
+    out = []
+    for i in np.argsort(-sims):
+        if sims[i] < min_score or len(out) >= k:
+            break
+        r = rows[i]
+        if subject and r.get("subject") != subject:
+            continue
+        out.append({"fact": r["sentence"], "quote": r["quote"], "source": r["source"],
+                    "note": r.get("rel") or r["path"], "score": round(float(sims[i]), 3)})
+    return out
+
+
 def query_claims(status: str | None = None, source: str | None = None, subject: str | None = None,
                  q: str | None = None, limit: int = 100, path: str | None = None,
                  conflicts: bool = False) -> list[dict]:
