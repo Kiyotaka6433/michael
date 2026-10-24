@@ -1,0 +1,8 @@
+{"id": "b61b14c06cc", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b0ae69344d2", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bacee08f545", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b8502053b57", "label": "partly", "reason": "the invariants ensure the correct coefficients, not the GCD", "labeler": "claude-audit"}
+{"id": "be471d3367d", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bf69aeef2cd", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "b011de683ce", "label": "correct", "reason": "", "labeler": "claude-audit"}
+{"id": "bfe875b1285", "label": "correct", "reason": "", "labeler": "claude-audit"}
