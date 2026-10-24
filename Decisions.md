@@ -4,6 +4,20 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-24 · 13:13-15:13 (two-hour summary)
+**Done** (details in the two entries below; 17 commits, 79 tests pass)
+- Extension 0.3.0-0.3.2: a card is guaranteed within the reading time + 5 s, and it lists facts you have already verified.
+- Fact-check (Obsidian, Chrome right-click, MCP); instant answers (`/api/v1/facts`); study quiz (web, MCP, and since 15:11 **"Quiz me on this note"** in Obsidian, also for source articles through the facts that cite them); coverage map; MCP `quiz` / `library_gaps`.
+- Quiz quality: numbers are whole ("100,000") and never taken from code (`r+1`); names are never the tail of a longer name.
+- `eval/gate_repair.py`: each experiment (`GATE_TAG`) gets its own outputs **and its own rewrite labels**, because a run's rewrites differ from another run's for the same draft.
+- No library batch ran (`library/build.log` unchanged since retopics 13/28 on 22 Oct); backend job list empty.
+
+**Choices and why**
+- **Per-experiment labels:** reusing the baseline's labels would have scored the quote run's new rewrites with labels written for different sentences.
+- **Fair comparison:** the baseline repair figure (17.3% lost) was measured with older code, so the plain pipeline is re-run with today's code (`GATE_TAG=plain`) before quote repair is judged.
+
+**Running:** the quote-repair gate (16 of 28 note runs, below normal priority). Next: label its rewrites, the plain re-run, then a decision on the flag.
+
 ## 2026-10-24 · 14:46-15:10 (big build session, continued)
 **Done**
 - **Instant answers** (`/api/v1/facts`, `learning.semantic_facts`): the verified facts closest in meaning to a question, 0.06-0.1 s warm, no model run. Shown in the web search page, in Obsidian while a research note is written, and in MCP `verified_facts`.
