@@ -76,3 +76,9 @@ a.hit:hover { border-color: var(--text); }
 select { padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: #fff; font: inherit; }
 .graph-box { height: 72vh; min-height: 420px; background: #1e1e24; border-radius: 10px; border: 1px solid var(--line); }
 .legend { margin: 0 0 8px; display: flex; gap: 14px; flex-wrap: wrap; }
+
+/* quiz */
+.quiz-options { display: grid; gap: 8px; margin: 12px 0; }
+.quiz-options button { text-align: left; }
+.quiz-options button.wrong { background: #5b2330; border-color: #a33a4f; }
+.quiz-options button p { margin: 0; }

@@ -10,6 +10,7 @@ stored, so a client can reconnect and replay a job's history.
     subscribe(job_id) -> queue of events (history first, then live; None marks the end)
 """
 import json
+import os
 import queue
 import threading
 import time
@@ -204,6 +205,9 @@ def _worker():
         _run(job)
 
 
+NIGHT_HOURS = 6        # a nightly library job may start from nightly_hour until this many hours later
+
+
 def _scheduler():
     """Nightly maintenance at settings.nightly_hour: re-index the vault, re-check citations, and build key points
     for articles added since the last run. Runs at most once per day."""
@@ -217,7 +221,8 @@ def _scheduler():
         if vault:
             enqueue("index", {"vault_path": vault}, "nightly: re-index vault")
             enqueue("recheck", {"vault_path": vault}, "nightly: re-check citations")
-            enqueue("library", {"vault_path": vault, "phase": "keypoints"}, "nightly: key points for new articles")
+            enqueue("library", {"vault_path": vault, "phase": "keypoints", "nightly": True},
+                    "nightly: key points for new articles")
 
 
 def start():
@@ -265,11 +270,19 @@ def _library(p, emit, jid):
     import sys
     from pathlib import Path
     root = Path(__file__).resolve().parents[2]
+    if p.get("nightly") and not (settings.nightly_hour <= datetime.now().hour < settings.nightly_hour + NIGHT_HOURS):
+        # a nightly job left pending (laptop asleep or backend off) and resumed in the day: it would take the CPU
+        # from whatever you're doing - skip it, the next night queues a fresh one
+        return {"skipped": "nightly job resumed outside the night window"}
+    if os.name == "nt":                       # keep the writer model below Chrome / Obsidian / the extension
+        subprocess.Popen(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
+                          str(root / "scripts" / "keep_responsive.ps1")], creationflags=subprocess.CREATE_NO_WINDOW)
     cmd = [sys.executable, "-u", str(root / "scripts" / "build_library.py"), p.get("phase", "keypoints")]
     if p.get("vault_path"):
         cmd += ["--vault", p["vault_path"]]
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf8",
-                            errors="replace", cwd=root)
+                            errors="replace", cwd=root,
+                            creationflags=subprocess.BELOW_NORMAL_PRIORITY_CLASS if os.name == "nt" else 0)
     try:
         for line in proc.stdout:
             line = line.strip()

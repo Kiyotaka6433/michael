@@ -13,7 +13,7 @@ listeners = []                                   # callables(event dict) - the A
 
 def _only_markdown(change, path: str) -> bool:
     p = Path(path)
-    return p.suffix == ".md" and ".obsidian" not in p.parts and ".trash" not in p.parts
+    return p.suffix == ".md" and not any(part.startswith(".") for part in p.parts[-6:-1])   # no hidden folders
 
 
 def _loop(vault: str):
