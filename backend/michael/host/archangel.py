@@ -167,7 +167,9 @@ def verify_and_repair(question, claims, evidence, emit=_noop, repair_enabled=Tru
             break
         related = {c.index: set(c.citations) | ({by_id[verdicts[c.index].chunk_id].label}
                                                 if verdicts[c.index].chunk_id in by_id else set()) for c in failed}
-        fixes = raphael.repair_many(failed, evidence, related)
+        quotes = {c.index: (verdicts[c.index].evidence_label, verdicts[c.index].quote) for c in failed
+                  if c.index in verdicts and verdicts[c.index].quote}
+        fixes = raphael.repair_many(failed, evidence, related, quotes)
         pending = []
         for claim in failed:
             fixed = fixes.get(claim.index)

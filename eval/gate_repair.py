@@ -19,7 +19,9 @@ sys.path.insert(0, str(ROOT / "eval"))
 
 B = ROOT / "eval" / "baseline"
 LABELS = B / "repair_labels.jsonl"
-OUT = ROOT / "eval" / "reports" / "gate_repair.json"
+import os
+TAG = os.getenv("GATE_TAG", "")                    # e.g. GATE_TAG=quote -> gate_repair_quote.json (one file per experiment)
+OUT = ROOT / "eval" / "reports" / f"gate_repair{'_' + TAG if TAG else ''}.json"
 jl = lambda p: [json.loads(l) for l in p.read_text(encoding="utf8").splitlines() if l.strip()] if p.exists() else []
 norm = lambda s: " ".join(s.split())
 
@@ -79,7 +81,7 @@ def main():
 def report(rows):
     labels = {r["id"]: r["label"] for r in jl(LABELS)}
     open_ = [r for r in rows if r["status"] == "SUPPORTED" and r["rewritten"] and r["id"] not in labels]
-    with (B / "repair_unlabelled.txt").open("w", encoding="utf8") as f:
+    with (B / f"repair_unlabelled{'_' + TAG if TAG else ''}.txt").open("w", encoding="utf8") as f:
         for r in open_:
             f.write(f"### {r['id']}  {r['note']}\nORIGINAL: {r['sentence']}\nREWRITE:  {r['final']}\nQUOTE:    {r['quote'][:600]}\n\n")
     # a draft counts as kept-correct if it is shown verified and (unchanged and labelled correct, or rewritten and
