@@ -4,6 +4,22 @@ What was done each hour, the choices made, and why. Newest first. Times are loca
 
 ---
 
+## 2026-10-24 · 14:46-15:10 (big build session, continued)
+**Done**
+- **Instant answers** (`/api/v1/facts`, `learning.semantic_facts`): the verified facts closest in meaning to a question, 0.06-0.1 s warm, no model run. Shown in the web search page, in Obsidian while a research note is written, and in MCP `verified_facts`.
+- **Chrome card lists what you already know (extension 0.3.2):** on a page about a topic you've studied, the card gets a collapsed "You already have N verified facts on this" section. It is looked up after the card is final (4 s cap), so it never delays the card; harness: card 2.1 s, final 2.4 s, facts 2.5 s.
+  - Relevance cut measured on real queries: unrelated pages (Photosynthesis, World War II, Python list comprehension) score at most 0.65, so a fact is shown at >= 0.75, or >= 0.66 when it names the page's subject (Fenwick tree: 0.72).
+- **Coverage map** (`/coverage` in the web app, `/api/v1/coverage`): 150 of 339 saved articles back at least one verified fact. The key-points batch now does the unused articles first.
+- **MCP:** new tools `quiz` and `library_gaps` (8 tools).
+- **Quiz fix:** a name is never blanked out of a longer name ("Sparse _____" for Sparse Table).
+- **Quote-anchored repair** (`MICHAEL_QUOTE_REPAIR=1`, off by default): a failing sentence is rewritten against its exact closest quote. **Being measured now** on the 14 baseline notes at low priority (`GATE_TAG=quote`, its own output files).
+- `scripts/after_session.ps1` queues the remaining slow work in order: quote-repair gate, extractive-drafting experiment, then the library batch (topic rewrites, then key points).
+- Extension matching under the experiment's load: 0.1-0.2 s (0.6 s right after a backend restart). 78 tests pass.
+
+**Choices and why**
+- **Facts are appended, never awaited:** the 20-25 s guarantee is about the card, so anything extra must arrive after it or not at all.
+- **Quote repair stays off until the gate says so:** the gate's bar is the same as before: more correct sentences kept, 0 wrong ones accepted.
+
 ## 2026-10-24 · 14:10-14:46 (big build session)
 **Done**
 - **Extension 0.3.0/0.3.1: a card is guaranteed on every readable page.**

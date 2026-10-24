@@ -335,6 +335,8 @@ Other commands: **Re-index the vault**, **Check that every citation still matche
 | `search_library(query, k, subject?)` | Passages from your saved articles |
 | `read_note(path)` | One note's Markdown, frontmatter and backlinks |
 | `verified_facts(query?, source?, subject?)` | Facts already verified in Michael's notes, with quotes |
+| `quiz(subject?, n)` | Study questions from verified facts (answer and proving quote included) |
+| `library_gaps()` | Thin topics, and the saved sources no verified fact cites yet |
 | `research_start(question)` / `research_result(run_id)` | A full evidence-locked research note |
 
 When checking against the library, the passages are found by search rather than chosen for each sentence, so the bar for SUPPORTED is **0.90** instead of 0.70. In testing, a worked example (0.88) and an indirect remark ("unlike Dijkstra…", 0.73) were otherwise accepted for general claims.
@@ -346,7 +348,7 @@ For another client, e.g. Claude Desktop, add: `{"command": "<repo>/.venv/Scripts
 | Feature | Where | What it does |
 |---|---|---|
 | **Fact-check** | Obsidian: command, ribbon, right-click a selection · Chrome: right-click a selection · MCP: `check_facts` | Checks every sentence of *your* text against the library's source articles: ✓ supported (with the exact quote), ◐ partial, ✗ not found. Click a sentence to jump to it |
-| **Instant answers** | Web search page ("Already verified") · Obsidian research (shown while the note is written) · MCP `verified_facts` · `/api/v1/facts` | The verified facts closest in meaning to a question, in about 0.06 s, with no model run: each was already proven by a quote |
+| **Instant answers** | Web search page ("Already verified") · Obsidian research (shown while the note is written) · Chrome card ("You already have N verified facts on this") · MCP `verified_facts` · `/api/v1/facts` | The verified facts closest in meaning to a question, in about 0.06 s, with no model run: each was already proven by a quote |
 | **Study mode** | Web app → **Quiz** · `/api/v1/quiz` | Multiple choice from verified facts with no LLM: one key term (formula, name, number, technical word) is blanked out, the distractors are the same kind of term from the same note, and the proving quote is shown after each answer |
 | **Coverage map** | Web app → **Coverage** · `/api/v1/coverage` | Per topic: which saved articles back verified facts and which are unused (150 of 339 today). The key-points batch does unused articles first |
 
