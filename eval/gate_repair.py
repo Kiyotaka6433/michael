@@ -18,10 +18,10 @@ sys.path.insert(0, str(ROOT / "backend"))
 sys.path.insert(0, str(ROOT / "eval"))
 
 B = ROOT / "eval" / "baseline"
-LABELS = B / "repair_labels.jsonl"
 import os
 TAG = os.getenv("GATE_TAG", "")                    # e.g. GATE_TAG=quote -> gate_repair_quote.json (one file per experiment)
 OUT = ROOT / "eval" / "reports" / f"gate_repair{'_' + TAG if TAG else ''}.json"
+LABELS = B / f"repair_labels{'_' + TAG if TAG else ''}.jsonl"   # rewrites differ per experiment, so do their labels
 jl = lambda p: [json.loads(l) for l in p.read_text(encoding="utf8").splitlines() if l.strip()] if p.exists() else []
 norm = lambda s: " ".join(s.split())
 
