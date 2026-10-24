@@ -1,28 +1,21 @@
 import "./globals.css";
 import "katex/dist/katex.min.css";
 import type { ReactNode } from "react";
+import { Fraunces, Inter } from "next/font/google";
+import Header, { Leaf } from "./Header";
 
 export const metadata = { title: "Michael", description: "Evidence-locked research library" };
 
+const serif = Fraunces({ subsets: ["latin"], variable: "--font-serif", display: "swap" });
+const sans = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${serif.variable} ${sans.variable}`} suppressHydrationWarning>
       <body>
-        <header className="top">
-          <a href="/library" className="brand">Michael</a>
-          <nav className="nav">
-            <a href="/library">Library</a>
-            <a href="/search">Search</a>
-            <a href="/flashcards">Flashcards</a>
-            <a href="/quiz">Quiz</a>
-            <a href="/coverage">Coverage</a>
-            <a href="/graph">Graph</a>
-            <a href="/claims">Claims</a>
-            <a href="/">Research runs</a>
-          </nav>
-          <span className="muted grow-right">every sentence backed by a quote</span>
-        </header>
+        <Header />
         <main className="wrap">{children}</main>
+        <footer className="foot"><Leaf size={14} /> Michael · grown from your trusted sources, checked sentence by sentence</footer>
       </body>
     </html>
   );

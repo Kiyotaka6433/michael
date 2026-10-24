@@ -52,6 +52,7 @@ export default function Quiz() {
       {qs && qs.length === 0 && <div className="card">No verified facts to quiz on yet.</div>}
       {q && (
         <div className="card flashcard">
+          <div className="progress"><span style={{ width: `${(100 * i) / qs!.length}%` }} /></div>
           <div className="muted small">Question {i + 1} of {qs!.length} · score {score} · {q.note.split(/[\\/]/).pop()?.replace(".md", "")}</div>
           <div className="q"><Markdown text={q.question} /></div>
           <div className="quiz-options">
