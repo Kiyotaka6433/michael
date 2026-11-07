@@ -13,3 +13,6 @@ library/*.log
 browser-extension/local-token.json
 library/html_cache/
 library/.build_*.lock
+
+# local editor/tool settings
+.claude/
